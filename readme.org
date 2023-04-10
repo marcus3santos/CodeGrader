@@ -159,8 +159,6 @@ that that students are not allowed to use functions FIND and COUNT in
 their solutions. Then, the test cases lisp file will be something like
 this:
 #+begin_src lisp
-  (in-package :codegrader)
-  
   (forbidden-funcions find count)
   
   (deftest test-fact ()
