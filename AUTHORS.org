@@ -1,0 +1,7 @@
+The authors and contributors to the utilities in this system include (in alphabetical order):
+
+- [[https://github.com/marcus3santos][Marcus Santos]] - Developed the current version.
+- [[https://github.com/NabilNYMansour][Nabil NY Mansour]] - Developed the first version, called Automarker.
+
+We are grateful for the support provided by the Career Boost Program and the Department of Computer Science at Ryerson University (soon to be renamed, at the time of this writing) for the development of the first version of this software.
+
