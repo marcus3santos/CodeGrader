@@ -156,10 +156,10 @@ students to submit a file that includes two functions: a ~fact~
 function that gives the factorial of a number, and a ~avg~ function
 that gives the average of a list of numbers. Moreover, suppose also
 that that students are not allowed to use functions FIND and COUNT in
-their solutions. Then, the test cases lisp file will be something like
+their solutions, and the penalty for using those functions is that only 25% of their marks will be counted. Then, the test cases lisp file will be something like
 this:
 #+begin_src lisp
-  (forbidden-funcions find count)
+  (forbidden-funcions :penalty 0.25 :functions '(find count))
   
   (deftest test-fact ()
     (check
