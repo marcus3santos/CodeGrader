@@ -78,6 +78,8 @@ cases and on the weight associated to each function. If ws is nil then
 the mark is calculated as the # of passes divided by the total # of cases.
 - ws is a list of pairs (<function-name> <weight>) Note: sum of weights must be 100
 - res is the list stored in the global variable *results*"
+  (unless res
+    (error "No test case definitions were provided."))
   (labels ((get-avg (fn res accumPass accumT)
 	     (dolist (x res (if (zerop accumT)
 				(error "Test function ~S not defined in unit test" fn)
@@ -135,13 +137,14 @@ the mark is calculated as the # of passes divided by the total # of cases.
                 (t "No runtime errors"))
 	  (change-results-readable *results*))))
 
-(defun evaluate-solution (student-solution ddate sdate test-cases ws)
+
+(defun evaluate-solution (student-solution  test-cases &optional ddate sdate)
   (cond ((null student-solution)
-         (list 0 "no-submitted-file" nil "No submitted file"))
+         (list 0 "no-submitted-file" "No submitted file" nil))
         ((not (equal (pathname-type student-solution) "lisp"))
-         (list 0 "not-lisp-file" nil "Not a lisp file"))
-        ((>date sdate ddate)
-         (list 0 "late-submission" nil  (format nil "Late submission. Assignment due on: ~a Submitted on: ~a~%" ddate sdate)))
+         (list 0 "not-lisp-file" "Not a lisp file" nil))
+        ((and ddate sdate (>date sdate ddate))
+         (list 0 "late-submission"  (format nil "Late submission. Assignment due on: ~a Submitted on: ~a~%" ddate sdate) nil))
         (t (grade-code student-solution test-cases))))
 
 #|

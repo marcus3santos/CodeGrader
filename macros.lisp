@@ -14,6 +14,8 @@
 
 (defparameter *forbidden-functions* nil) ;; List containing the names of the functions students are not allowed to use
 
+(defparameter *penalty-forbidden* 0.5) ;; Penalty (to be multiplied by total lab mark) for using forbidden functions
+
 (defparameter *test-name* nil)
 
 ;; Maximum running time (in seconds) allotted to the
@@ -90,8 +92,10 @@
        ,@body)))
 |#
 
-(defmacro forbidden-functions (&body fs)
-  `(setf *forbidden-functions* ',fs))
+(defmacro forbidden-functions (&key (penalty .5) functions)
+  `(progn 
+    (setf *penalty-forbidden* ,penalty)
+    (setf *forbidden-functions* ,functions)))
 
 
 (defun rewrite-load (file)

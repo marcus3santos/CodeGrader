@@ -11,5 +11,4 @@
   :components ((:file "package")
                (:file "macros")
                (:file "grader")
-               (:file "codemeter")
                (:file "codegrader")))
