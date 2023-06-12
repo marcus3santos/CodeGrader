@@ -86,9 +86,9 @@ CodeGrader generates the following files in the =results= folder (see above):
    #Hammermann,Odinson,Thor,0.0,#
    #+end_example
    Note:
-   - If a student exists in the exported file but not in the
+   - If a student exists in the exported grade file but not in the
      submissions folder, then the respective grades will
-     not be included in the generated in the respective csv files.
+     not be included in the generated in the respective csv files. This is particularly useful when using CodeGrader to grade exams with differente versions. In that case, you provide CodeGrader with the zipped students' solutions for that exam version, the grade file for the whole class, the test cases file for that exam version, and the results folder where you will store the results for that exam version assessment. To upload the students' grades, you should upload the grade.csv file generated for each exam version, as it stores the stores of the students who wrote that particular exam version.
 - A Feedback folder that holds feedback files for the students. The
   general structure is like this: Consider Timb Handerson who did not
   get a full grade. His feedback file will be as such:
