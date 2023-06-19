@@ -22,7 +22,7 @@
 
 (defun clean-symbol-names (e)
   (cond ((symbolp e) (intern (symbol-name e)) )
-        ((consp e) (mapcar #'clean-symbol-names e))
+        ((consp e) (cons (clean-symbol-names (car e))  (clean-symbol-names (cdr e))))
         (t e)))
 
 (defun generate-messages (out eval)
