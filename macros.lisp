@@ -92,10 +92,10 @@
        ,@body)))
 |#
 
-(defmacro forbidden-functions (&key (penalty .5) functions)
-  `(progn 
-    (setf *penalty-forbidden* ,penalty)
-    (setf *forbidden-functions* ,functions)))
+(defun forbidden-functions (&key (penalty .5) functions)
+  (progn 
+    (setf *penalty-forbidden* penalty)
+    (setf *forbidden-functions* functions)))
 
 
 (defun rewrite-load (file)
