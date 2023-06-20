@@ -77,14 +77,15 @@
           (format *standard-output* "~A~%" std-name)))))
 
 (defun generate-marks-spreadsheet (log-file-stream d2l-file folder ht f out-file)
-  (with-open-file (in d2l-file :direction :input)
-    (with-open-file (out (merge-pathnames folder out-file)
-			 :direction :output :if-exists :supersede)
-      (format out "~A~%" (read-line in nil))
-      (format *standard-output* "Students that did not submit solution are listed below:~%")
-      (loop for line = (read-line in nil)
-	    while line do
-	      (get-insert-grade log-file-stream out line ht f)))))
+  (when d2l-file
+    (with-open-file (in d2l-file :direction :input)
+      (with-open-file (out (merge-pathnames folder out-file)
+			   :direction :output :if-exists :supersede)
+        (format out "~A~%" (read-line in nil))
+        (format *standard-output* "Students that did not submit solution are listed below:~%")
+        (loop for line = (read-line in nil)
+	      while line do
+	        (get-insert-grade log-file-stream out line ht f))))))
 
 (defun check-input-files (lf)
   (when lf
@@ -212,8 +213,8 @@
             results))
     (reverse results)))
 
-(defun grade-it (submissions-zipped-file exam-grades-export-file tests-folder results-folder)
-  (check-input-files (list submissions-zipped-file exam-grades-export-file tests-folder))
+(defun grade-it (submissions-zipped-file tests-folder results-folder &optional exam-grades-export-file)
+  (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file tests-folder)))
   (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
          (test-cases-folder (check-foldername  (namestring (ensure-directories-exist tests-folder :verbose T))))
          (feedback-folder (merge-pathnames "student-feedback/" results-folder))
@@ -258,12 +259,14 @@
         (format broadcast-stream "Generating the zipped feedback folder...~%")
         (zip:zip feedback-zipped feedback-folder :if-exists :supersede)
         (format broadcast-stream "Done.~%")
-        (format broadcast-stream "Generating the grades spreadsheet...~%")
+        (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
         (generate-marks-spreadsheet log-file-stream exam-grades-export-file results-folder h-table #'(lambda (x) (submission-total-marks x)) "grades.csv")
-        (format broadcast-stream "Done.~%")
+        (when exam-grades-export-file (format broadcast-stream "Done.~%"))
         (format broadcast-stream "Exam grading complete!~%" )
         (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
-        (format *standard-output* "- grade.csv : contains the test marks~%- student-feedback.zip : contains the feedback txt files for each student.")
+        (when exam-grades-export-file
+          (format *standard-output* "- grade.csv : contains the test marks~%"))
+        (format *standard-output* "- student-feedback.zip : contains the feedback txt files for each student.")
         (in-package :cl-user)
         "(^_^)"))))
         
