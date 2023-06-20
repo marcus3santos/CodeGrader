@@ -127,7 +127,7 @@ that that students are not allowed to use functions FIND and COUNT in
 their solutions. Then, the test cases lisp file will be something like
 this:
 #+begin_src lisp
-  (forbidden-funcions :penalty 0.75 :functions '(find coun))
+  (forbidden-funcions :penalty 0.75 :functions '(find count))
   
   (deftest test-fact ()
     (check
