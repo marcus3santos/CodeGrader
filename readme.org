@@ -129,7 +129,7 @@ COUNT. If students use any of these prohibited functions, a penalty of
 90% will be deducted from their total marks for that question. Then,
 the test cases lisp file will be something like this:
 #+begin_src lisp
-  (forbidden-funcions :penalty 0.90 :functions '(find count))
+  (forbidden-functions :penalty 0.90 :functions '(find count))
   
   (deftest test-fact ()
     (check
