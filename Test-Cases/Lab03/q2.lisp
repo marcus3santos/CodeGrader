@@ -44,10 +44,23 @@
               (filter-ages single-person 20))
             (vector "Alice"))))
 
+(deftest test-array-group ()
+  (check
+    (equalp (array-group #(1 3 5) #(2 4 6 8 10))
+            #(#(1 2) #(3 4) #(5 6) #(NIL 8) #(NIL 10)))
+    (equalp (array-group  #(2 4 6 8 10) #(1 3 5))
+            #(#(2 1) #(4 3) #(6 5) #(8 NIL) #(10 NIL)))
+    (equalp (array-group  #(2 4 6 8 10) #())
+            #(#(2 NIL) #(4 NIL) #(6 NIL) #(8 NIL) #(10 NIL)))
+    (equalp (array-group #()  #(2 4 6 8 10))
+            #(#(NIL 2) #(NIL 4) #(NIL 6) #(NIL 8) #(NIL 10)))))
+
 (defun test-q2 ()
+  (test-array-group)
   (test-filter-ages)
   (test-filter-ages-edge-cases)
-  (fmakunbound 'test-filter-ages)
-  (fmakunbound 'test-filter-ages-edge-cases))
+  (fmakunbound 'filter-ages)
+  (fmakunbound 'filter-ages-edge-cases)
+  (fmakunbound 'array-group))
 
 (test-q2)
