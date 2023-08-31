@@ -44,8 +44,8 @@ Type the commands below an a linux or Mac terminal:
    students. D2L will generate a compressed zip. Do not unzip the file. For more information, visit
    [[https://www.torontomu.ca/courses/instructors/tutorials/assignments/assignment-submissions/]]. Make
    sure you have downloaded *all* submissions.
-3. Prepare the *test cases lisp file* for the assignment you want to
-   mark. Test cases for the CPS305 Practice Lab Exercises are available in the *Test-Cases* folder of this repository.
+3. Prepare a folder containing the  *test cases lisp files* for the assignment you want to
+   mark. You can find folders with test case files for CPS305 Practice Lab Exercises in the Test-Cases directory of this repository.
 4. Launch Emacs and then press *M-x* and type /Slime/ and press Enter.
 1. To load the codegrader, type the following commands on the REPL:
    #+begin_src lisp
