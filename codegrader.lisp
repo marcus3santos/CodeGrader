@@ -182,11 +182,36 @@
 	(p (cadddr dt)))
     (list m d td p)))
 
+(defun chng-to-string (a)
+  (if (null a) nil
+      (cons (symbol-name (car a)) (chng-to-string (cdr a)))))
+
+(defun capitalize-string (s)
+  (dotimes (i (length s) s)
+    (when (and (char>= (aref s i) #\a)
+             (char<= (aref s i) #\z))
+      (setf (aref s i) (char-upcase (aref s i))))))
+
+(defun capitalize-list (a &optional acc)
+  (if (null a) acc
+      (capitalize-list (cdr a) (cons (capitalize-string (car a)) acc))))
+
+(defun contains-forbidden-function? (prg-file)
+  (let ((ffuncs (chng-to-string *forbidden-functions*))
+        (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
+    (labels ((check-fnames (e)
+               (cond ((null e) nil)
+                     ((member (car e) ffuncs :test #'equal) t)
+                     (t (check-fnames (cdr e))))))
+      (check-fnames cap-symbs))))
+
+#|
 (defun contains-forbidden-function? (prg-file &optional (e (uiop:read-file-forms prg-file)))
   (cond ((null e) nil)
         ((atom e) (car (member e *forbidden-functions*)))
         ((eq (car e) 'defun) (contains-forbidden-function? prg-file (cddr e)))
         (t (or (contains-forbidden-function? prg-file (car e)) (contains-forbidden-function? prg-file (cdr e))))))
+|#
 
 (defun get-solution (fname lfiles)
   (if (string= fname (file-namestring (car lfiles)))
@@ -196,13 +221,25 @@
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
 
-(defun check-parens (file)
-  (with-open-file (in file)
-    (do ((c (read-char in) (read-char in nil 'eof))
-         (opcp-count 0))
-        ((not (characterp c)) (zerop opcp-count))
-      (cond ((char= c #\() (incf opcp-count))
-            ((char= c #\)) (decf opcp-count)) ))))
+(defun extract-symbols-from-file (file)
+  (with-open-file (stream file :element-type 'character :direction :input)
+    (let ((symbols '())
+          (current-symbol '())
+          (inside-symbol nil))
+      (labels ((process-char (char)
+                 (cond
+                   ((or (char= char #\() (char= char #\)) (char= char #\Space) (char= char #\Newline) (char= char #\Tab))
+                    (when inside-symbol
+                      (push (coerce (reverse current-symbol) 'string) symbols)
+                      (setf current-symbol '())
+                      (setf inside-symbol nil)))
+                   (t
+                    (setf current-symbol (cons char current-symbol))
+                    (setf inside-symbol t)))))
+        
+        (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
+            ((eq char :eof) (return symbols))
+          (process-char char))))))
 
 
 (defun grade-solutions (solution-files test-cases-files)
@@ -212,12 +249,11 @@
       (push (list (remove-extension (file-namestring test-case))
                   (if (member (file-namestring test-case) sol-fnames :test #'string=)
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
-                             (evaluation (evaluate-solution solution test-case)))
-                        (when (check-parens solution)
-                          (let ((forbid-func (contains-forbidden-function? solution)))
-                            (when forbid-func
-                              (setf (car evaluation)  (* (car evaluation) (- 1 *penalty-forbidden*)))
-                              (setf (cadr evaluation) (list 'used-forbidden-function forbid-func *penalty-forbidden*)))))
+                             (evaluation (evaluate-solution solution test-case))
+                             (forbid-func (contains-forbidden-function? solution)))
+                        (when forbid-func
+                          (setf (car evaluation)  (* (car evaluation) (- 1 *penalty-forbidden*)))
+                          (setf (cadr evaluation) (list 'used-forbidden-function forbid-func *penalty-forbidden*)))
                         evaluation)
                       (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found." nil))))
             results))
