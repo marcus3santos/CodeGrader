@@ -196,6 +196,15 @@
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
 
+(defun check-parens (file)
+  (with-open-file (in file)
+    (do ((c (read-char in) (read-char in nil 'eof))
+         (opcp-count 0))
+        ((not (characterp c)) (zerop opcp-count))
+      (cond ((char= c #\() (incf opcp-count))
+            ((char= c #\)) (decf opcp-count)) ))))
+
+
 (defun grade-solutions (solution-files test-cases-files)
   (let ((results (list))
         (sol-fnames (mapcar #'file-namestring solution-files)))
@@ -204,7 +213,7 @@
                   (if (member (file-namestring test-case) sol-fnames :test #'string=)
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
                              (evaluation (evaluate-solution solution test-case)))
-                        (unless (equal (cadr evaluation) "runtime-error")
+                        (when (check-parens solution)
                           (let ((forbid-func (contains-forbidden-function? solution)))
                             (when forbid-func
                               (setf (car evaluation)  (* (car evaluation) (- 1 *penalty-forbidden*)))
