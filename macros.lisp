@@ -23,7 +23,7 @@
 ;; thread is terminated, and a fail is associated to the respective
 ;; test case 
 
-(defvar *max-time* 1) 
+(defvar *max-time* 0.1) 
 
 
 (defun report-result (result form)
