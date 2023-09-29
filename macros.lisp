@@ -27,7 +27,8 @@
 
 
 (defun report-result (result form)
-  (let ((res (not (or (equalp result "runtime-error")
+  (let ((res (not (or (eq result 'runtime-error)
+                      (equalp result "runtime-error")
 		      (typep result 'condition)
 		      (not result)))))
     (push (list res result *test-name* form) *results*)
