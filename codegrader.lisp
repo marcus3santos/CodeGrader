@@ -201,7 +201,7 @@
         (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
     (labels ((check-fnames (e)
                (cond ((null e) nil)
-                     ((member (car e) ffuncs :test #'equal) t)
+                     ((member (car e) ffuncs :test #'equal) (car e))
                      (t (check-fnames (cdr e))))))
       (check-fnames cap-symbs))))
 
