@@ -197,6 +197,7 @@
       (capitalize-list (cdr a) (cons (capitalize-string (car a)) acc))))
 
 (defun contains-forbidden-function? (prg-file)
+  (setf *forbidden-functions* nil)
   (let ((ffuncs (chng-to-string *forbidden-functions*))
         (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
     (labels ((check-fnames (e)
