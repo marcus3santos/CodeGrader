@@ -5,6 +5,8 @@
 ;; The percentage of correct answers a student's solutions must achieve before
 ;; their simplicity score is taken into account.
 
+(defvar *inside-multiline-comment* nil)
+
 (defstruct submission
   std-name
   date
@@ -222,25 +224,65 @@
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
 
+
+(defun read-lisp-file (file-path)
+  (setf *inside-multiline-comment* nil)
+  (with-open-file (stream file-path)
+    (loop for line = (read-line stream nil)
+          while line
+          collect (remove-comments line))))
+;; test
+
+
+(defun remove-comments (line)
+  (let* ((semicolon-position (position #\; line))
+         (multiline-start (search "#|" line))
+         (multiline-end (search "|#" line)))
+    (cond
+      ;; Single-line comment
+      ((and (not *inside-multiline-comment*)
+            semicolon-position
+            (or (not multiline-start) (< semicolon-position multiline-start)))
+       (subseq line 0 semicolon-position))
+    ;; Multiline comment start
+    
+      (multiline-start
+       (if (and (not *inside-multiline-comment*)
+                multiline-end (> multiline-end multiline-start))
+           (let ((before-multiline (subseq line 0 multiline-start))
+                 (after-multiline (subseq line (+ 2 multiline-end))))
+             (concatenate 'string before-multiline after-multiline))
+           (progn
+             (setf *inside-multiline-comment* t)
+             (subseq line 0 multiline-start))))
+      ;; Multiline comment end
+      ((and *inside-multiline-comment* multiline-end (not multiline-start))
+       (setf *inside-multiline-comment* nil)
+       (subseq line (+ 2 multiline-end)))
+      (*inside-multiline-comment* "")
+      ;; No comment found
+      (t line))))
+
+
 (defun extract-symbols-from-file (file)
-  (with-open-file (stream file :element-type 'character :direction :input)
-    (let ((symbols '())
-          (current-symbol '())
-          (inside-symbol nil))
-      (labels ((process-char (char)
-                 (cond
-                   ((or (char= char #\() (char= char #\)) (char= char #\Space) (char= char #\Newline) (char= char #\Tab))
-                    (when inside-symbol
-                      (push (coerce (reverse current-symbol) 'string) symbols)
-                      (setf current-symbol '())
-                      (setf inside-symbol nil)))
-                   (t
-                    (setf current-symbol (cons char current-symbol))
-                    (setf inside-symbol t)))))
-        
-        (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
-            ((eq char :eof) (return symbols))
-          (process-char char))))))
+  (let ((file-string (apply #'concatenate 'string (read-lisp-file file))))
+    (with-input-from-string (stream file-string)
+      (let ((symbols '())
+            (current-symbol '())
+            (inside-symbol nil))
+        (labels ((process-char (char)
+                   (cond
+                     ((or (char= char #\() (char= char #\)) (char= char #\Space) (char= char #\Newline) (char= char #\Tab))
+                      (when inside-symbol
+                        (push (coerce (reverse current-symbol) 'string) symbols)
+                        (setf current-symbol '())
+                        (setf inside-symbol nil)))
+                     (t
+                      (setf current-symbol (cons char current-symbol))
+                      (setf inside-symbol t)))))
+          (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
+              ((eq char :eof) (return symbols))
+            (process-char char)))))))
 
 
 (defun grade-solutions (solution-files test-cases-files)
