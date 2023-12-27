@@ -7,7 +7,7 @@
   (:export *runtime-error*)
   (:export *load-error*)
   (:export *cr-warning*)
-  (:export *forbidden-functions*)
+  (:export *forbidden-symbols*)
   (:export *penalty-forbidden*)
   (:export :handle-solution-loading))
 
@@ -32,7 +32,7 @@
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader)
-  (:export :start :quit :eval-solutions :grade-it :grade-code))
+  (:export :start :quit :eval-solutions :grade-it  :evaluate-solution))
 
 
 

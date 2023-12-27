@@ -5,8 +5,6 @@
 ;; The percentage of correct answers a student's solutions must achieve before
 ;; their simplicity score is taken into account.
 
-(defvar *inside-multiline-comment* nil)
-
 (defstruct submission
   std-name
   date
@@ -41,9 +39,9 @@
       (cond ((or (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
 		 (equal error-type "late-submission")) (format out "~%~%~A" res))
-            ((and (listp error-type) (equal (car error-type) 'used-forbidden-function))
-             (format out "~%!!! Used forbidden function ~A !!!~%" (cadr error-type))
-             (format out "~%Solution mark reduced by ~a% for using forbidden function.~%" (* (caddr error-type) 100))
+            ((and (listp error-type) (equal (car error-type) 'used-forbidden-symbol))
+             (format out "~%!!! Used forbidden symbol~A !!!~%" (cadr error-type))
+             (format out "~%Solution mark reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
              (format out "~%Unit test results:~%~{- ~s~%~}" res))
 	    ((equal error-type "No RT-error") (format out "~%Unit test results:~%~{- ~s~%~}" res))
 	    (t (format out "~%~A~%Unit test results:~%~{- ~s~%~}" descr res))))))
@@ -184,37 +182,6 @@
 	(p (cadddr dt)))
     (list m d td p)))
 
-(defun chng-to-string (a)
-  (if (null a) nil
-      (cons (symbol-name (car a)) (chng-to-string (cdr a)))))
-
-(defun capitalize-string (s)
-  (dotimes (i (length s) s)
-    (when (and (char>= (aref s i) #\a)
-             (char<= (aref s i) #\z))
-      (setf (aref s i) (char-upcase (aref s i))))))
-
-(defun capitalize-list (a &optional acc)
-  (if (null a) acc
-      (capitalize-list (cdr a) (cons (capitalize-string (car a)) acc))))
-
-(defun contains-forbidden-function? (prg-file)
-  (setf *forbidden-functions* nil)
-  (let ((ffuncs (chng-to-string *forbidden-functions*))
-        (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
-    (labels ((check-fnames (e)
-               (cond ((null e) nil)
-                     ((member (car e) ffuncs :test #'equal) (car e))
-                     (t (check-fnames (cdr e))))))
-      (check-fnames cap-symbs))))
-
-#|
-(defun contains-forbidden-function? (prg-file &optional (e (uiop:read-file-forms prg-file)))
-  (cond ((null e) nil)
-        ((atom e) (car (member e *forbidden-functions*)))
-        ((eq (car e) 'defun) (contains-forbidden-function? prg-file (cddr e)))
-        (t (or (contains-forbidden-function? prg-file (car e)) (contains-forbidden-function? prg-file (cdr e))))))
-|#
 
 (defun get-solution (fname lfiles)
   (if (string= fname (file-namestring (car lfiles)))
@@ -225,65 +192,6 @@
   (subseq filename 0 (position #\. filename :from-end t)))
 
 
-(defun read-lisp-file (file-path)
-  (setf *inside-multiline-comment* nil)
-  (with-open-file (stream file-path)
-    (loop for line = (read-line stream nil)
-          while line
-          collect (remove-comments line))))
-;; test
-
-
-(defun remove-comments (line)
-  (let* ((semicolon-position (position #\; line))
-         (multiline-start (search "#|" line))
-         (multiline-end (search "|#" line)))
-    (cond
-      ;; Single-line comment
-      ((and (not *inside-multiline-comment*)
-            semicolon-position
-            (or (not multiline-start) (< semicolon-position multiline-start)))
-       (subseq line 0 semicolon-position))
-    ;; Multiline comment start
-    
-      (multiline-start
-       (if (and (not *inside-multiline-comment*)
-                multiline-end (> multiline-end multiline-start))
-           (let ((before-multiline (subseq line 0 multiline-start))
-                 (after-multiline (subseq line (+ 2 multiline-end))))
-             (concatenate 'string before-multiline after-multiline))
-           (progn
-             (setf *inside-multiline-comment* t)
-             (subseq line 0 multiline-start))))
-      ;; Multiline comment end
-      ((and *inside-multiline-comment* multiline-end (not multiline-start))
-       (setf *inside-multiline-comment* nil)
-       (subseq line (+ 2 multiline-end)))
-      (*inside-multiline-comment* "")
-      ;; No comment found
-      (t line))))
-
-
-(defun extract-symbols-from-file (file)
-  (let ((file-string (apply #'concatenate 'string (read-lisp-file file))))
-    (with-input-from-string (stream file-string)
-      (let ((symbols '())
-            (current-symbol '())
-            (inside-symbol nil))
-        (labels ((process-char (char)
-                   (cond
-                     ((or (char= char #\() (char= char #\)) (char= char #\Space) (char= char #\Newline) (char= char #\Tab))
-                      (when inside-symbol
-                        (push (coerce (reverse current-symbol) 'string) symbols)
-                        (setf current-symbol '())
-                        (setf inside-symbol nil)))
-                     (t
-                      (setf current-symbol (cons char current-symbol))
-                      (setf inside-symbol t)))))
-          (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
-              ((eq char :eof) (return symbols))
-            (process-char char)))))))
-
 
 (defun grade-solutions (solution-files test-cases-files)
   (let ((results (list))
@@ -292,11 +200,7 @@
       (push (list (remove-extension (file-namestring test-case))
                   (if (member (file-namestring test-case) sol-fnames :test #'string=)
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
-                             (evaluation (evaluate-solution solution test-case))
-                             (forbid-func (contains-forbidden-function? solution)))
-                        (when forbid-func
-                          (setf (car evaluation)  (* (car evaluation) (- 1 *penalty-forbidden*)))
-                          (setf (cadr evaluation) (list 'used-forbidden-function forbid-func *penalty-forbidden*)))
+                             (evaluation (evaluate-solution solution test-case)))
                         evaluation)
                       (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found." nil))))
             results))
@@ -395,7 +299,7 @@
                              (format broadcast-stream "Error in student lisp code: ~a~%" condition))))
                    (seval (if (car simp) ;; applies penalty for solution that mentioned a forbidden function
                               (progn (setf (car temp-eval) (* (car temp-eval) *penalty-forbidden*))
-                                     (setf (cadr temp-eval) (list 'used-forbidden-function (car simp)))
+                                     (setf (cadr temp-eval) (list 'used-forbidden-symbol (car simp)))
                                      temp-eval)
                               temp-eval))
                    (item (make-submission :std-name std-name

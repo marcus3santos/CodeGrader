@@ -2,6 +2,8 @@
 
 (defparameter *system-name* :codegrader)
 
+(defvar *inside-multiline-comment* nil)
+
 
 (defun month->number (name)
   (let* ((sname (symbol-name name))
@@ -107,6 +109,89 @@ the mark is calculated as the # of passes divided by the total # of cases.
 (defun load-macros ()
   (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
 
+(defun chng-to-string (a)
+  (if (null a) nil
+      (cons (symbol-name (car a)) (chng-to-string (cdr a)))))
+
+(defun capitalize-string (s)
+  (dotimes (i (length s) s)
+    (when (and (char>= (aref s i) #\a)
+             (char<= (aref s i) #\z))
+      (setf (aref s i) (char-upcase (aref s i))))))
+
+(defun capitalize-list (a &optional acc)
+  (if (null a) acc
+      (capitalize-list (cdr a) (cons (capitalize-string (car a)) acc))))
+
+(defun read-lisp-file (file-path)
+  (setf *inside-multiline-comment* nil)
+  (with-open-file (stream file-path)
+    (loop for line = (read-line stream nil)
+          while line
+          collect (remove-comments line))))
+
+
+
+(defun remove-comments (line)
+  (let* ((semicolon-position (position #\; line))
+         (multiline-start (search "#|" line))
+         (multiline-end (search "|#" line)))
+    (cond
+      ;; Single-line comment
+      ((and (not *inside-multiline-comment*)
+            semicolon-position
+            (or (not multiline-start) (< semicolon-position multiline-start)))
+       (subseq line 0 semicolon-position))
+    ;; Multiline comment start
+    
+      (multiline-start
+       (if (and (not *inside-multiline-comment*)
+                multiline-end (> multiline-end multiline-start))
+           (let ((before-multiline (subseq line 0 multiline-start))
+                 (after-multiline (subseq line (+ 2 multiline-end))))
+             (concatenate 'string before-multiline after-multiline))
+           (progn
+             (setf *inside-multiline-comment* t)
+             (subseq line 0 multiline-start))))
+      ;; Multiline comment end
+      ((and *inside-multiline-comment* multiline-end (not multiline-start))
+       (setf *inside-multiline-comment* nil)
+       (subseq line (+ 2 multiline-end)))
+      (*inside-multiline-comment* "")
+      ;; No comment found
+      (t line))))
+
+(defun extract-symbols-from-file (file)
+  (let ((file-string (apply #'concatenate 'string (read-lisp-file file))))
+    (with-input-from-string (stream file-string)
+      (let ((symbols '())
+            (current-symbol '())
+            (inside-symbol nil))
+        (labels ((process-char (char)
+                   (cond
+                     ((or (char= char #\() (char= char #\)) (char= char #\Space) (char= char #\Newline) (char= char #\Tab))
+                      (when inside-symbol
+                        (push (coerce (reverse current-symbol) 'string) symbols)
+                        (setf current-symbol '())
+                        (setf inside-symbol nil)))
+                     (t
+                      (setf current-symbol (cons char current-symbol))
+                      (setf inside-symbol t)))))
+          (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
+              ((eq char :eof) (return symbols))
+            (process-char char)))))))
+
+
+(defun contains-forbidden-symbol? (prg-file)
+  ;;(setf *forbidden-symbols* nil)
+  (let ((ffuncs (chng-to-string *forbidden-symbols*))
+        (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
+    (labels ((check-fnames (e)
+               (cond ((null e) nil)
+                     ((member (car e) ffuncs :test #'equal) (car e))
+                     (t (check-fnames (cdr e))))))
+      (check-fnames cap-symbs))))
+
 (defun grade-code (student-solution test-cases &optional ws)
     "Loads the student-solution file, loads the test cases, runs
   the test cases, and returns the percentage of correct results over total results"
@@ -116,26 +201,33 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (setf *runtime-error* nil)
     (setf *load-error* nil)
     (setf *cr-warning* nil)
-    (setf *forbidden-functions* nil)
+    (setf *forbidden-symbols* nil)
     (handle-solution-loading student-solution)
     (load-macros)
     (load test-cases)
     (in-package :grader)
-    (list (calc-mark *results* ws) ;(format nil "~f" (calc-mark *results* ws))
-	  (cond (*runtime-error* (setf description "Runtime error")
-				 "runtime-error")
-		(*load-error* (setf description "Load/Compiling error")
-			      "load-error")
-                (*cr-warning* (setf description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")
-                              "cr-warning")
+    (let ((score (calc-mark *results* ws))
+          (forbid-symb (contains-forbidden-symbol? student-solution))
+          (error-types nil))
+      (list
+       (if forbid-symb
+           (* score (- 1 *penalty-forbidden*))
+           score)
+       (cond (*runtime-error* "runtime-error")
+		(*load-error* "load-error")
+                (*cr-warning* "cr-warning")
 		(t "No RT-error"))
-          (cond ((or *runtime-error* *load-error*)
-                 (setf description (concatenate 'string
-                                                description
-                                                (format nil "(s) when evaluating the following expressions:~%~{- ~A~%~}" (reverse *runtime-error*)))))
-                (*cr-warning* description)
-                (t "No runtime errors"))
-	  (change-results-readable *results*))))
+       (progn
+         (if *runtime-error* 
+             (setf description (format nil "Runtime error(s) when evaluating the following expressions:~%~{- ~A~%~}" (reverse *runtime-error*)))
+             (setf description "No runtime errors"))
+         (if *load-error*
+             (setf description  (concatenate 'string  description "Load/Compiling error")))    
+         (if *cr-warning*
+             (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
+         (if forbid-symb
+             (setf description  (concatenate 'string  description (format nil "Used forbidden symbol ~a" forbid-symb)))))
+       (change-results-readable *results*)))))
 
 
 (defun evaluate-solution (student-solution  test-cases &optional ddate sdate)

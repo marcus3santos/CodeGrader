@@ -12,9 +12,9 @@
 
 (defvar *cr-warning* nil)
 
-(defparameter *forbidden-functions* nil) ;; List containing the names of the functions students are not allowed to use
+(defparameter *forbidden-symbols* nil) ;; List containing the names of the symbols students are not allowed to use
 
-(defparameter *penalty-forbidden* 0.5) ;; Penalty (to be multiplied by total lab mark) for using forbidden functions
+(defparameter *penalty-forbidden* 0.5) ;; Penalty (to be multiplied by total lab mark) for using forbidden symbols
 
 (defparameter *test-name* nil)
 
@@ -93,10 +93,10 @@
        ,@body)))
 |#
 
-(defun forbidden-functions (&key (penalty .5) functions)
+(defun forbidden-symbols (&key (penalty .5) symbols)
   (progn 
     (setf *penalty-forbidden* penalty)
-    (setf *forbidden-functions* functions)))
+    (setf *forbidden-symbols* symbols)))
 
 
 (defun rewrite-load (file)
