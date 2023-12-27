@@ -183,7 +183,7 @@ be handled by CodeGrader and reported as appropriate.
 In case you wish to mark one specific submission or test your test
 case file, you can use the following function:
 #+begin_example
-grade-code (student-solution test-cases-dir)
+evaluate-solution (student-solution test-cases-dir)
 ---------------------------------------------------
 Description:  Loads the student-solution file, loads the test cases, runs
               the test cases, and returns the percentage of correct results over total results
@@ -210,7 +210,7 @@ CodeGrader as follows: (assuming you have already installed CodeGrader
 as shown above)
 #+begin_src lisp
   CL-USER> (ql:quickload :codegrader)  ; Loading the codegrader
-  CL-USER> (cg:grade-code "/home/John/mysol.lisp" "/home/John/test-cases.lisp") 
+  CL-USER> (cg:evaluate-solution "/home/John/mysol.lisp" "/home/John/test-cases.lisp") 
   ("100.0" OK "No runtime errors"
    (("Pass" T TEST-DEPOSIT (EQUAL (DEPOSIT 20) 130))
     ("Pass" T TEST-DEPOSIT (EQUAL (DEPOSIT 10) 110))
