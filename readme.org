@@ -127,12 +127,12 @@ exam requires the students to submit a file called *q1.lisp* that
 includes two functions: a ~fact~ function that gives the factorial of
 a number, and a ~avg~ function that gives the average of a list of
 numbers. Moreover, suppose also that in certain questions, the use of
-specific Lisp built-in functions is restricted, e.g., FIND and
-COUNT. If students use any of these prohibited functions, a penalty of
+specific Lisp symbols is restricted, e.g., FIND and
+COUNT. If students use any of these prohibited symbols, a penalty of
 90% will be deducted from their total marks for that question. Then,
 the test cases lisp file will be something like this:
 #+begin_src lisp
-  (forbidden-functions :penalty 0.90 :functions '(find count))
+  (forbidden-symbols :penalty 0.90 :symbols '(find count))
   
   (deftest test-fact ()
     (check
