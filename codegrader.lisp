@@ -40,7 +40,7 @@
 		 (equalp error-type "not-lisp-file")
 		 (equal error-type "late-submission")) (format out "~%~%~A" res))
             ((and (listp error-type) (equal (car error-type) 'used-forbidden-symbol))
-             (format out "~%!!! Used forbidden symbol~A !!!~%" (cadr error-type))
+             (format out "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
              (format out "~%Solution mark reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
              (format out "~%Unit test results:~%~{- ~s~%~}" res))
 	    ((equal error-type "No RT-error") (format out "~%Unit test results:~%~{- ~s~%~}" res))

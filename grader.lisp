@@ -214,19 +214,20 @@ the mark is calculated as the # of passes divided by the total # of cases.
            (* score (- 1 *penalty-forbidden*))
            score)
        (cond (*runtime-error* "runtime-error")
-		(*load-error* "load-error")
-                (*cr-warning* "cr-warning")
-		(t "No RT-error"))
+	     (*load-error* "load-error")
+             (*cr-warning* "cr-warning")
+             (forbid-symb (list 'used-forbidden-symbol forbid-symb))
+	     (t "No RT-error"))
        (progn
          (if *runtime-error* 
              (setf description (format nil "Runtime error(s) when evaluating the following expressions:~%~{- ~A~%~}" (reverse *runtime-error*)))
-             (setf description "No runtime errors"))
+             (setf description "No runtime errors."))
          (if *load-error*
-             (setf description  (concatenate 'string  description "Load/Compiling error")))    
+             (setf description  (concatenate 'string  description "Load/Compiling error.")))    
          (if *cr-warning*
              (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
          (if forbid-symb
-             (setf description  (concatenate 'string  description (format nil "Used forbidden symbol ~a" forbid-symb)))))
+             (setf description  (concatenate 'string  description (format nil "~%Used forbidden symbol ~a !!!~%" forbid-symb)))))
        (change-results-readable *results*)))))
 
 
