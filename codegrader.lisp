@@ -6,10 +6,14 @@
 ;; their simplicity score is taken into account.
 
 (defstruct submission
+  std-id
+  std-fname
+  std-lname
+  room-pc
   std-name
   date
   evaluation ; percentage marks per question and explanations
-  total-marks ; total marks, i.e., (sum correctness marks per question)/(Number of questions) 
+  total-marks ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
   simplicity
   rank
   points)
@@ -46,12 +50,20 @@
 	    ((equal error-type "No RT-error") (format out "~%Unit test results:~%~{- ~s~%~}" res))
 	    (t (format out "~%~A~%Unit test results:~%~{- ~s~%~}" descr res))))))
 
-(defun generate-std-feedback (key eval feedback-folder)
+(defun generate-feedback (key eval feedback-folder)
+  (let* ((fname (concatenate 'string key ".txt"))
+	 (folder (ensure-directories-exist (concatenate 'string  (namestring feedback-folder) fname))))
+    (with-open-file (out folder :direction :output :if-exists :supersede)
+      (generate-messages out eval))))
+
+(defun generate-d2l-feedback (key eval feedback-folder)
   (let* ((fname (concatenate 'string (subseq key 0 (1- (length key))) ".txt"))
 	 (folder (ensure-directories-exist (concatenate 'string  (namestring feedback-folder) fname))))
     (with-open-file (out folder :direction :output :if-exists :supersede)
       (generate-messages out eval))))
 
+(defun get-std-id (csv)
+  (subseq csv 1 (position #\, csv)))
 
 (defun get-std-name (csv)
   (let* ((pref1 (subseq csv (1+ (position #\, csv))))
@@ -65,6 +77,19 @@
 	 (pref2 (subseq pref1 0 (position #\, pref1 :from-end 0))))
     (concatenate 'string pref2 "," (write-to-string mark) ",#")))
 
+(defun get-insert-exam-grade (log-file-stream stream csv ht f)
+  "This version uses the student id # as hash key"
+  (let* ((std-id (get-std-id csv))
+	 (v (gethash std-id ht)))
+    (if v
+        (let ((new-mark (change-mark-csv csv (funcall f v)))
+              (std-name (concatenate 'string (submission-std-fname v) " " (submission-std-lname v))))
+          (format log-file-stream "Mark of student ~a (~a) changed from ~a to ==> ~a~%" std-name std-id csv new-mark)
+          (format stream "~A~%"  new-mark))
+	(progn 
+          (format log-file-stream "Student ~a did not submit solution!~%" std-id)
+          (format *standard-output* "~A~%" std-id)))))
+
 (defun get-insert-grade (log-file-stream stream csv ht f)
   (let* ((std-name (get-std-name csv))
 	 (v (gethash std-name ht)))
@@ -75,6 +100,17 @@
 	(progn 
           (format log-file-stream "~S did not submit solution!~%" std-name)
           (format *standard-output* "~A~%" std-name)))))
+
+(defun generate-exam-marks-spreadsheet (log-file-stream d2l-file folder ht f out-file)
+  (when d2l-file
+    (with-open-file (in d2l-file :direction :input)
+      (with-open-file (out (merge-pathnames folder out-file)
+			   :direction :output :if-exists :supersede)
+        (format out "~A~%" (read-line in nil))
+        (format *standard-output* "Students that did not write a solution are listed below:~%")
+        (loop for line = (read-line in nil)
+	      while line do
+	        (get-insert-exam-grade log-file-stream out line ht f))))))
 
 (defun generate-marks-spreadsheet (log-file-stream d2l-file folder ht f out-file)
   (when d2l-file
@@ -206,6 +242,92 @@
             results))
     (reverse results)))
 
+
+(defun parse-room-pc (str)
+  (do ((i 0 (1+ i)))
+      ((or (= i (length str))
+           (and (not (alphanumericp (aref str i)))
+                (not (char= #\- (aref str i)))))
+       (subseq str 0 i))))
+
+(defun get-insert-std (line table)
+  (let* ((id (subseq line 0 (position #\, line)))
+         (sufx1 (subseq line (1+ (length id))))
+         (fname (subseq sufx1 0 (position #\, sufx1)))
+         (sufx2 (subseq sufx1 (1+ (length fname))))
+         (lname (subseq sufx2 0 (position #\, sufx2)))
+         (room-pc (parse-room-pc (subseq sufx2 (1+ (length lname))))))
+    (setf (gethash room-pc table) (list id fname lname room-pc))))
+
+(defun create-mapping-table (csv-file)
+  (let ((htable (make-hash-table :test 'equal)))
+    (with-open-file (in csv-file :direction :input)
+      (loop for line = (read-line in nil)
+            while line do
+              (get-insert-std line htable)))
+    htable))
+
+(defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
+  "submissions-zipped-file is the zipped file containing the student solutions
+   pc-std-map is a csv file containing the student ID, name, and room-machine ID"
+  (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file std-pc-map tests-folder)))
+  (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
+         (test-cases-folder (check-foldername  (namestring (ensure-directories-exist tests-folder :verbose T))))
+         (feedback-folder (merge-pathnames "student-feedback/" results-folder))
+	 (feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
+	 (subs-folder (merge-pathnames "submissions/" results-folder))
+	 (subs-folder-wfiles (progn
+                               (cleanup-folder feedback-folder)
+                               (cleanup-folder subs-folder)
+	                       (zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
+	                       subs-folder))
+	 (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
+         (map (create-mapping-table std-pc-map)))
+    (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
+                                     :direction :output
+                                     :if-exists :append
+                                     :if-does-not-exist :create)
+      (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
+        (format broadcast-stream "~a: Started marking~%" (get-date-time))
+        (dolist (folder sfolders)
+          (let* ((str (namestring folder))
+                 (temp (subseq str (1+ (position #\/ (subseq str 0 (1- (length str))) :from-end t))))
+                 (room-pc (subseq temp 0 (1- (length temp))))
+                 (std (gethash room-pc map))
+                 (student-files (directory (merge-pathnames folder "*.*")))
+                 (test-cases-files (directory (merge-pathnames test-cases-folder "*.lisp")))
+                 (solutions-evaluations (if test-cases-files (grade-solutions student-files test-cases-files)
+                                            (error "There are no lisp files in the provided test cases folder!!!")))
+                 (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length test-cases-files))
+                              solutions-evaluations))
+                 (item (make-submission :std-id (first std)
+                                        :std-fname (second std)
+                                        :std-lname (third std)
+                                        :room-pc (fourth std)
+                                        :evaluation seval
+                                        :total-marks (car seval))))
+            (format log-file-stream "Student *~a*,  result:~%~a~%" (concatenate 'string (submission-std-fname item) " " (submission-std-lname item)) seval)
+            (setf (gethash (submission-std-id item) map) item)
+            (generate-feedback (subseq (submission-std-id item) 3) seval feedback-folder)))
+        (in-package :codegrader)
+        (format *standard-output* "~%============================================================================~%")
+        (format *standard-output* "Slime produced the above messages when loading the students' solutions~%")
+        (format *standard-output* "============================================================================~%")
+        (format broadcast-stream "Done marking students solutions.~%")
+        (format broadcast-stream "Generating the zipped feedback folder...~%")
+        (zip:zip feedback-zipped feedback-folder :if-exists :supersede)
+        (format broadcast-stream "Done.~%")
+        (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
+        (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
+        (when exam-grades-export-file (format broadcast-stream "Done.~%"))
+        (format broadcast-stream "Exam grading complete!~%" )
+        (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
+        (when exam-grades-export-file
+          (format *standard-output* "- grade.csv : contains the test marks~%"))
+        (format *standard-output* "- student-feedback.zip : contains the feedback txt files for each student.")
+        (in-package :cl-user)
+        "(^_^)"))))
+
 (defun grade-it (submissions-zipped-file tests-folder results-folder &optional exam-grades-export-file)
   (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file tests-folder)))
   (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
@@ -242,11 +364,11 @@
                                           :total-marks (car seval))))
               (format log-file-stream "Student *~a*,  result:~%~a~%" std-name seval)
               (setf (gethash std-name h-table) item)
-              (generate-std-feedback key seval feedback-folder)
+              (generate-d2l-feedback key seval feedback-folder)
               )))
         (in-package :codegrader)
         (format *standard-output* "~%============================================================================~%")
-        (format *standard-output* "Slime produced the above messages when loading the students' solution~%")
+        (format *standard-output* "Slime produced the above messages when loading the students' solutions~%")
         (format *standard-output* "============================================================================~%")
         (format broadcast-stream "Done marking students solutions.~%")
         (format broadcast-stream "Generating the zipped feedback folder...~%")
