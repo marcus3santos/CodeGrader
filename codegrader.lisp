@@ -305,10 +305,11 @@
                                         :std-lname (third std)
                                         :room-pc (fourth std)
                                         :evaluation seval
-                                        :total-marks (car seval))))
+                                        :total-marks (car seval)))
+                 (anony-id (subseq (submission-std-id item) 5)))
             (format log-file-stream "Student *~a*,  result:~%~a~%" (concatenate 'string (submission-std-fname item) " " (submission-std-lname item)) seval)
             (setf (gethash (submission-std-id item) map) item)
-            (generate-feedback (subseq (submission-std-id item) 3) seval feedback-folder)))
+            (generate-feedback anony-id seval feedback-folder))) 
         (in-package :codegrader)
         (format *standard-output* "~%============================================================================~%")
         (format *standard-output* "Slime produced the above messages when loading the students' solutions~%")
