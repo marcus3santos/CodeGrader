@@ -2,9 +2,6 @@
 
 (in-package #:codegrader)
 
-;; The percentage of correct answers a student's solutions must achieve before
-;; their simplicity score is taken into account.
-
 (defstruct submission
   std-id
   std-fname
@@ -13,10 +10,10 @@
   std-name
   date
   evaluation ; percentage marks per question and explanations
-  total-marks ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
-  simplicity
-  rank
-  points)
+  total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
+
+;; Folder in student's home directory storing their solutions
+(defvar *std-sub-folder* "pt/")
 
 (defun check-input-files (lf)
   (when lf
@@ -294,7 +291,7 @@
                  (temp (subseq str (1+ (position #\/ (subseq str 0 (1- (length str))) :from-end t))))
                  (room-pc (subseq temp 0 (1- (length temp))))
                  (std (gethash room-pc map))
-                 (student-files (directory (merge-pathnames folder "*.*")))
+                 (student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
                  (test-cases-files (directory (merge-pathnames test-cases-folder "*.lisp")))
                  (solutions-evaluations (if test-cases-files (grade-solutions student-files test-cases-files)
                                             (error "There are no lisp files in the provided test cases folder!!!")))
