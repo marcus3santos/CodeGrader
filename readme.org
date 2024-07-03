@@ -1,8 +1,8 @@
 #+TITLE: CodeGrader
 
 CodeGrader is an automated grader for lisp programming practicum
-exams. It assumes students' solutions are stored in individual
-properly named lisp program files located in individual folders. 
+assessments.
+
 
 * Dependencies
 
@@ -20,11 +20,15 @@ Type the commands below an a linux or Mac terminal:
 
 ** Marking
 
-1. Zip the folders containing the students' solutions. For example,
-   suppose two students wrote the exam in lab room ENG201, on
-   PCs whose IDs are 03 and 07. Suppose also that their solutions to the
-   exam questions are stored in files *q1.lisp* and *q2.lisp*. Then, the
-   diagram below represents the corresponding file structure:
+1. CodeGrader is able to mark students' solutions that have been
+   downloaded from D2L as a zip file, or solutions that have been
+   stored in the student's computer in the test environment. For this
+   tutorial, we assume the latter. As such, zip the folders containing
+   the students' solutions. For example, suppose two students wrote
+   the exam in lab room ENG201, on PCs whose IDs are 03
+   and 07. Suppose also that their solutions to the exam questions are
+   stored in files *q1.lisp* and *q2.lisp*. Then, the diagram below
+   represents the corresponding file structure:
    - ENG201-03/
      - q1.lisp
      - q2.lisp
@@ -36,14 +40,13 @@ Type the commands below an a linux or Mac terminal:
    #+begin_src shell
      zip -r std-sol.zip ENG201-03/ ENG201-07/
    #+end_src
-2. Obtain from your IT staff a CSV file containing the student-to-pc
+2. Obtain from the IT staff a CSV file containing the student-to-pc
    mapping. Each row in that spreadsheet should contain the following
    information: Student ID number, Student First Name, Student Last
    Name, and Room-PC ID
 3. Prepare a folder containing the  *test cases lisp files* for the assignment you want to
    mark. You can find folders with test case files for CPS305 Practice Lab Exercises in the Test-Cases directory of this repository.
-4. Create a folder where you will store the results produced by
-   CodeGrader. You can give any name to that folder.
+4. Create a folder where CodeGrader will store the results. You can give any name to that folder.
 5. [ /This is step is not necessary if you are assessing an "ungraded" examination (i.e., an assessment
    whose weight is zero)/ ] On D2L, export the students' *assignment grades* *to a CSV
    file*. When generating this file, select the following /Export
