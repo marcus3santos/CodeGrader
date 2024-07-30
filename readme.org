@@ -22,17 +22,17 @@ Type the commands below an a linux or Mac terminal:
 
 1. CodeGrader is able to mark students' solutions that have been
    downloaded from D2L as a zip file, or solutions that have been
-   stored in the student's computer in the test environment. For this
+   properly saved in the student's home folder in the test environment. For this
    tutorial, we assume the latter. As such, zip the folders containing
    the students' solutions. For example, suppose two students wrote
    the exam in lab room ENG201, on PCs whose IDs are 03
    and 07. Suppose also that their solutions to the exam questions are
-   stored in files *q1.lisp* and *q2.lisp*. Then, the diagram below
+   stored in  *pt/q1.lisp* and *pt/q2.lisp*. Then, the diagram below
    represents the corresponding file structure:
-   - ENG201-03/
+   - ENG201-03/pt/
      - q1.lisp
      - q2.lisp
-   - ENG201-07/
+   - ENG201-07/pt/
      - q1.lisp
      - q2.lisp
 
