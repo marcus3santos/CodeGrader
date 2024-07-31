@@ -26,6 +26,15 @@
         ((consp e) (cons (clean-symbol-names (car e))  (clean-symbol-names (cdr e))))
         (t e)))
 
+(defun gen-message (r)
+  (let ((res (first r))
+        (rt-error (second r))
+        (test (nth 3 r)))
+    (cond ((string= res "Pass")
+           (format nil "Passed.    ~a returned ~a" (second test) (third test)))
+          ((and (string= res "Fail") rt-error) (format nil "Failed.    Runtime error in function ~a ~%             ~a " (car (second test)) rt-error))
+          (t (format nil "Failed.    ~a did not return ~a" (second test) (third test))))))
+
 (defun generate-messages (out eval)
   (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- Each question is worth 100 points.~%- Your score is the sum of your questions' points divided by the number of questions in the assessment.~%END OF NOTE.~%~%")
   (format out "Your score: ~a (out of 100)~%" (car eval))
@@ -35,7 +44,8 @@
            (mark (first qeval))
            (error-type (second qeval))
 	   (descr (third qeval))
-	   (res (clean-symbol-names (fourth qeval))))
+	   (res (clean-symbol-names (fourth qeval)))
+           (unit-test-name (third (car res))))
       (format out "~%---------------------------------------------------------------------------~%* ~a: ~a points (out of 100).~%" q mark)
       (cond ((or (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
@@ -43,9 +53,9 @@
             ((and (listp error-type) (equal (car error-type) 'used-forbidden-symbol))
              (format out "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
              (format out "~%Solution mark reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
-             (format out "~%Unit test results:~%~{- ~s~%~}" res))
-	    ((equal error-type "No RT-error") (format out "~%Unit test results:~%~{- ~s~%~}" res))
-	    (t (format out "~%~A~%Unit test results:~%~{- ~s~%~}" descr res))))))
+             (format out "~%~a,  results:~%~{- ~a~%~}" unit-test-name (mapcar #'gen-message res)))
+	    ((equal error-type "No RT-error") (format out "~%~a, results:~%~{- ~a~%~}" unit-test-name (mapcar #'gen-message res)))
+	    (t (format out "~%~a, results:~%~{- ~a~%~}" unit-test-name (mapcar #'gen-message res)))))))
 
 (defun generate-feedback (key eval feedback-folder)
   (let* ((fname (concatenate 'string key ".txt"))
@@ -142,27 +152,6 @@
   (if (char= (aref p (1- (length p))) #\/)
       p
       (concatenate 'string p "/")))
-
-#|
-(defun rank-perf-solutions (ht-perf ht-stds &optional (pts (list 25 18 15 12 10 8 6 4 2 1)) (perf (list)))
-  (labels ((set-rank (list i pts)
-             (when list
-               (let ((item (car list)))
-                 (setf (submission-rank item) i)
-                 (setf (submission-points item) (car pts))
-                 (setf (gethash (submission-std-name item) ht-stds) item)
-                 (set-rank (cdr list) (1+ i) (cdr pts))))))
-    (maphash (lambda (k v)
-               (push v perf))
-             ht-perf)
-    (set-rank (sort perf '< :key #'submission-simplicity) 1 pts)))
-
-(defun generate-kalos-kagathos-file (root-folder table)
-  (with-open-file (test-stream (merge-pathnames root-folder "correctness-and-simplicity.csv") :direction :output :if-exists :supersede)
-    (maphash (lambda (key value)
-               (format test-stream "~a, ~a, ~a, ~a, ~a~%" key (car (submission-correctness value)) (submission-simplicity value) (submission-rank value) (submission-points value)))
-             table)))
-|#
 
 (defun create-folder-ifzipped (is-zipped submissions-dir unzipped-subs-folder)
   (if is-zipped
@@ -384,81 +373,6 @@
         (in-package :cl-user)
         "(^_^)"))))
         
-
-#|
-(defun grade-it (submissions-zipped-file lab-grades-export-file test-cases-file results due-date-time &optional solution-baseline code-simplicity-export-file)
-  (check-input-files (list submissions-zipped-file lab-grades-export-file test-cases-file))
-  (let* ((is-zipped t)
-         (root-folder (check-foldername  (namestring (ensure-directories-exist results :verbose T))))
-         (feedback-folder (merge-pathnames "student-feedback/" root-folder))
-	 (feedback-zipped (merge-pathnames root-folder "student-feedback.zip"))
-	 (unzipped-subs-folder (merge-pathnames "submissions/" root-folder))
-	 (subms-folder (progn
-                         (cleanup-folder feedback-folder)
-                         (cleanup-folder unzipped-subs-folder)
-                         (create-folder-ifzipped is-zipped submissions-zipped-file unzipped-subs-folder)))
-	 (sfolders (directory (concatenate 'string (namestring subms-folder) "*/")))
-         (hperf-solutions (make-hash-table :test 'equal))
-	 (h-table (make-hash-table :test 'equal)))
-    (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
-                                     :direction :output
-                                     :if-exists :append
-                                     :if-does-not-exist :create)
-      (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
-        (format broadcast-stream "~a: Started marking assignme~%Solution correctness:~%" (get-date-time))
-        (dolist (folder sfolders)
-          (multiple-value-bind (key date) (get-key-and-date folder)
-            (let* ((pref (consume-until (consume-until key #\-) #\-)) ;(splice-at-char key #\-))
-                   (std-name (subseq pref 1 (1- (length pref))))
-                   
-                   (student-solution (car (directory (merge-pathnames folder "*.*")))) ; gets first file in the directory
-                   (sdate (check-dt (form-date-time (replace-char date #\, #\ ))))
-                   (ddate (check-dt due-date-time))
-                   (temp-eval (evaluate-solution student-solution test-cases-file ddate sdate))
-                   (simp (handler-case (program-size student-solution solution-baseline)
-                           (error (condition)
-                             (format broadcast-stream "Error in student lisp code: ~a~%" condition))))
-                   (seval (if (car simp) ;; applies penalty for solution that mentioned a forbidden function
-                              (progn (setf (car temp-eval) (* (car temp-eval) *penalty-forbidden*))
-                                     (setf (cadr temp-eval) (list 'used-forbidden-symbol (car simp)))
-                                     temp-eval)
-                              temp-eval))
-                   (item (make-submission :std-name std-name
-                                          :date sdate
-                                          :correctness seval                                                        
-                                          :simplicity (cadr simp))))
-              (format log-file-stream "Student *~a*,  result:~%~a~%" std-name seval)
-              (setf (gethash std-name h-table) item)
-              (if (>= (car seval) *correctness-threshold*)
-                  (setf (gethash std-name hperf-solutions) item))
-              (generate-std-feedback key seval feedback-folder))))
-        (in-package :codegrader)
-        (format *standard-output* "~%============================================================================~%")
-        (format *standard-output* "Slime produced the above messages when loading the students' solution~%")
-        (format *standard-output* "============================================================================~%")
-        (format broadcast-stream "Done marking students solutions.~%")
-        (format broadcast-stream "Ranking the simplicity of perfect solutions...~%")
-        (rank-perf-solutions hperf-solutions h-table)
-        (format broadcast-stream "Done.~%")
-        (format broadcast-stream "Generating the code simplicity scores cvs file...~%")
-        (generate-kalos-kagathos-file root-folder h-table)
-        (format broadcast-stream "Done.~%")        
-        (format broadcast-stream "Generating the zipped feedback folder...~%")
-        (zip:zip feedback-zipped feedback-folder :if-exists :supersede)
-        (format broadcast-stream "Done.~%")
-        (format broadcast-stream "Generating the grades spreadsheet...~%")
-        (generate-marks-spreadsheet log-file-stream lab-grades-export-file root-folder h-table #'(lambda (x) (car (submission-correctness x))) "grades.csv")
-        (format broadcast-stream "Done.~%")
-        (when  code-simplicity-export-file
-          (format broadcast-stream "Generating the code simplicity spreadsheet...~%")
-          (generate-marks-spreadsheet log-file-stream code-simplicity-export-file root-folder h-table #'submission-simplicity "simplicity-score.csv")
-          (format broadcast-stream "Done.~%"))
-        (format broadcast-stream "Assignment grading complete!~%" )
-        (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results)
-        (format *standard-output* "- grade.csv : contains the lab assignment correctness marks~%- student-feedback.zip : contains the feedback txt files for each student~%- (optional) simplicity-score.csv : contains the code simplicity score.")
-        (in-package :cg)
-"(^_^)"))))
-|#
 
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
