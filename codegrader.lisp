@@ -52,15 +52,19 @@
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
       (format out "~%---------------------------------------------------------------------------~%* ~a: ~a points (out of 100).~%" q mark)
-      (cond ((or (equalp error-type "no-submitted-file")
+      (cond ((or (equalp error-type "missing-question-file")
+                 (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
-		 (equal error-type "late-submission")) (format out "~%~%~A" res))
+		 (equal error-type "late-submission"))
+             (format out "~%~A !!!" descr))
             ((and (listp error-type) (equal (car error-type) 'used-forbidden-symbol))
              (format out "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
              (format out "~%Solution mark reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
              (format out "~%Function ~a, unit test results:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
 	    ((equal error-type "No RT-error") (format out "~%Function ~a, unit test results:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
-	    (t (format out "~%Function ~a, unit test results:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))))))
+	    (t (format out "~%Function ~a, unit test results:~%~{- ~a~%~}" func-name (mapcar #'gen-message res))))))
+  (format out "~%---------------------------------------------------------------------------")
+  (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
 
 (defun generate-feedback (key eval feedback-folder)
   (let* ((fname (concatenate 'string key ".txt"))
@@ -229,7 +233,7 @@
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
                              (evaluation (evaluate-solution solution test-case)))
                         evaluation)
-                      (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found." nil))))
+                      (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found" nil))))
             results))
     (reverse results)))
 
@@ -381,6 +385,7 @@
 
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
+
 
 (defun eval-solutions (solutions-folder lab &optional  test-cases-folder)
   (unless (probe-file solutions-folder)
