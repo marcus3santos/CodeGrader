@@ -1,6 +1,6 @@
 ;; q2.lisp
 
-(forbidden-functions :penalty 0.9 :functions '(SETF LENGTH LIST-LENGTH DO DOLIST MAP MAPINTO MAPC MAPCAR MAPCAN MAPL MAPLIST MAPCON))
+(forbidden-symbols :penalty 0.9 :symbols '(SETF LENGTH LIST-LENGTH DO DOLIST MAP MAPINTO MAPC MAPCAR MAPCAN MAPL MAPLIST MAPCON))
 
 (deftest test-interleave ()
   (check
