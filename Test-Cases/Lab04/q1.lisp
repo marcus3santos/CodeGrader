@@ -1,6 +1,6 @@
 ;; q1.lisp
 
-(forbidden-functions :penalty 0.90 :functions '(sort))
+(forbidden-symbols :penalty 0.90 :symbols '(sort))
 
 (deftest test-sort-student-records ()
   (check
