@@ -22,24 +22,25 @@ Type the commands below an a linux or Mac terminal:
 
 1. CodeGrader is able to mark students' solutions that have been
    downloaded from D2L as a zip file, or solutions that have been
-   properly saved in the student's home folder in the test environment. For this
-   tutorial, we assume the latter. As such, zip the folders containing
-   the students' solutions. For example, suppose two students wrote
-   the exam in lab room ENG201, on PCs whose IDs are 03
-   and 07. Suppose also that their solutions to the exam questions are
-   stored in  *pt/q1.lisp* and *pt/q2.lisp*. Then, the diagram below
-   represents the corresponding file structure:
-   - ENG201-03/pt/
+   saved in the computer where the student took the test. For this
+   tutorial, we assume the latter. As such, the solutions for each student from a given course section are stored in specific folders named  *CPS305YY/ENGXXX-ZZ/pt/*, where *YY* is the course section number, *ENGXXX* is the lab room number, and *ENGXXX-ZZ* is the computer's ID number. For example, suppose one student from section 05 took
+   the exam in lab room ENG203 on a PC whose ID is ENG203-03, and another student from section 08 took the same version of the exam in lab room ENG201 on a PC whose ID is ENG201-07. Then, the diagram below
+   represents the corresponding file structure where the two Lisp files containing the solutions for each student would be stored:
+   - CPS30505/ENGENG203-03/pt/
      - q1.lisp
      - q2.lisp
-   - ENG201-07/pt/
+   - CPS30508/ENG201-07/pt/
      - q1.lisp
      - q2.lisp
-
-   To zip those two folders, type the command below on a terminal:
+   *AN IMPORTANT NOTE*: Since students from specific sections may have taken different versions of the exam, it is crucial to obtain the sections-to-exam-versions mapping in advance from the instructor to ensure you are running CodeGrader on the solutions for the correct course sections and using the correct test cases for the respective exam version. 
+   For example, suppose students from sections 05 and 08 took Version 1 of the exam, and students from section 10 took Version 2. You would have to first create a zip file containing the students' solutions for sections 05 an 08. Assuming you want to store that zip archive file in *~/Zipped-solutions/*, the commands below show how to create the zip file:
    #+begin_src shell
-     zip -r std-sol.zip ENG201-03/ ENG201-07/
+     cd
+     mkdir Zipped-solutions
+     (cd CPS30505 && zip -r ~/Zipped-solutions/std-sol.zip *) && (cd CPS30508 && zip -r ~/Zipped-solutions/std-sol.zip *)
    #+end_src
+   By zipping this way, you would create a zip archive that does not include the parent directories (CPS30505 and CPS30508); it only includes the ENGXXX-YY/ folders in your zip archive. 
+
 2. Obtain from the IT staff a CSV file containing the student-to-pc
    mapping. Each row in that spreadsheet should contain the following
    information: Student ID number, Student First Name, Student Last
@@ -90,7 +91,7 @@ Type the commands below an a linux or Mac terminal:
    where:
    - ~submissions~ is a string representing the full path and name of
      the zipped file containing the students' solutions, e.g.,
-     ~/Users/johndoe/Downloads/std-sol.zip~
+     ~/Users/johndoe/Zipped-solutions/std-sol.zip~
    - ~map~  is a string representing the full path and name of of the csv file storing the student-to-pc mapping.
    - ~test-folder~ is a string representing the full path for the test cases folder.
    - ~results-folder~ is a string representing the full path for a folder
