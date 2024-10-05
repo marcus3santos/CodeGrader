@@ -1,7 +1,8 @@
 #+TITLE: CodeGrader
 
-CodeGrader is an automated grader for lisp programming exercises where
-the students' solutions have been exported from D2L.
+CodeGrader is an automated grader for lisp programming practicum
+assessments.
+
 
 * Dependencies
 
@@ -19,52 +20,111 @@ Type the commands below an a linux or Mac terminal:
 
 ** Marking
 
-1. [ /This is step is not necessary if you are assessing an "ungraded" examination (i.e., an assessment
+*** Preamble
+
+
+CodeGrader is able to mark students' solutions that have been
+downloaded from D2L as a zip file, or solutions that have been saved
+in the computer where the student took the test. For this tutorial, we
+assume the latter. In this case, the IT Technicians have provided you
+with access to the solutions for each student of a given course
+section, stored in in specific folders named
+*CPS305YY/ENGXXX-ZZ/pt/*, where *YY* is the course section number,
+*ENGXXX* is the lab room number, and *ENGXXX-ZZ* is the computer's ID
+number. For example, suppose one student from section 05 took the exam
+in lab room ENG203 on a PC whose ID is ENG203-03, and another student
+from section 08 took the same version of the exam in lab room ENG201
+on a PC whose ID is ENG201-07. Then, the diagram below represents the
+corresponding file structure where the two Lisp files containing the
+solutions for each student have been stored:
+   - CPS30505/ENGENG203-03/pt/
+     - q1.lisp
+     - q2.lisp
+   - CPS30508/ENG201-07/pt/
+     - q1.lisp
+     - q2.lisp
+
+*** Steps for grading students' solutions
+
+1. *Create a zipped file containing the students' solutions*: Since
+   students from specific sections may have taken different versions
+   of the exam, it is crucial to obtain the sections-to-exam-versions
+   mapping in advance from the instructor to ensure you are running
+   CodeGrader on the solutions for the correct course sections and
+   using the correct test cases for the respective exam version.  For
+   example, suppose students from sections 05 and 08 took Version 1 of
+   the exam, and students from section 10 took Version 2. You would
+   have to first create a zip file containing the students' solutions
+   for sections 05 an 08. Assuming you want to store that zip archive
+   file in *~/Zipped-solutions/*, the commands below show how to
+   create the zip file:
+   #+begin_src shell
+     cd
+     mkdir Zipped-solutions
+     (cd CPS30505 && zip -r ~/Zipped-solutions/std-sol.zip *) && (cd CPS30508 && zip -r ~/Zipped-solutions/std-sol.zip *)
+   #+end_src
+   By zipping this way, you would create a zip archive that does not
+   include the parent directories (CPS30505 and CPS30508); it only
+   includes the ENGXXX-YY/ folders in your zip archive.
+
+2. *Create a CSV file containing the mapping of students-to-computers*:
+   We assume the IT technicians have sent you CSV files containing the
+   student-to-computer mapping for each of the course sections. Now,
+   based on these CSV files and on the sections-to-exams-versions, you
+   should create a CSV file that contains the mappings of all students
+   who took a given test version. Each row in that
+   spreadsheet should contain the following information: Student ID
+   number, Student First Name, Student Last Name, and Room-PC ID
+3. *Prepate the test cases*: Prepare a folder containing the *test
+   cases lisp files* for the assignment you want to mark. You can find
+   folders with test case files for CPS305 Practice Lab Exercises in
+   the Test-Cases directory of this repository.
+4. Create a folder where CodeGrader will store the results. You can give any name to that folder.
+5. [ /This is step is not necessary if you are assessing an "ungraded" examination (i.e., an assessment
    whose weight is zero)/ ] On D2L, export the students' *assignment grades* *to a CSV
    file*. When generating this file, select the following /Export
    Options/:
-  - Username
-  - Points grade
-  - Last name
-  - First name
+  - Key Field:
+    - *Both*
+  - Grade Values:
+    - *Points grade*
+  - User Details: 
+    - *Last name*
+    - *First name*
   Below is an example of a CSV file exported by D2L:
   #+begin_example
      Username,Last Name,First Name,Lab 0X Points Grade <Course  Data>,End-of-Line-Indicator 
-     #TTiger,Tigertongue,Tim,,#
-     #Patrick97,Pearson,Patrick,,#
-     #Towhander,Twohands,Tony,,#
-     #Zain1997,Zodson,Zain,,#
-     #Coopercat,Cooper,Cain,,#
-     #Hammermann,Odinson,Thor,,#
-     #CastleSword03,Vampireson,Alucard,,#
-     #TarkovIsAwesone,Handerson,Timb,,#
+     #500583619,#TTiger,Tigertongue,Tim,,#
+     #500585612,#Patrick97,Pearson,Patrick,,#
+     #501585619,#Towhander,Twohands,Tony,,#
+     #500586619,#Zain1997,Zodson,Zain,,#
+     #500585619,#Coopercat,Cooper,Cain,,#
+     #500585119,#Hammermann,Odinson,Thor,,#
   #+end_example
   For more information, visit [[https://www.torontomu.ca/courses/instructors/tutorials/grades/grades-export-import/]]
-2. On D2L, download the assignment solutions submitted by the
-   students. D2L will generate a compressed zip. Do not unzip the file. For more information, visit
-   [[https://www.torontomu.ca/courses/instructors/tutorials/assignments/assignment-submissions/]]. Make
-   sure you have downloaded *all* submissions.
-3. Prepare a folder containing the  *test cases lisp files* for the assignment you want to
-   mark. You can find folders with test case files for CPS305 Practice Lab Exercises in the Test-Cases directory of this repository.
-4. Launch sbcl from the command line
+6. Launch sbcl from the command line
    #+begin_src shell
      rlwrap sbcl --dynamic-space-size 20480
    #+end_src
-1. To load the codegrader, type the following commands on the REPL:
+7. To load the codegrader, type the following commands on the REPL:
    #+begin_src lisp
           (ql:quickload :codegrader)
    #+end_src
-2. To run the students'
-   solutions through CodeGrader, type the command below on the CodeGrader REPL: (NOTE: once you
-   launch CodeGrader, it will start executing the students'
-   solutions; consequently, it will display on the REPL buffer all
-   error/warning messages and output generated by the student's solution. CodeGrader
-   will be done marking when you see the message =Exam grading complete!= displayed on the REPL window buffer.)
+8. To run the students' solutions through CodeGrader, type the command
+   below on the CodeGrader REPL: (NOTE: once you launch CodeGrader, it
+   will start executing the students' solutions; consequently, it will
+   display on the REPL buffer all error/warning messages and output
+   generated by the student's solution. CodeGrader will be done
+   marking when you see the message =Exam grading complete!= displayed
+   on the REPL window buffer.)
    #+begin_src lisp
-      (cg:grade-it submissions tests-folder results-folder exam-grades-export-file)
+      (cg:grade-exam submissions map tests-folder results-folder exam-grades-export-file)
    #+end_src
    where:
-   - ~submissions~ is a string representing the full path and name of the zipped file generated by D2L containing the students' submissions, e.g., ~/Users/johndoe/Downloads/LabXX-XX.zip~
+   - ~submissions~ is a string representing the full path and name of
+     the zipped file containing the students' solutions, e.g.,
+     ~/Users/johndoe/Zipped-solutions/std-sol.zip~
+   - ~map~  is a string representing the full path and name of of the csv file storing the student-to-pc mapping.
    - ~test-folder~ is a string representing the full path for the test cases folder.
    - ~results-folder~ is a string representing the full path for a folder
     where you want codegrader to store the results (the students'
