@@ -54,20 +54,21 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ -x '*/.*' '*/quicklisp/*'
 1. *Create a zipped file containing the students' solutions*: Since
    students from specific sections may have taken different versions
    of the exam, it is crucial to obtain the sections-to-exam-versions
-   mapping in advance from the instructor to ensure you are running
-   CodeGrader on the solutions for the correct course sections and
+   mapping in advance from the course coordinator to ensure you are running
+   CodeGrader  on the solutions written by the students in the correct section, and
    using the correct test cases for the respective exam version.  For
-   example, suppose students from sections 05 and 08 took Version 1 of
-   the exam, and students from section 10 took Version 2. You would
-   have to first create a zip file containing the students' solutions
-   for sections 05 an 08. Assuming you want to store that zip archive
-   file in *~/Zipped-solutions/*, the commands below show how to
-   create the zip file:
+   example, suppose students from sections 03 and 05 are taught by instructor A and took Version 1 of
+   the exam, and students from section 10 are taught by instructor B and took Version 2. 
+
+   Assuming you want to store that zip archive
+   file in *~/Zipped-solutions-3-5/*, the commands below show how to
+   create the zip file with the solutions of the students from sectoins 03 and 05:
    #+begin_src shell
      cd
      mkdir Zipped-solutions
-     (cd CPS30505 && zip -r ~/Zipped-solutions/std-sol.zip *) && (cd CPS30508 && zip -r ~/Zipped-solutions/std-sol.zip *)
+     (cd CPS30503 && zip -r ~/Zipped-solutions-3-5/std-sol.zip *) && (cd CPS30505 && zip -r ~/Zipped-solutions-3-5/std-sol.zip *)
    #+end_src
+   You would do something similar to zip the solutions for students in section 10.
    By zipping this way, you would create a zip archive that does not
    include the parent directories (CPS30505 and CPS30508); it only
    includes the ENGXXX-YY/ folders in your zip archive.
