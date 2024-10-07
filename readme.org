@@ -26,9 +26,9 @@ Type the commands below an a linux or Mac terminal:
 CodeGrader is able to mark students' solutions that have been
 downloaded from D2L as a zip file, or solutions that have been saved
 in the computer where the student took the test. For this tutorial, we
-assume the latter. In this case, the IT Technicians have provided you
-with access to the solutions for each student of a given course
-section, stored in in specific folders named
+assume the latter. 
+
+The IT Technicians have created and shared with the instructor a zip archive file containing containing the students' solutions stored in in specific folders named
 *CPS305YY/ENGXXX-ZZ/pt/*, where *YY* is the course section number,
 *ENGXXX* is the lab room number, and *ENGXXX-ZZ* is the computer's ID
 number. For example, suppose one student from section 05 took the exam
@@ -43,6 +43,11 @@ solutions for each student have been stored:
    - CPS30508/ENG201-07/pt/
      - q1.lisp
      - q2.lisp
+
+Here is the command the IT staff used to create the zip file:
+#+begin_src shell
+zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ -x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
+#+end_src
 
 *** Steps for grading students' solutions
 
