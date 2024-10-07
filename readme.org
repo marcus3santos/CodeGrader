@@ -100,10 +100,10 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ -x '*/.*' '*/quicklisp/*'
      - User Details: 
        - *Last name*
        - *First name*
-  - /Choose grades to Export/: Ensure only one of the listed grade items is checked. If the grade item contains subitems, select the appropriate subitem. For example: if a /Practicum Test/ grade item contains subitems representing the versions of the test, select the subitem representing the Practicum Test version you are interested in grading.
+  - /Choose grades to Export/: Choose only one of the listed grade items. If the grade item contains subitems, choose the appropriate subitem. For example: if a /Practicum Test/ grade item contains subitems representing the versions of the test, choose the subitem representing the Practicum Test version you are interested in grading.
   Below is an example of a CSV file exported by D2L:
   #+begin_example
-     Username,Last Name,First Name,Lab 0X Points Grade <Course  Data>,End-of-Line-Indicator 
+     OrgDefinedId,Username,Last Name,First Name,Practicum Test 1 - Version 1 Points Grade <Numeric MaxPoints:100 Weight:10 Category:Practicum Test 1 CategoryWeight:10>,End-of-Line Indicator
      #500583619,#TTiger,Tigertongue,Tim,,#
      #500585612,#Patrick97,Pearson,Patrick,,#
      #501585619,#Towhander,Twohands,Tony,,#
