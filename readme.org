@@ -61,16 +61,16 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ -x '*/.*' '*/quicklisp/*'
    the exam, and students from section 10 are taught by instructor B and took Version 2. 
 
    Assume the parent folder *~/tmp/cps305PracticumTest/* contains the students' solutions from the various sections. Also assume you want to store the zip archive for sections 03 and 05
-   in *~/tmp/PT1/Sect-3-5/* (you have already created that folder), the commands below show how to
+   in *~/tmp/PT1/Sections/03-05/* (you have already created that folder), the commands below show how to
    create the zip file with the solutions of the students from sectoins 03 and 05:
    #+begin_src shell
      cd ~/tmp/cps305PracticumTest
-     (cd CPS30503 && zip -r ~/tmp/PT1/Sect-3-5/std-sol.zip *) && (cd CPS30505 && zip -r ~/tmp/PT1/Sect-3-5/std-sol.zip *)
+     (cd CPS30503 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *) && (cd CPS30505 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *)
    #+end_src
    You would do something similar to zip the solutions for students in section 10.
    #+begin_src shell
      cd ~/tmp/cps305PracticumTest
-     (cd CPS30510 && zip -r ~/tmp/PT1/Sect-10/std-sol.zip *) 
+     (cd CPS30510 && zip -r ~/tmp/PT1/Sections/10/std-sol.zip *) 
    #+end_src
    By zipping this way, you would create a zip archive that does not
    include the parent directories (CPS30505 and CPS30508); it only
