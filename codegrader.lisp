@@ -317,6 +317,7 @@
         (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
         (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
         (when exam-grades-export-file (format broadcast-stream "Done.~%"))
+        (uiop:run-program `("rm" "-rf" ,(namestring subs-folder)))
         (format broadcast-stream "Exam grading complete!~%" )
         (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
         (when exam-grades-export-file
