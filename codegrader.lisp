@@ -274,7 +274,8 @@
 	 (subs-folder-wfiles (progn
                                (cleanup-folder feedback-folder)
                                (cleanup-folder subs-folder)
-	                       (zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
+                               (uiop:run-program (concatenate 'string "unzip " (namestring submissions-zipped-file) " -d " (namestring subs-folder)))
+	                       ;(zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
 	                       subs-folder))
 	 (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
          (map (create-mapping-table std-pc-map)))
