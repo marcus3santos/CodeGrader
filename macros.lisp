@@ -268,6 +268,7 @@
 
 (defun chng-funcalls (fname c-id lexp)
   (cond ((null lexp) nil)
+        ((and (listp lexp) (eq (car lexp) 'return-from)) (append  (list (first lexp) (second lexp)) (chng-funcalls fname c-id (cddr lexp))))
         ((and (listp lexp) (eq (car lexp) fname))
          (append (list (car lexp)) (chng-funcalls fname c-id (cdr lexp)) `((1+ ,c-id))))
         ((listp lexp)
