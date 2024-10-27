@@ -184,7 +184,6 @@ CodeGrader generates the following files in the =results= folder (see above):
    (Fail TEST-WITHDRAW (EQUAL (WITHDRAW 20) 70))
    (Fail TEST-WITHDRAW (EQUAL (WITHDRAW 10) 90)))
   #+end_example
-- A zipped version of the feedback folder. To be uploaded into D2L.
 
 The log file *codegrader-history/log.txt* located in the root of the
 user's home directory contains historical information about the
