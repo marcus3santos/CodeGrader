@@ -192,8 +192,17 @@ the mark is calculated as the # of passes divided by the total # of cases.
                      (t (check-fnames (cdr e))))))
       (check-fnames cap-symbs))))
 
+(defun read-file-as-string (file-name)
+  "Reads the content of the file specified by FILE-NAME and returns it as a string."
+  (with-open-file (stream file-name :direction :input)
+    (let ((content (make-string-output-stream)))  ;; Create a stream to collect the file content
+      (loop for line = (read-line stream nil nil)
+            while line
+            do (format content "~A~%" line))      ;; Append each line to content with a newline
+      (get-output-stream-string content))))
+
 (defun grade-code (student-solution test-cases &optional ws)
-    "Loads the student-solution file, loads the test cases, runs
+  "Loads the student-solution file, loads the test cases, runs
   the test cases, and returns the percentage of correct results over total results"
   (let ((description "No runtime errors"))
     (in-package :test-runtime)
@@ -228,7 +237,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
              (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
          (if forbid-symb
              (setf description  (concatenate 'string  description (format nil "~%Used forbidden symbol ~a !!!~%" forbid-symb)))))
-       (change-results-readable *results*)))))
+       (change-results-readable *results*)
+       (read-file-as-string student-solution)))))
 
 
 (defun evaluate-solution (student-solution  test-cases &optional ddate sdate)

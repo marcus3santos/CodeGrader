@@ -34,11 +34,11 @@
          (ret (third test)))
     (cond ((string= res "Pass")
            (format nil "Passed.~%~t   ~a returned ~a" fcall ret))
-          ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   Runtime error in function ~a.~%~t   ~a." (car (second test)) rt-error))
+          ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   Runtime error in function ~a.~%~t   ~a" (car (second test)) rt-error))
           (t (format nil "Failed.~%~t   ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
-  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- Each question is worth 100 points.~%- Your score is the sum of your questions' points divided by the number of questions in the assessment.~%END OF NOTE.~%~%")
+  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- Each question is worth 100 points.~%- Your score is the sum of your questions' points divided by the number of questions in the assessment.~%~%")
   (format out "Your score: ~a (out of 100)~%" (car eval))
   (dolist (question (cadr eval))
     (let* ((q (car question))
@@ -47,15 +47,21 @@
            (error-type (second qeval))
 	   (descr (third qeval))
 	   (res (clean-symbol-names (fourth qeval)))
+           (std-sol (nth 4 qeval))
            (unit-test-name (symbol-name (third (car res))))
            (pos (position #\- unit-test-name))
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
       (format out "~%---------------------------------------------------------------------------~%* ~a: ~a points (out of 100).~%" q mark)
-      (cond ((or (equalp error-type "missing-question-file")
+      (unless (or (equalp error-type "missing-question-file")
                  (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
 		 (equal error-type "late-submission"))
+        (format out "~%------ Your Solution ------~%~%~A~%~%---------------------------~%" std-sol))
+      (cond ((or (equalp error-type "missing-question-file")
+                 (equalp error-type "no-submitted-file")
+		 (equalp error-type "not-lisp-file")
+		 (equal error-type "late-submission")) 
              (format out "~%~A !!!" descr))
             ((and (listp error-type) (equal (car error-type) 'used-forbidden-symbol))
              (format out "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
@@ -262,6 +268,29 @@
               (get-insert-std line htable)))
     htable))
 
+
+
+(defun encode-integer (number-str str)
+  "Encode an integer NUMBER using a string STR containing an integer by XOR-ing corresponding digits."
+  (let* ((len-number (length number-str)) ; Length of the number as string
+         (len-str (length str))           ; Length of the string
+         (max-len (max len-number len-str)) ; Maximum length between the two
+         (padded-number-str (concatenate 'string
+                                         (make-array (- max-len len-number) :initial-element #\0)
+                                         number-str)) ; Zero-pad the number string
+         (padded-charcode-number-str (map 'string #'char-code padded-number-str))
+         (padded-str (concatenate 'string
+                                  (make-array (- max-len len-str) :initial-element #\0)
+                                  str))
+         (padded-charcode-str (map 'string #'char-code padded-str))) ; Zero-pad the input string
+    
+    #|(encoded-digits (map 'string 
+    (lambda (digit1 digit2)             ; ;
+    (logxor digit1 digit2))             ; ;
+    padded-number-str padded-str))) ; XOR digits ; ;
+    |#
+    (values padded-charcode-number-str  padded-charcode-str)))  ; Return the encoded result as a string
+
 (defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
   "submissions-zipped-file is the zipped file containing the student solutions
    pc-std-map is a csv file containing the student ID, name, and room-machine ID"
@@ -275,7 +304,7 @@
                                (cleanup-folder feedback-folder)
                                (cleanup-folder subs-folder)
                                (uiop:run-program (concatenate 'string "unzip " (namestring submissions-zipped-file) " -d " (namestring subs-folder)))
-	                       ;(zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
+                                        ;(zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
 	                       subs-folder))
 	 (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
          (map (create-mapping-table std-pc-map)))
@@ -303,7 +332,9 @@
                                             :room-pc (fourth std)
                                             :evaluation seval
                                             :total-marks (car seval)))
-                     (anony-id (subseq (submission-std-id item) 5)))
+                     (anony-id (format nil "~A" (sxhash (submission-std-id item))))  ;; hashes the student ID#
+                     ;(anony-id (subseq (submission-std-id item) 5))
+                     )
                 (format log-file-stream "Student *~a*,  result:~%~a~%" (concatenate 'string (submission-std-fname item) " " (submission-std-lname item)) seval)
                 (setf (gethash (submission-std-id item) map) item)
                 (generate-feedback anony-id seval feedback-folder)))))
