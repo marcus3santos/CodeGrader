@@ -46,7 +46,7 @@ solutions for each student have been stored:
 
 Here is the command the IT staff used to create the zip file:
 #+begin_src shell
-zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ -x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
+zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/otest*/-x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
 #+end_src
 
 *** Steps for grading students' solutions
