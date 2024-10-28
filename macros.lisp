@@ -198,7 +198,7 @@
             (new-bindings (mapcar (lambda (binding)
                                     (let* ((var (first binding))
                                            (init (second binding))
-                                           (step (third binding)))
+                                           (step (if (third binding) (third binding) var)))
                                       (list (generate-unique-name var (incf counter))
                                             (rename-vars init env counter)
                                             (rename-vars step env counter))))
@@ -207,10 +207,18 @@
             (new-inits (mapcar (lambda (binding)
                                  (list (first binding)
                                        (second binding)
-                                       (rename-vars (third binding) new-env counter))) new-bindings)))
+                                       (rename-vars (third binding) new-env counter)))
+                               new-bindings)))
        `(do ,new-inits
             ,(mapcar (lambda (e) (rename-vars e new-env counter)) (third expr))
           ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdr (cddr expr))))))
+    ((and (consp expr) (eq (first expr) 'cond))
+     `(cond ,@(mapcar (lambda (clause)
+                        (let ((test (first clause))
+                              (body (rest clause)))
+                          `(,(rename-vars test env counter)
+                            ,@(mapcar (lambda (e) (rename-vars e env counter)) body))))
+                      (rest expr))))
     ;; If the expression is a LABELS or FLET forms, rename its function names, parameters, and bodies
     ((and (consp expr) (or (eq (first expr) 'labels) (eq (first expr) 'flet)))
      (let* ((bindings (if (every #'(lambda (x) (and (consp x) (symbolp (first x)) (consp (second x)))) (second expr))
@@ -268,11 +276,9 @@
 
 (defun chng-funcalls (fname c-id lexp)
   (cond ((null lexp) nil)
-        ((and (listp lexp) (eq (car lexp) 'return-from)) (append  (list (first lexp) (second lexp)) (chng-funcalls fname c-id (cddr lexp))))
         ((and (listp lexp) (eq (car lexp) fname))
-         (append (list (car lexp)) (chng-funcalls fname c-id (cdr lexp)) `((1+ ,c-id))))
-        ((listp lexp)
-         (append (list (chng-funcalls fname c-id (car lexp))) (chng-funcalls fname c-id (cdr lexp))))
+         (append (mapcar #'(lambda (x) (chng-funcalls fname c-id x)) lexp) `((1+ ,c-id))))
+        ((listp lexp) (mapcar #'(lambda (x) (chng-funcalls fname c-id x)) lexp))
         (t lexp)))
 
 
@@ -318,17 +324,19 @@
   (let ((newfname (concatenate 'string (directory-namestring file) (string (gensym)))))
     (with-open-file (in file :direction :input)
       (with-open-file (out newfname :direction :output)
-        (loop for form = (read in nil nil)
+        (loop for form = (read in nil nil) 
               while form
               do
                  (if (eq (car form) 'defun)
                      (progn
-                       (pprint `(mod-fundef ,@(cdr form)) out)
+                       (pprint `(mod-fundef ,@(cdr (rename-vars form))) out)
                        (terpri out))
                      (progn (pprint form out)
                             (terpri out))))))
     (load newfname)
-    (delete-file newfname)))
+    ;(delete-file newfname)
+    ))
+
 
 ;; -----------
 
