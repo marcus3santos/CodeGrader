@@ -225,7 +225,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (cond (*runtime-error* "runtime-error")
 	     (*load-error* "load-error")
              (*cr-warning* "cr-warning")
-             (forbid-symb (list 'used-forbidden-symbol forbid-symb))
+             (forbid-symb (list "used forbidden symbol" forbid-symb *penalty-forbidden*))
 	     (t "No RT-error"))
        (progn
          (if *runtime-error* 
