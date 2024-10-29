@@ -29,18 +29,18 @@ in the computer where the student took the test. For this tutorial, we
 assume the latter. 
 
 The IT Technicians have created and shared with the instructor a zip archive file containing containing the students' solutions stored in in specific folders named
-*CPS305YY/ENGXXX-ZZ/pt/*, where *YY* is the course section number,
-*ENGXXX* is the lab room number, and *ENGXXX-ZZ* is the computer's ID
+*cps05YY/engXXX-ZZ/pt/* or *cps305YY/otest-KK*, where *YY* is the course section number and *KK* is an integer number,
+*engXX* is the lab room number, and *engXXX-ZZ* is the computer's ID
 number. For example, suppose one student from section 05 took the exam
-in lab room ENG203 on a PC whose ID is ENG203-03, and another student
-from section 08 took the same version of the exam in lab room ENG201
-on a PC whose ID is ENG201-07. Then, the diagram below represents the
+in lab room ENG203 on a PC whose ID is eng203-03, and another student
+from section 08 took the same version of the exam in at the Accommodation Test Centre 
+on a PC whose ID is otest-07. Then, the diagram below represents the
 corresponding file structure where the two Lisp files containing the
 solutions for each student have been stored:
-   - CPS30505/ENGENG203-03/pt/
+   - cps30505/eng203-03/pt/
      - q1.lisp
      - q2.lisp
-   - CPS30508/ENG201-07/pt/
+   - cps30508/otest-07/pt/
      - q1.lisp
      - q2.lisp
 
