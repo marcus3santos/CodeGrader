@@ -137,11 +137,48 @@
      (let* ((args (if (and (symbolp (second expr)) (listp (third expr))) ; Syntax checking
                       (third expr)
                       (error "Invalid defun expression: ~a" expr)))
-            (new-args (mapcar (lambda (arg)
-                                (generate-unique-name arg (incf counter)))
-                              args))
-            (new-env (append (mapcar #'(lambda (x y) (cons x y)) args new-args) env)))
-       `(defun ,(second expr) ,new-args ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdddr expr)))))
+            (new-args nil)
+            (new-env env))
+       ;; Process argument list with support for &optional, &rest, &key
+       (dolist (arg args)
+         (cond
+           ;; Handle &optional marker
+           ((eq arg '&optional)
+            (push '&optional new-args))
+           ;; Handle &rest marker
+           ((eq arg '&rest)
+            (push '&rest new-args))
+           ;; Handle &key marker
+           ((eq arg '&key)
+            (push '&key new-args))
+           ;; Handle optional/rest/key arguments (after markers)
+           ((listp arg)
+            (let ((param (first arg))
+                  (init (second arg))
+                  (suppliedp (third arg)))
+              (let ((new-param (generate-unique-name param (incf counter))))
+                (push `(,new-param ,(rename-vars init new-env counter) ,(rename-vars suppliedp new-env counter)) new-args)
+                (push (cons param new-param) new-env))))
+           ;; Regular argument, rename it
+           (t
+            (let ((new-arg (generate-unique-name arg (incf counter))))
+              (push new-arg new-args)
+              (push (cons arg new-arg) new-env)))))
+       ;; Reverse the new-args since we built it backwards
+       `(defun ,(second expr) ,(nreverse new-args)
+          ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdddr expr)))))
+    
+    #|
+    ((and (consp expr) (eq (first expr) 'defun)) ;
+    (let* ((args (if (and (symbolp (second expr)) (listp (third expr))) ; Syntax checking ;
+    (third expr)                        ;
+    (error "Invalid defun expression: ~a" expr))) ;
+    (new-args (mapcar (lambda (arg)     ;
+    (generate-unique-name arg (incf counter))) ;
+    args))                              ;
+    (new-env (append (mapcar #'(lambda (x y) (cons x y)) args new-args) env))) ;
+    `(defun ,(second expr) ,new-args ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdddr expr))))) ;
+    |#
     
     ;; If the expression is a LET form, rename its bindings and body
     ((and (consp expr) (eq (first expr) 'let))
@@ -334,8 +371,8 @@
                      (progn (pprint form out)
                             (terpri out))))))
     (load newfname)
-    ;(delete-file newfname)
-    ))
+    (format t "PASSED")
+    (delete-file newfname)))
 
 
 ;; -----------
@@ -353,8 +390,8 @@
           (if (char= c #\Return)
               (write-char #\Newline out)
               (write-char c out)))))
-    (mod-load-progfile newfname)
-                                        ;(load newfname)
+    ;(mod-load-progfile newfname)
+    (load newfname)
     (delete-file newfname)))
   
 
@@ -368,8 +405,8 @@
 (defun load-solution (file)
   (if (has-cr? file)
       (rewrite-load file)
-      (mod-load-progfile file)
-                                        ;(load file)
+      ;(mod-load-progfile file)
+      (load file)
       ))
 
 (defun handle-solution-loading (student-solution)
