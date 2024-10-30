@@ -63,7 +63,7 @@
 		 (equalp error-type "not-lisp-file")
 		 (equal error-type "late-submission")) 
              (format out "~%~A !!!" descr))
-            ((and (listp error-type) (string= (car error-type) "used forbidden symbol")) 
+            ((and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format out "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
              (format out "~%The mark for this solution was reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
              (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
@@ -110,8 +110,7 @@
           (format log-file-stream "Mark of student ~a (~a) changed from ~a to ==> ~a~%" std-name std-id csv new-mark)
           (format stream "~A~%"  new-mark))
 	(progn 
-          (format log-file-stream "Student ~a did not submit solution!~%" std-id)
-          (format *standard-output* "~A~%" std-id)))))
+          (format log-file-stream "Student ~a did not submit solution!~%" std-id)))))
 
 (defun get-insert-grade (log-file-stream stream csv ht f)
   (let* ((std-name (get-std-name csv))
@@ -130,7 +129,7 @@
       (with-open-file (out (merge-pathnames folder out-file)
 			   :direction :output :if-exists :supersede)
         (format out "~A~%" (read-line in nil))
-        (format *standard-output* "Students that did not write a solution are listed below:~%")
+        ;(format *standard-output* "Students that did not write a solution are listed below:~%")
         (loop for line = (read-line in nil)
 	      while line do
 	        (get-insert-exam-grade log-file-stream out line ht f))))))
@@ -355,7 +354,7 @@
         (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
         (when exam-grades-export-file
           (format *standard-output* "- grade.csv : contains the test marks~%"))
-        (format *standard-output* "- student-feedback.zip : contains the feedback txt files for each student.")
+        (format *standard-output* "- student-feedback/ : contains the feedback txt files for each student.")
         (in-package :cl-user)
         "(^_^)"))))
 
