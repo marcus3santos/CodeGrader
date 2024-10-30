@@ -212,6 +212,26 @@
        `(do ,new-inits
             ,(mapcar (lambda (e) (rename-vars e new-env counter)) (third expr))
           ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdr (cddr expr))))))
+    ;; If the expression is a do* form, rename its variable bindings and body
+    ((and (consp expr) (eq (first expr) 'do*))
+     (let* ((bindings (if (every #'(lambda (x) (and (consp x) (<= (length x) 3))) (second expr))
+                          (second expr)
+                          (error "Invalid binding in do* expression: ~a" expr)))
+            (new-bindings nil)
+            (new-env env))
+       (dolist (binding bindings)
+         (let* ((var (first binding))
+                (init (second binding))
+                (step (if (third binding) (third binding) var))
+                (new-var (generate-unique-name var (incf counter))))
+           (push (list new-var
+                       (rename-vars init new-env counter)
+                       (rename-vars step (push (cons var new-var) new-env) counter))
+                 new-bindings)))
+       `(do* ,(reverse new-bindings)
+             ,(mapcar (lambda (e) (rename-vars e new-env counter)) (third expr))
+          ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdr (cddr expr))))))
+    ;; If the expression is a COND form
     ((and (consp expr) (eq (first expr) 'cond))
      `(cond ,@(mapcar (lambda (clause)
                         (let ((test (first clause))
@@ -234,26 +254,6 @@
                                       `(,fn-name ,new-args ,@(mapcar (lambda (e) (rename-vars e fn-env counter)) (cddr binding)))))
                                   bindings)))
        `(labels ,new-bindings ,@(mapcar (lambda (e) (rename-vars e env counter)) (cddr expr)))))
-    ;; If the expression is a do* form, rename its variable bindings and body
-    ((and (consp expr) (eq (first expr) 'do*))
-     (let* ((bindings (if (every #'(lambda (x) (and (consp x) (<= (length x) 3))) (second expr))
-                          (second expr)
-                          (error "Invalid binding in do* expression: ~a" expr)))
-            (new-bindings nil)
-            (new-env env))
-       (dolist (binding bindings)
-         (let* ((var (first binding))
-                (init (second binding))
-                (step (third binding))
-                (new-var (generate-unique-name var (incf counter))))
-           (push (list new-var
-                       (rename-vars init new-env counter)
-                       (rename-vars step new-env counter))
-                 new-bindings)
-           (push (cons var new-var) new-env)))
-       `(do* ,(reverse new-bindings)
-             ,(mapcar (lambda (e) (rename-vars e new-env counter)) (third expr))
-          ,@(mapcar (lambda (e) (rename-vars e new-env counter)) (cdr (cddr expr))))))
     ;; If the expression is a MULTIPLE-VALUE-BIND, rename its variables and body
     ((and (consp expr) (eq (first expr) 'multiple-value-bind))
      (unless (and (listp (second expr)) ; Syntax checking
