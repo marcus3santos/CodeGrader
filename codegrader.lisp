@@ -335,7 +335,7 @@
                      (anony-id (format nil "~A" (sxhash (submission-std-id item))))  ;; hashes the student ID#
                      ;(anony-id (subseq (submission-std-id item) 5))
                      )
-                (format log-file-stream "Student *~a*,  result:~%~a~%" (concatenate 'string (submission-std-fname item) " " (submission-std-lname item)) seval)
+                (format log-file-stream "Student ~a (~a ~a),  result:~%~a~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
                 (setf (gethash (submission-std-id item) map) item)
                 (generate-feedback anony-id seval feedback-folder)))))
         (in-package :codegrader)
