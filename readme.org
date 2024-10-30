@@ -249,6 +249,37 @@ be handled by CodeGrader and reported as appropriate.
 
 ** Other functions
 
+*** Marking all the program files submitted by a student
+
+In case you wish to mark all the program files submitted by a student, you can use the following function:
+#+begin_example
+eval-student-solutions (std-id solutions-folder test-cases-folder output-folder)
+evaluate-solution (student-solution test-cases-dir)
+---------------------------------------------------
+Description:  Based on the given student id (std-id, an integer), the students' solutions in solutions-folder, and 
+              the test cases in test-cases-folder, generates a file in the output-folder containing the CodeGrader-generated feedback.
+Inputs:       1) std-id [integer]: The student id number
+              2) solutions-folder [string]: the full path of the folder containing the student's program files
+              3) test-cases-folder [string]: The folder containing the test cases files.
+              4) output-folder [string]: An existing folder where the generated feedback file will be saved
+
+Outputs:      
+              [string] A message informing where the feedback file has been saved.
+---------------------------------------------------
+#+end_example
+
+Usage Example: John is a student whose ID is 1234. Say you needed to
+autograde John's solutions stored in =/home/John/Solutions/=. The test
+cases are stored in =/home/John/Test-cases/=, and you want to store the feedback in =/home/John/Results/=
+#+begin_src lisp
+  CL-USER> (ql:quickload :codegrader)  ; Loading the codegrader
+  CL-USER> (cg:eval-student-solutions "/home/John/Solutions/" "/home/John/Test-cases/" "/home/John/Results/")
+  Feedback saved in /home/John/Results/3753443020201070578.txt
+  CL-USER> 
+#+end_src
+
+
+*** Marking one program file submitted by a student
 In case you wish to mark one specific submission or test your test
 case file, you can use the following function:
 #+begin_example

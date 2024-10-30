@@ -27,12 +27,12 @@
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
   (:use cl :grader :test-runtime)
-  (:export :grade-it :grade-exam :eval-solutions))
+  (:export :grade-it :grade-exam :eval-solutions :eval-student-solutions))
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader)
-  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution))
+  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions))
 
 
 

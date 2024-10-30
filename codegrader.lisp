@@ -419,8 +419,19 @@
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
 
+(defun my-feedback-file (stdid)
+  (format nil "~A.txt" (sxhash (format nil "~A" stdid))))
 
-(defun eval-solutions (solutions-folder lab &optional  test-cases-folder)
+(defun eval-student-solutions (std-id solutions-folder test-cases-folder output-folder)
+  "Based on the given student id (std-id, an integer), the students' solutions in solutions-folder, and 
+   the test cases in test-cases-folder, generates a file in the output-folder containing the CodeGrader generated feedback."
+  (let* ((fname (concatenate 'string (format nil "~A" (sxhash (format nil "~A" std-id))) ".txt"))
+	 (folder (ensure-directories-exist (concatenate 'string  (namestring output-folder) fname))))
+    (with-open-file (out folder :direction :output :if-exists :supersede)
+      (eval-solutions solutions-folder :exam test-cases-folder out))
+     (format t "Feedback saved in ~a~%" folder)))
+
+(defun eval-solutions (solutions-folder lab &optional  test-cases-folder out)
   (unless (probe-file solutions-folder)
     (error "Folder does not exist: ~S~%" solutions-folder))
   (if test-cases-folder
@@ -440,9 +451,10 @@
                  (:lab07 (get-lab-files "Lab07"))
                  (:lab08 (get-lab-files "Lab08"))
                  (:lab09 (get-lab-files "Lab09"))
+                 (:exam (directory test-cases-folder))
                  (otherwise (error "Invalid lab identifier ~a.~%Lab identifiers are in the form :labXX, where XX is the lab number, e.g., :lab03." lab)))))
          (solution-evaluations (grade-solutions solution-files test-cases-files)))
-    (generate-messages t (list (/ (reduce #'+ solution-evaluations :key #'caadr)
+    (generate-messages out (list (/ (reduce #'+ solution-evaluations :key #'caadr)
                                   (length test-cases-files))
                                solution-evaluations)))
   (in-package :cl-user))
