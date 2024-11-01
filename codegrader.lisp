@@ -431,7 +431,7 @@
       (eval-solutions solutions-folder :exam test-cases-folder out))
      (format t "Feedback saved in ~a~%" folder)))
 
-(defun eval-solutions (solutions-folder lab &optional  test-cases-folder out)
+(defun eval-solutions (solutions-folder lab &optional  test-cases-folder (out t))
   (unless (probe-file solutions-folder)
     (error "Folder does not exist: ~S~%" solutions-folder))
   (if test-cases-folder
