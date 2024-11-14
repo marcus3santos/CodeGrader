@@ -65,16 +65,16 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/ot
    create the zip file with the solutions of the students from sectoins 03 and 05:
    #+begin_src shell
      cd ~/tmp/cps305PracticumTest
-     (cd CPS30503 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *) && (cd CPS30505 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *)
+     (cd cps30503 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *) && (cd cps30505 && zip -r ~/tmp/PT1/Sections/03-05/std-sol.zip *)
    #+end_src
    You would do something similar to zip the solutions for students in section 10.
    #+begin_src shell
-     cd ~/tmp/cps305PracticumTest
-     (cd CPS30510 && zip -r ~/tmp/PT1/Sections/10/std-sol.zip *) 
+     cd ~/tmp/cps305PracticumTest/cps30510
+     zip -r ~/tmp/PT1/Sections/10/std-sol.zip 
    #+end_src
    By zipping this way, you would create a zip archive that does not
-   include the parent directories (CPS30505 and CPS30508); it only
-   includes the ENGXXX-YY/ folders in your zip archive.
+   include the parent directories (cps30505 and cps30508); it only
+   includes the eng*/ and otest*/ folders in your zip archive.
 
 2. *Create a CSV file containing the mapping of students-to-computers*:
    We assume the IT technicians have sent you CSV files containing the
@@ -146,6 +146,39 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/ot
     files/subfolders inside folder ~/Users/johndoe/A1/~.
    - (optional) ~exam-grades-export-file~ is a string representing the full path for
      the D2L exam grades exported by D2L
+
+*** If a student's solution causes a Stack Overflow and crashes CodeGrader
+While Codegrader is running each student's solution on the test cases it displays, among other things, a message providing information about the student:
+#+begin_example
+...
+Running program of student (50123456 John Doe eng205-08)
+...
+#+end_example
+If a student's solution crashes CodeGrader because of a stack overflow, do the following to enable CodeGrader to continue marking the solutions:
+1. If CodeGrader has crashed, scroll up and look for the last printed 'Running program ...etc' message and take note of the student's number and name.
+2. Remove that student from the mapping (csv) file, save the file,  and put them in a "problematic.csv" file
+3. Run codegrader again.
+4. If code grader crashed,  goto step 1.
+5. If codegrader completed the grading without crashing, manually evaluate the solutions in the problematic.csv file using  the function call below *on each pair* of solution and test case files *pt/qi.lisp* , *Test-cases/qi.lisp*.
+
+#+begin_src lisp
+(grader:evaluate-solution <solution-file> <test-case-file>)
+#+end_src 
+Where:
+- =<solution-file>= is a string containing the full path to the student solution *pt/qi.lisp*
+- =<test-case-file>= is a string containing the full path to the respective test case *Test-case/qi.lisp*
+
+The function above returns a list containing the result of the evaluation. The first item in the list is the number of points CodeGrader assessed for that solution, the last item is the feedback. If a solution caused a stack overflow and crashed CodeGrader, you will take note that that you need to assign zero points to that student's solution and the respective feedbac is "CAUSED A STACK OVERFLOW DUE TO ENDLESS RECURSION."
+
+The student's mark is the sum of the points of the evaluations of all solution files divided by the number of solution files. For example, if a solution for a question consists of files *q1.lisp*, *q2.lisp*, and *q3.lisp* and the sum of the points assessed by Codegrader is 70. Then the student's mark should be 70/3. 
+
+Create a feedback file by copy-pasting the above information as appropriate to a file and name that file by hashing the student ID using that function below:
+#+begin_src lisp
+(defun my-feedback-file (stdid)
+  (format nil "~A.txt" (sxhash (format nil "~A" stdid))))
+#+end_src
+
+Add that file to the *Feedback* folder created by CodeGarder, and enter the student's mark in the *grades.csv* file (see Section Output below).
     
 ** Output
 
