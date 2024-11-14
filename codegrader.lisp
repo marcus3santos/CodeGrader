@@ -320,6 +320,7 @@
                  (room-pc (subseq temp 0 (1- (length temp))))
                  (std (gethash room-pc map)))
             (when std
+              (format t "Running program of student ~a~%" std)
               (let* ((student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
                      (test-cases-files (directory (merge-pathnames test-cases-folder "*.lisp")))
                      (solutions-evaluations (if test-cases-files (grade-solutions student-files test-cases-files)
@@ -332,8 +333,8 @@
                                             :room-pc (fourth std)
                                             :evaluation seval
                                             :total-marks (car seval)))
-                     (anony-id (format nil "~A" (sxhash (submission-std-id item))))  ;; hashes the student ID#
-                     ;(anony-id (subseq (submission-std-id item) 5))
+                     (anony-id (format nil "~A" (sxhash (submission-std-id item)))) ;; hashes the student ID#
+                                        ;(anony-id (subseq (submission-std-id item) 5))
                      )
                 (format log-file-stream "Student ~a (~a ~a),  result:~%~a~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
                 (setf (gethash (submission-std-id item) map) item)
