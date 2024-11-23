@@ -268,28 +268,16 @@
               (get-insert-std line htable)))
     htable))
 
-
-
-(defun encode-integer (number-str str)
-  "Encode an integer NUMBER using a string STR containing an integer by XOR-ing corresponding digits."
-  (let* ((len-number (length number-str)) ; Length of the number as string
-         (len-str (length str))           ; Length of the string
-         (max-len (max len-number len-str)) ; Maximum length between the two
-         (padded-number-str (concatenate 'string
-                                         (make-array (- max-len len-number) :initial-element #\0)
-                                         number-str)) ; Zero-pad the number string
-         (padded-charcode-number-str (map 'string #'char-code padded-number-str))
-         (padded-str (concatenate 'string
-                                  (make-array (- max-len len-str) :initial-element #\0)
-                                  str))
-         (padded-charcode-str (map 'string #'char-code padded-str))) ; Zero-pad the input string
-    
-    #|(encoded-digits (map 'string 
-    (lambda (digit1 digit2)             ; ;
-    (logxor digit1 digit2))             ; ;
-    padded-number-str padded-str))) ; XOR digits ; ;
-    |#
-    (values padded-charcode-number-str  padded-charcode-str)))  ; Return the encoded result as a string
+;; -------- Not integrated to the CodeGrader yet
+(defun ck-my-solution (q#)
+  "Q# is a string identifying a question, e.g., \"q1\".
+   Checks if the student's solution is in the required folder defined in *std-sub-folder*
+   with the required file name, i.e., (concatenate 'string q# \".lisp\"),
+   and runs the solution against the given examples for that question."
+  (let ((sol-file (ck-input-files (list (concatenate 'string (namestring (user-homedir-pathname)) *std-sub-folder* q# ".lisp")))))
+    (when sol-file 
+      (ck-forbidden-symbols sol-file))))
+;;----------
 
 (defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
   "submissions-zipped-file is the zipped file containing the student solutions
@@ -298,7 +286,7 @@
   (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
          (test-cases-folder (check-foldername  (namestring (ensure-directories-exist tests-folder :verbose T))))
          (feedback-folder (merge-pathnames "student-feedback/" results-folder))
-	 ;(feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
+                                        ;(feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
 	 (subs-folder (merge-pathnames "submissions/" results-folder))
 	 (subs-folder-wfiles (progn
                                (cleanup-folder feedback-folder)
@@ -344,9 +332,9 @@
         (format *standard-output* "Slime produced the above messages when loading the students' solutions~%")
         (format *standard-output* "============================================================================~%")
         (format broadcast-stream "Done marking students solutions.~%")
-        ;(format broadcast-stream "Generating the zipped feedback folder...~%")
-        ;(zip:zip feedback-zipped feedback-folder :if-exists :supersede)
-        ;(format broadcast-stream "Done.~%")
+                                        ;(format broadcast-stream "Generating the zipped feedback folder...~%")
+                                        ;(zip:zip feedback-zipped feedback-folder :if-exists :supersede)
+                                        ;(format broadcast-stream "Done.~%")
         (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
         (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
         (when exam-grades-export-file (format broadcast-stream "Done.~%"))
