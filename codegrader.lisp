@@ -68,7 +68,7 @@
              (format out "~%The mark for this solution was reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
              (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
 	    ((equal error-type "No RT-error") 
-             (format out "~%Unit Test Resuls - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
+             (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
 	    (t (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res))))))
   (format out "~%---------------------------------------------------------------------------")
   (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
@@ -269,14 +269,19 @@
     htable))
 
 ;; -------- Not integrated to the CodeGrader yet
-(defun ck-my-solution (q#)
+(defun ck-my-solution (q# &optional testcase-file)
   "Q# is a string identifying a question, e.g., \"q1\".
    Checks if the student's solution is in the required folder defined in *std-sub-folder*
-   with the required file name, i.e., (concatenate 'string q# \".lisp\"),
+   and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
    and runs the solution against the given examples for that question."
-  (let ((sol-file (ck-input-files (list (concatenate 'string (namestring (user-homedir-pathname)) *std-sub-folder* q# ".lisp")))))
-    (when sol-file 
-      (ck-forbidden-symbols sol-file))))
+  (let* ((folder (format nil "~a~a" (namestring (user-homedir-pathname)) *std-sub-folder*))
+         (fname (format nil "~a.lisp" q#))
+         (folder-file (format nil "~a~a" folder fname)))
+    (if (probe-file folder-file)
+        (let ((eval (evaluate-solution folder-file testcase-file)))
+          (format t "~%Your ~A test results:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))
+        (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder)))
+  (in-package :cl-user))
 ;;----------
 
 (defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
