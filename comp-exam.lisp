@@ -14,19 +14,31 @@
     (let ((tkn (subseq (string-upcase line) 0 (length str))))
       (if (equal (string-upcase str) tkn) (subseq line (length str))))))
 
-(defun get-qnumber-forbid (line))
+(defun get-qnumber (line)
+  line)
+
+(defun get-item (kind input-string)
+  "Sequentially read and process items from a string."
+  (let ((position 0)
+        (length (length input-string)))
+    (loop while (< position length)
+          do
+            (multiple-value-bind (item new-position)
+                (read-from-string input-string nil nil :start position)
+              (when (null item)
+                (return)) ;; Stop processing if we encounter an invalid read
+              (when (and (listp item) (string= (string-upcase kind) (string-upcase (format nil "~a" (car item)))))
+                (return (cdr item))) ;; Replace this with your processing logic
+              (setf position new-position)))))
+
 (defun comp-exam (from)
   (if (probe-file from)
       (with-open-file (in from)
-	(let ((to (ensure-directories-exist
-		   (concatenate 'string (directory-namestring from) "gen-files/" (file-namestring from)))))
-	  (with-open-file (out to :direction :output
-				  :if-exists :supersede)
-	    (let ((question-flag nil)
-                  (examples-flag nil))
-	      (loop for line = (read-line in nil nil)
-		    while line do
-		      (format t ".")
-		      (cond ((sect-marker? line "#+Question:")
-                             (setf question-flag t)
-                             (get-qnumber-forbid (subseq line (length ) ) line))))))))))
+        (let ((question-flag nil)
+              (examples-flag nil))
+	  (loop for line = (read-line in nil nil)
+		while line do
+		  (format t ".")
+		  (cond ((sect-marker? line *question-marker*)
+                         (setf question-flag t)
+                         (format t "~a~%" (get-item "forbid" (subseq line (length *question-marker*)))))))))))
