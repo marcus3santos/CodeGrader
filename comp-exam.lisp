@@ -28,7 +28,7 @@
               (when (null item)
                 (return)) ;; Stop processing if we encounter an invalid read
               (when (and (listp item) (string= (string-upcase kind) (string-upcase (format nil "~a" (car item)))))
-                (return (cdr item))) ;; Replace this with your processing logic
+                (return (cdr item))) 
               (setf position new-position)))))
 
 (defun comp-exam (from)
