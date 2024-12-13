@@ -1,5 +1,8 @@
+;; comp-exam.lisp
 
-(defparameter *question-marker* "#+QUESTION:")
+(defparameter *question-marker* "** Question ")
+
+(defparameter *forbidden-marker* "#+FORBIDDEN:")
 
 (defparameter *begin-examples-marker* "#+BEGIN_EXAMPLE")
 
@@ -9,13 +12,20 @@
 
 (defparameter *end-test-cases-maker* "#+END_TCS")
 
+(defparameter *REPL-marker* "CL-USER>")
+
+(defstruct question
+  number forbidden examples test-cases)
+
 (defun sect-marker? (line str)
   (when (and (coerce line 'list) (>= (length line) (length str)))
     (let ((tkn (subseq (string-upcase line) 0 (length str))))
       (if (equal (string-upcase str) tkn) (subseq line (length str))))))
 
 (defun get-qnumber (line)
-  line)
+  (let ((number (read-from-string line nil nil)))
+    (if number number
+        (error "Missing question number!"))))
 
 (defun get-item (kind input-string)
   "Sequentially read and process items from a string."
@@ -31,14 +41,74 @@
                 (return (cdr item))) 
               (setf position new-position)))))
 
+(defun emit (out str)
+  (format out "~a~%" str))
+
 (defun comp-exam (from)
   (if (probe-file from)
       (with-open-file (in from)
-        (let ((question-flag nil)
-              (examples-flag nil))
-	  (loop for line = (read-line in nil nil)
-		while line do
-		  (format t ".")
-		  (cond ((sect-marker? line *question-marker*)
-                         (setf question-flag t)
-                         (format t "~a~%" (get-item "forbid" (subseq line (length *question-marker*)))))))))))
+        (let ((to (ensure-directories-exist
+		   (concatenate 'string (directory-namestring from) "gen-files/" (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
+	  (with-open-file (out to :direction :output
+				  :if-exists :supersede)
+            (let ((question-flag nil)
+                  (examples-flag nil)
+                  (an-example-flag nil)
+                  (test-cases-flag nil)
+                  (ht (make-hash-table))
+                  (examples nil)
+                  (an-example nil)
+                  (test-cases nil))
+	      (loop for line = (read-line in nil nil)
+		    while line do
+		      (format t ".")
+		      (cond ((sect-marker? line *question-marker*)
+                             (setf question-flag (get-qnumber (subseq line (length *question-marker*))))
+                             (setf (gethash question-flag ht) (make-question :number question-flag))
+                             (emit out (format nil "~a~a" *question-marker* question-flag)))
+                            ((sect-marker? line *forbidden-marker*)
+                             (setf (question-forbidden (gethash question-flag ht))
+                                   (read-from-string (subseq line (length *forbidden-marker*)) nil nil)))
+                            ((sect-marker? line *begin-examples-marker*) ;; Examples begin
+                             (setf examples-flag t)
+                             (emit out *begin-examples-marker*))
+                            ((sect-marker? line *end-examples-marker*) ;; Examples end
+                             (setf (question-examples (gethash question-flag ht))
+                                   (reverse (push (reverse an-example) examples)))
+                             (setf examples-flag nil)
+                             (setf examples nil)
+                             (setf an-example nil)
+                             (setf an-example-flag nil)
+                             (emit out *end-examples-marker*))
+                            ((and examples-flag
+                                  (not an-example-flag)
+                                  (sect-marker? line *REPL-marker*)) ;; Example begins
+                             (setf an-example-flag t)
+                             (emit out (format nil "~a~a" *REPL-marker* (subseq line (length *REPL-marker*))))
+                             (push (read-from-string (subseq line (length *REPL-marker*)) nil nil)
+                                   an-example))
+                            ((and examples-flag
+                                  an-example-flag
+                                  (sect-marker? line *REPL-marker*)) ;; Example ends
+                             (emit out (format nil "~a~a" *REPL-marker* (subseq line (length *REPL-marker*))))
+                             (push (reverse an-example) examples)
+                             (setf an-example (list (read-from-string (subseq line (length *REPL-marker*)) nil nil))))
+                            ((and examples-flag an-example-flag)
+                             (emit out line)
+                             (let ((item (read-from-string line nil nil)))
+                               (push item an-example)))
+                            ((sect-marker? line *begin-test-cases-maker*)
+                             (setf test-cases-flag t))
+                            ((sect-marker? line *end-test-cases-maker*)
+                             (setf test-cases-flag nil)
+                             (setf (question-test-cases (gethash question-flag ht))
+                                   (reverse test-cases))
+                             (setf test-cases nil))
+                            (test-cases-flag                             
+                             (push (read-from-string line nil nil) test-cases))
+                            (t (emit out line))))
+              (maphash (lambda (k v) (format t "~%Question: ~a Forbidden: ~a Examples: ~a Test cases: ~a~%"
+                                             (question-number v)
+                                             (question-forbidden v)
+                                             (question-examples v)
+                                             (question-test-cases v))) ht)))))))
