@@ -1,5 +1,6 @@
 ;; comp-exam.lisp
 
+(defparameter *parent-folder* "gen-files/")
 (defparameter *question-marker* "** Question ")
 
 (defparameter *forbidden-marker* "#+FORBIDDEN:")
@@ -44,18 +45,17 @@
 (defun emit (out str)
   (format out "~a~%" str))
 
-(defun comp-exam (from)
+(defun comp-exam (from ht)
   (if (probe-file from)
       (with-open-file (in from)
         (let ((to (ensure-directories-exist
-		   (concatenate 'string (directory-namestring from) "gen-files/" (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
+		   (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
 	  (with-open-file (out to :direction :output
 				  :if-exists :supersede)
             (let ((question-flag nil)
                   (examples-flag nil)
                   (an-example-flag nil)
-                  (test-cases-flag nil)
-                  (ht (make-hash-table))
+                  (test-cases-flag nil)                  
                   (examples nil)
                   (an-example nil)
                   (test-cases nil))
@@ -63,8 +63,8 @@
 		    while line do
 		      (format t ".")
 		      (cond ((sect-marker? line *question-marker*)
-                             (setf question-flag (get-qnumber (subseq line (length *question-marker*))))
-                             (setf (gethash question-flag ht) (make-question :number question-flag))
+                             (setf question-flag (get-qnumber (subseq line (length *question-marker*)))
+                                   (gethash question-flag ht) (make-question :number question-flag))
                              (emit out (format nil "~a~a" *question-marker* question-flag)))
                             ((sect-marker? line *forbidden-marker*)
                              (setf (question-forbidden (gethash question-flag ht))
@@ -75,10 +75,10 @@
                             ((sect-marker? line *end-examples-marker*) ;; Examples end
                              (setf (question-examples (gethash question-flag ht))
                                    (reverse (push (reverse an-example) examples)))
-                             (setf examples-flag nil)
-                             (setf examples nil)
-                             (setf an-example nil)
-                             (setf an-example-flag nil)
+                             (setf examples-flag nil
+                                   examples nil
+                                   an-example nil
+                                   an-example-flag nil)
                              (emit out *end-examples-marker*))
                             ((and examples-flag
                                   (not an-example-flag)
@@ -102,13 +102,17 @@
                             ((sect-marker? line *end-test-cases-maker*)
                              (setf test-cases-flag nil)
                              (setf (question-test-cases (gethash question-flag ht))
-                                   (reverse test-cases))
+                                   (read-from-string (apply #'concatenate 'string (reverse test-cases)) nil nil))
                              (setf test-cases nil))
                             (test-cases-flag                             
-                             (push (read-from-string line nil nil) test-cases))
-                            (t (emit out line))))
-              (maphash (lambda (k v) (format t "~%Question: ~a Forbidden: ~a Examples: ~a Test cases: ~a~%"
+                             (push line test-cases))
+                            (t (emit out line))))))))))
+
+(defun gen-exam-files (exam-specs)
+  (let ((ht (make-hash-table)))
+    (comp-exam exam-specs ht)
+    (maphash (lambda (k v) (format t "~%Question: ~a Forbidden: ~a Examples: ~a Test cases: ~a~%"
                                              (question-number v)
                                              (question-forbidden v)
                                              (question-examples v)
-                                             (question-test-cases v))) ht)))))))
+                                             (question-test-cases v))) ht)))
