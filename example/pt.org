@@ -1,0 +1,42 @@
+#+Title: Test
+#+Options: toc:nil num:nil date:nil author:nil
+
+* Questions
+** Question 1
+
+#+forbidden: (count member apply)
+
+Question 1 goes here
+
+#+begin_example
+CL-USER> (fib 3)
+23
+CL-USER> (fib 4)
+24
+CL-USER> (fib 5)
+25
+CL-USER> (fib 6)
+26
+#+end_example
+
+** Question 2
+
+#+forbidden: (count member apply)
+
+Question 2 goes here
+
+#+begin_example
+CL-USER> (fact 3)
+23
+CL-USER> (fact 4)
+24
+CL-USER> (fact 5)
+25
+CL-USER> (fact 6)
+26
+#+end_example
+
+#+begin_TCS
+  (-> (fact 4)  24)
+  (-> (fact 12) 222)
+#+end_tcs
