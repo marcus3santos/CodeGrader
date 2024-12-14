@@ -45,6 +45,20 @@
 (defun emit (out str)
   (format out "~a~%" str))
 
+(defun read-objects-from-string (input-string)
+  "Reads all Lisp objects from INPUT-STRING and returns them as a list."
+  (let ((result '())      ; List to store objects
+        (position 0))     ; Current position in the string
+    (loop
+      (multiple-value-bind (object new-position)
+          (ignore-errors (read-from-string input-string nil nil :start position))
+        (if object
+            (progn
+              (push object result)  ; Add the object to the result list
+              (setf position new-position))  ; Update position for next read
+            (return))))  ; Exit the loop when no more objects
+    (nreverse result))) 
+
 (defun comp-exam (from ht)
   (if (probe-file from)
       (with-open-file (in from)
@@ -98,17 +112,28 @@
                              (emit out line)
                              (let ((item (read-from-string line nil nil)))
                                (push item an-example)))
-                            ((sect-marker? line *begin-test-cases-maker*)
+                            ((sect-marker? line *begin-test-cases-maker*) ;; Test cases begin
                              (setf test-cases-flag t))
-                            ((sect-marker? line *end-test-cases-maker*)
+                            ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
                              (setf test-cases-flag nil)
+                             (format t "~Test cases: ~s~%" (reverse test-cases))
                              (setf (question-test-cases (gethash question-flag ht))
-                                   (read-from-string (apply #'concatenate 'string (reverse test-cases)) nil nil))
+                                   (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
                              (setf test-cases nil))
                             (test-cases-flag                             
                              (push line test-cases))
                             (t (emit out line))))))))))
 
+(defun gen-packages (from qlabel tcs)
+  (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
+        (to (ensure-directories-exist
+		   (concatenate 'string (directory-namestring from) *parent-folder* "packages/" qlabel ".lisp"))))
+    (with-open-file (out to :direction :output :if-exists :supersede)
+      (format out "~S"
+              `(defpackage ,(intern (string-upcase qlabel) :keyword) 
+                 (:documentation "Dedicated package for the student's solution store, so it does not polute CodeGrader's name space")
+                 (:use cl)
+                 (:export ,@fnames))))))
 
 (defun gen-examples-tcs (qlabel forbidden examples))
 
@@ -122,6 +147,7 @@
                      (forbidden (question-forbidden v))
                      (examples (question-examples v))
                      (test-cases (question-test-cases v)))
+                 (gen-packages exam-specs qlabel test-cases)
                  (gen-examples-tcs qlabel forbidden examples)
                  (gen-solution-tcs qlabel forbidden test-cases)
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))

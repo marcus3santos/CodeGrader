@@ -31,14 +31,21 @@ CL-USER> (fiber 6)
 #+end_example
 
 #+begin_tcs
-(deftest test-square ()
-  (check
-    (equal (square 0) 0)
-    (equal (square -1) 1)
-    (equal (square 4) 16)
-    (equal (square 40) 1600)
-    (equal (square -10) 100)
-    (equal (square 0.4) (* 0.4 0.4))))
+(deftest fib
+    (fib 0) 0
+    (fib -1) 1
+    (fib 4) 16
+    (fib 40) 1600
+    (fib -10) 100
+    (fib 0.4) (* 0.4 0.4))
+
+(deftest fiber
+    (fiber 0) 0
+    (fiber -1) 1
+    (fiber 4) 16
+    (fiber 40) 1600
+    (fiber -10) 100
+    (fiber 0.4) (* 0.4 0.4))
 #+end_tcs
 
 ** Question 2
@@ -59,7 +66,7 @@ CL-USER> (fact 6)
 #+end_example
 
 #+begin_TCS
-(deftest
-  (-> (fact 4)  24)
-  (-> (fact 12) 222))
+(deftest fact
+  (fact 4)  24
+  (fact 12) 222)
 #+end_tcs
