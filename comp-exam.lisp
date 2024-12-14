@@ -64,7 +64,8 @@
 		      (format t ".")
 		      (cond ((sect-marker? line *question-marker*)
                              (setf question-flag (get-qnumber (subseq line (length *question-marker*)))
-                                   (gethash question-flag ht) (make-question :number question-flag))
+                                   (gethash question-flag ht) (make-question :number question-flag)
+                                   examples nil)
                              (emit out (format nil "~a~a" *question-marker* question-flag)))
                             ((sect-marker? line *forbidden-marker*)
                              (setf (question-forbidden (gethash question-flag ht))
@@ -76,7 +77,7 @@
                              (setf (question-examples (gethash question-flag ht))
                                    (reverse (push (reverse an-example) examples)))
                              (setf examples-flag nil
-                                   examples nil
+                                   ;;examples nil
                                    an-example nil
                                    an-example-flag nil)
                              (emit out *end-examples-marker*))
@@ -108,6 +109,11 @@
                              (push line test-cases))
                             (t (emit out line))))))))))
 
+
+(defun gen-examples-tcs (qlabel forbidden examples))
+
+(defun gen-solution-tcs (qlabel forbidden test-cases))
+
 (defun gen-exam-files (exam-specs)
   (let ((ht (make-hash-table)))
     (comp-exam exam-specs ht)
@@ -117,4 +123,5 @@
                      (examples (question-examples v))
                      (test-cases (question-test-cases v)))
                  (gen-examples-tcs qlabel forbidden examples)
-                 (gen-solution-tcs qlabel forbidden test-cases))) ht)))
+                 (gen-solution-tcs qlabel forbidden test-cases)
+                 (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))
