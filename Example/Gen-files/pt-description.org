@@ -1,0 +1,49 @@
+#+Options: toc:nil num:nil date:nil author:nil
+#+Title: Test
+#+Options: toc:nil num:nil date:nil author:nil
+
+* Questions
+** Question 1
+
+
+Question 1 goes here
+
+#+BEGIN_EXAMPLE
+CL-USER> (fib 3)
+23
+CL-USER> (fib 4)
+24
+CL-USER> (fib 5)
+25
+CL-USER> (fib 6)
+26
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+CL-USER> (fiber 3)
+23
+CL-USER> (fiber 4)
+24
+CL-USER> (fiber 5)
+25
+CL-USER> (fiber 6)
+26
+#+END_EXAMPLE
+
+
+** Question 2
+
+
+Question 2 goes here
+
+#+BEGIN_EXAMPLE
+CL-USER> (fact 3)
+23
+CL-USER> (fact 4)
+24
+CL-USER> (fact 5)
+25
+CL-USER> (fact 6)
+26
+#+END_EXAMPLE
+

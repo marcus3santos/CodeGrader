@@ -1,6 +1,6 @@
 ;; comp-exam.lisp
 
-(defparameter *parent-folder* "gen-files/")
+(defparameter *parent-folder* "Gen-files/")
 
 (defparameter *question-marker* "** Question ")
 
@@ -70,6 +70,7 @@
 		   (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
 	  (with-open-file (out to :direction :output
 				  :if-exists :supersede)
+            (emit out "#+Options: toc:nil num:nil date:nil author:nil")
             (let ((question-flag nil)
                   (examples-flag nil)
                   (an-example-flag nil)
@@ -130,7 +131,7 @@
 (defun gen-packages (from qlabel tcs)
   (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
         (to (ensure-directories-exist
-		   (concatenate 'string (directory-namestring from) *parent-folder* "packages/" qlabel ".lisp"))))
+		   (concatenate 'string (directory-namestring from) *parent-folder* "Packages/" qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out
               `(defpackage ,(intern (string-upcase qlabel) :keyword) 
@@ -150,25 +151,45 @@
     (mapcar #'cdr (loop for key being the hash-keys of groups
                         collect (cons key (nreverse (gethash key groups)))))))
 
-(defun gen-examples-tcs (from qlabel forbidden examples)
+(defun cr-pairs (a)
+  (if (null a) a
+      (cons (list (car a) (cadr a)) (cr-pairs (cddr a)))))
+
+(defun gen-cases (out macro-name examples)
+  (emit-code out
+             `(deftest ,macro-name ()
+                (check
+                  ,@(let ((res))
+                      (dolist (e examples (reverse res)) 
+                        (push `(equalp ,(car e) ,(cadr e)) res))))))
+  (format out "~%"))
+
+(defun gen-tcs (from qlabel forbidden examples &optional folder-name)
   (let ((penalty (car forbidden))
         (funcs (cdr forbidden))
         (to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring from) *parent-folder* "examples/" qlabel ".lisp"))))
+	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,funcs)))
       (format out "~%")
-      (dolist (g-examples  (group-by-function-name examples))
-        (let ((macro-name (intern (format nil "TEST-~a" (symbol-name (caaar g-examples))))))
-          (emit-code out
-                     `(deftest ,macro-name ()
-                        (check
-                          ,@(let ((res))
-                              (dolist (e g-examples (reverse res)) 
-                                (push `(equalp ,(car e) ,(cadr e)) res))))))
-          (format out "~%"))))))
+      (let ((fm-names))
+        (dolist (g-examples  examples)
+          (let ((fm-name-cases (if (string= folder-name "Examples/")
+                                 (list (caaar g-examples) (intern (format nil "TEST-~a" (caaar g-examples))) g-examples)
+                                 (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples))))))
+            (push fm-name-cases fm-names)
+            (gen-cases out (second fm-name-cases) (third fm-name-cases))))
+        (emit-code out
+                   `(defun ,(intern (format nil "TEST-~a" (string-upcase qlabel))) ()
+                      ,@(let ((res)
+                              (rfm-names (reverse fm-names)))
+                          (dolist (e rfm-names)
+                            (push (list (second e)) res))
+                          (dolist (e rfm-names (reverse res))
+                            (push (list 'fmakunbound  (list 'quote (first e))) res)))))
+        (emit out "")
+        (emit-code out `(,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))))
 
-(defun gen-solution-tcs (qlabel forbidden test-cases))
 
 (defun gen-exam-files (exam-specs)
   (let ((ht (make-hash-table)))
@@ -178,7 +199,7 @@
                      (forbidden (question-forbidden v))
                      (examples (question-examples v))
                      (test-cases (question-test-cases v)))
-                 (gen-packages exam-specs qlabel test-cases)
-                 (gen-examples-tcs exam-specs qlabel forbidden examples)
-                 (gen-solution-tcs qlabel forbidden test-cases)
+                 (gen-packages exam-specs qlabel test-cases)                   
+                 (gen-tcs exam-specs qlabel forbidden  (group-by-function-name examples) "Examples/")
+                 (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))
