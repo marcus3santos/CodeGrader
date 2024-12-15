@@ -4,7 +4,7 @@
 * Questions
 ** Question 1
 
-#+forbidden: (count member apply)
+#+forbidden: (0.9 count apply)
 
 Question 1 goes here
 
@@ -50,7 +50,7 @@ CL-USER> (fiber 6)
 
 ** Question 2
 
-#+forbidden: (count member apply)
+#+forbidden: (0.9 count member apply)
 
 Question 2 goes here
 

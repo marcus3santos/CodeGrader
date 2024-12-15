@@ -1,6 +1,7 @@
 ;; comp-exam.lisp
 
 (defparameter *parent-folder* "gen-files/")
+
 (defparameter *question-marker* "** Question ")
 
 (defparameter *forbidden-marker* "#+FORBIDDEN:")
@@ -45,18 +46,21 @@
 (defun emit (out str)
   (format out "~a~%" str))
 
+(defun emit-code (out form)
+  (pprint form out))
+
 (defun read-objects-from-string (input-string)
   "Reads all Lisp objects from INPUT-STRING and returns them as a list."
-  (let ((result '())      ; List to store objects
-        (position 0))     ; Current position in the string
+  (let ((result '())                  ; List to store objects
+        (position 0))                 ; Current position in the string
     (loop
       (multiple-value-bind (object new-position)
           (ignore-errors (read-from-string input-string nil nil :start position))
         (if object
             (progn
-              (push object result)  ; Add the object to the result list
-              (setf position new-position))  ; Update position for next read
-            (return))))  ; Exit the loop when no more objects
+              (push object result) ; Add the object to the result list
+              (setf position new-position)) ; Update position for next read
+            (return))))           ; Exit the loop when no more objects
     (nreverse result))) 
 
 (defun comp-exam (from ht)
@@ -116,7 +120,6 @@
                              (setf test-cases-flag t))
                             ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
                              (setf test-cases-flag nil)
-                             (format t "~Test cases: ~s~%" (reverse test-cases))
                              (setf (question-test-cases (gethash question-flag ht))
                                    (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
                              (setf test-cases nil))
@@ -129,13 +132,41 @@
         (to (ensure-directories-exist
 		   (concatenate 'string (directory-namestring from) *parent-folder* "packages/" qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
-      (format out "~S"
+      (emit-code out
               `(defpackage ,(intern (string-upcase qlabel) :keyword) 
                  (:documentation "Dedicated package for the student's solution store, so it does not polute CodeGrader's name space")
                  (:use cl)
                  (:export ,@fnames))))))
 
-(defun gen-examples-tcs (qlabel forbidden examples))
+(defun split-examples (examples))
+
+(defun group-by-function-name (input-list)
+  "Group sublists by their function name (first element of the first sublist)."
+  (let ((groups (make-hash-table :test #'equal))) ; Use a hash table for grouping
+    (dolist (sublist input-list)
+      (let ((func-name (first (first sublist)))) ; Extract the function name
+        (push sublist (gethash func-name groups))))
+    ;; Convert the hash table into a list of lists
+    (mapcar #'cdr (loop for key being the hash-keys of groups
+                        collect (cons key (nreverse (gethash key groups)))))))
+
+(defun gen-examples-tcs (from qlabel forbidden examples)
+  (let ((penalty (car forbidden))
+        (funcs (cdr forbidden))
+        (to (ensure-directories-exist
+	     (concatenate 'string (directory-namestring from) *parent-folder* "examples/" qlabel ".lisp"))))
+    (with-open-file (out to :direction :output :if-exists :supersede)
+      (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,funcs)))
+      (format out "~%")
+      (dolist (g-examples  (group-by-function-name examples))
+        (let ((macro-name (intern (format nil "TEST-~a" (symbol-name (caaar g-examples))))))
+          (emit-code out
+                     `(deftest ,macro-name ()
+                        (check
+                          ,@(let ((res))
+                              (dolist (e g-examples (reverse res)) 
+                                (push `(equalp ,(car e) ,(cadr e)) res))))))
+          (format out "~%"))))))
 
 (defun gen-solution-tcs (qlabel forbidden test-cases))
 
@@ -148,6 +179,6 @@
                      (examples (question-examples v))
                      (test-cases (question-test-cases v)))
                  (gen-packages exam-specs qlabel test-cases)
-                 (gen-examples-tcs qlabel forbidden examples)
+                 (gen-examples-tcs exam-specs qlabel forbidden examples)
                  (gen-solution-tcs qlabel forbidden test-cases)
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))
