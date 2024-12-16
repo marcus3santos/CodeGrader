@@ -9,25 +9,19 @@
 Question 1 goes here
 
 #+begin_example
-CL-USER> (fib 3)
-23
-CL-USER> (fib 4)
-24
-CL-USER> (fib 5)
-25
-CL-USER> (fib 6)
-26
+(deftest fib 
+  (fib 3) 23
+  (fib 4) 24
+  (fib 5) 25
+  (fib 6) 26)
 #+end_example
 
 #+begin_example
-CL-USER> (fiber 3)
-23
-CL-USER> (fiber 4)
-24
-CL-USER> (fiber 5)
-25
-CL-USER> (fiber 6)
-26
+(deftest fiber
+  (fiber 3) 23
+  (fiber 4) 24
+  (fiber 5) 25
+  (fiber 6) 26)
 #+end_example
 
 #+begin_tcs
@@ -55,14 +49,11 @@ CL-USER> (fiber 6)
 Question 2 goes here
 
 #+begin_example
-CL-USER> (fact 3)
-23
-CL-USER> (fact 4)
-24
-CL-USER> (fact 5)
-25
-CL-USER> (fact 6)
-26
+(deftest fact
+  (fact 3) 23
+  (fact 4) 24
+  (fact 5) 25
+  (fact 6) 26)
 #+end_example
 
 #+begin_TCS

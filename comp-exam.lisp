@@ -61,7 +61,12 @@
               (push object result) ; Add the object to the result list
               (setf position new-position)) ; Update position for next read
             (return))))           ; Exit the loop when no more objects
-    (nreverse result))) 
+    (nreverse result)))
+
+(defun gen-example (out examples)
+  (dolist (pair (cr-pairs (cddr examples)))
+    (emit out (format nil "~a ~a" *REPL-marker* (car pair)))
+    (emit out (cadr pair))))
 
 (defun comp-exam (from ht)
   (if (probe-file from)
@@ -73,10 +78,8 @@
             (emit out "#+Options: toc:nil num:nil date:nil author:nil")
             (let ((question-flag nil)
                   (examples-flag nil)
-                  (an-example-flag nil)
                   (test-cases-flag nil)                  
                   (examples nil)
-                  (an-example nil)
                   (test-cases nil))
 	      (loop for line = (read-line in nil nil)
 		    while line do
@@ -94,29 +97,12 @@
                              (emit out *begin-examples-marker*))
                             ((sect-marker? line *end-examples-marker*) ;; Examples end
                              (setf (question-examples (gethash question-flag ht))
-                                   (reverse (push (reverse an-example) examples)))
-                             (setf examples-flag nil
-                                   ;;examples nil
-                                   an-example nil
-                                   an-example-flag nil)
+                                   (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
+                             (setf examples-flag nil)
+                             (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
+                             (setf examples nil)
                              (emit out *end-examples-marker*))
-                            ((and examples-flag
-                                  (not an-example-flag)
-                                  (sect-marker? line *REPL-marker*)) ;; Example begins
-                             (setf an-example-flag t)
-                             (emit out (format nil "~a~a" *REPL-marker* (subseq line (length *REPL-marker*))))
-                             (push (read-from-string (subseq line (length *REPL-marker*)) nil nil)
-                                   an-example))
-                            ((and examples-flag
-                                  an-example-flag
-                                  (sect-marker? line *REPL-marker*)) ;; Example ends
-                             (emit out (format nil "~a~a" *REPL-marker* (subseq line (length *REPL-marker*))))
-                             (push (reverse an-example) examples)
-                             (setf an-example (list (read-from-string (subseq line (length *REPL-marker*)) nil nil))))
-                            ((and examples-flag an-example-flag)
-                             (emit out line)
-                             (let ((item (read-from-string line nil nil)))
-                               (push item an-example)))
+                            (examples-flag (push line examples))
                             ((sect-marker? line *begin-test-cases-maker*) ;; Test cases begin
                              (setf test-cases-flag t))
                             ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
@@ -124,8 +110,7 @@
                              (setf (question-test-cases (gethash question-flag ht))
                                    (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
                              (setf test-cases nil))
-                            (test-cases-flag                             
-                             (push line test-cases))
+                            (test-cases-flag (push line test-cases))
                             (t (emit out line))))))))))
 
 (defun gen-packages (from qlabel tcs)
@@ -138,18 +123,6 @@
                  (:documentation "Dedicated package for the student's solution store, so it does not polute CodeGrader's name space")
                  (:use cl)
                  (:export ,@fnames))))))
-
-(defun split-examples (examples))
-
-(defun group-by-function-name (input-list)
-  "Group sublists by their function name (first element of the first sublist)."
-  (let ((groups (make-hash-table :test #'equal))) ; Use a hash table for grouping
-    (dolist (sublist input-list)
-      (let ((func-name (first (first sublist)))) ; Extract the function name
-        (push sublist (gethash func-name groups))))
-    ;; Convert the hash table into a list of lists
-    (mapcar #'cdr (loop for key being the hash-keys of groups
-                        collect (cons key (nreverse (gethash key groups)))))))
 
 (defun cr-pairs (a)
   (if (null a) a
@@ -174,9 +147,7 @@
       (format out "~%")
       (let ((fm-names))
         (dolist (g-examples  examples)
-          (let ((fm-name-cases (if (string= folder-name "Examples/")
-                                 (list (caaar g-examples) (intern (format nil "TEST-~a" (caaar g-examples))) g-examples)
-                                 (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples))))))
+          (let ((fm-name-cases (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples)))))
             (push fm-name-cases fm-names)
             (gen-cases out (second fm-name-cases) (third fm-name-cases))))
         (emit-code out
@@ -200,6 +171,6 @@
                      (examples (question-examples v))
                      (test-cases (question-test-cases v)))
                  (gen-packages exam-specs qlabel test-cases)                   
-                 (gen-tcs exam-specs qlabel forbidden  (group-by-function-name examples) "Examples/")
+                 (gen-tcs exam-specs qlabel forbidden examples "Examples/")
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))

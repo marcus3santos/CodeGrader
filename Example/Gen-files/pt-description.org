@@ -9,24 +9,24 @@
 Question 1 goes here
 
 #+BEGIN_EXAMPLE
-CL-USER> (fib 3)
+CL-USER> (FIB 3)
 23
-CL-USER> (fib 4)
+CL-USER> (FIB 4)
 24
-CL-USER> (fib 5)
+CL-USER> (FIB 5)
 25
-CL-USER> (fib 6)
+CL-USER> (FIB 6)
 26
 #+END_EXAMPLE
 
 #+BEGIN_EXAMPLE
-CL-USER> (fiber 3)
+CL-USER> (FIBER 3)
 23
-CL-USER> (fiber 4)
+CL-USER> (FIBER 4)
 24
-CL-USER> (fiber 5)
+CL-USER> (FIBER 5)
 25
-CL-USER> (fiber 6)
+CL-USER> (FIBER 6)
 26
 #+END_EXAMPLE
 
@@ -37,13 +37,13 @@ CL-USER> (fiber 6)
 Question 2 goes here
 
 #+BEGIN_EXAMPLE
-CL-USER> (fact 3)
+CL-USER> (FACT 3)
 23
-CL-USER> (fact 4)
+CL-USER> (FACT 4)
 24
-CL-USER> (fact 5)
+CL-USER> (FACT 5)
 25
-CL-USER> (fact 6)
+CL-USER> (FACT 6)
 26
 #+END_EXAMPLE
 
