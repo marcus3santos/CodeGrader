@@ -1,14 +1,9 @@
 #+Title: Common Lisp Practicum Test
-#+Options: toc:nil num:nil date:nil author:nil
+#+folder: pt 
 
 * Questions
-** Question 1
+** Question (1 (0.9 count apply))
  
-Note: 
-- Save your solution in the folder: =~/pt/=
-- In the parts of this question, you are not allowed to use or refer to the following Lisp functions and symbols: COUNT, APPLY
-
-#+forbidden: (0.9 count apply)
 
 - **Part 1:** Write a function =count-occurrences= that takes an element and a list as arguments and returns the number of times the element appears in the list. You may not use the =COUNT= function.
 
@@ -40,13 +35,12 @@ Note:
     (contains-all? '() '()) t)
 #+end_tcs
 
-** Question 2
+** Question (2 (0.9 reverse nreverse))
 
 Note: 
 - Save your solution in the folder: =~/pt/=
 - In the parts of this question, you are not allowed to use or refer to the following Lisp functions and symbols: REVERSE, NREVERSE
 
-#+forbidden: (0.9 reverse nreverse)
 
 - **Part 1:** Write a function =reverse-list= that takes a list as an argument and returns a new list that is the reverse of the original list. You may not use =REVERSE= or =NREVERSE=.
 

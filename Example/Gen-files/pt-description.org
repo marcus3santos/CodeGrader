@@ -1,49 +1,70 @@
 #+Options: toc:nil num:nil date:nil author:nil
-#+Title: Test
-#+Options: toc:nil num:nil date:nil author:nil
+#+Title: Common Lisp Practicum Test
 
 * Questions
 ** Question 1
 
+*NOTE*:
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/PT/q1.lisp*
+- You must not use or refer to the following Lisp built-in functions
+  and symbols: COUNT, APPLY, . The penalty for doing so is a deduction
+  of 90.0% on your score for the your solutions for this question
+ 
 
-Question 1 goes here
+- **Part 1:** Write a function =count-occurrences= that takes an element and a list as arguments and returns the number of times the element appears in the list. You may not use the =COUNT= function.
 
 #+BEGIN_EXAMPLE
-CL-USER> (FIB 3)
-23
-CL-USER> (FIB 4)
-24
-CL-USER> (FIB 5)
-25
-CL-USER> (FIB 6)
-26
+CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
+3
+CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
+3
+CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
+0
 #+END_EXAMPLE
 
+- **Part 2:** Write a function =contains-all?= that takes two lists as arguments and returns =T= if all elements of the first list are contained in the second list, and =NIL= otherwise.
+
 #+BEGIN_EXAMPLE
-CL-USER> (FIBER 3)
-23
-CL-USER> (FIBER 4)
-24
-CL-USER> (FIBER 5)
-25
-CL-USER> (FIBER 6)
-26
+CL-USER> (CONTAINS-ALL? '(1 2) '(1 2 3 4))
+T
+CL-USER> (CONTAINS-ALL? '(1 5) '(1 2 3 4))
+NIL
+CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
+T
 #+END_EXAMPLE
 
 
 ** Question 2
 
+*NOTE*:
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/PT/q2.lisp*
+- You must not use or refer to the following Lisp built-in functions and symbols: REVERSE, NREVERSE, . The penalty for doing so is a deduction of 90.0% on your score for the your solutions for this question
 
-Question 2 goes here
+Note: 
+- Save your solution in the folder: =~/pt/=
+- In the parts of this question, you are not allowed to use or refer to the following Lisp functions and symbols: REVERSE, NREVERSE
+
+
+- **Part 1:** Write a function =reverse-list= that takes a list as an argument and returns a new list that is the reverse of the original list. You may not use =REVERSE= or =NREVERSE=.
 
 #+BEGIN_EXAMPLE
-CL-USER> (FACT 3)
-23
-CL-USER> (FACT 4)
-24
-CL-USER> (FACT 5)
-25
-CL-USER> (FACT 6)
-26
+CL-USER> (REVERSE-LIST '(1 2 3 4))
+'(4 3 2 1)
+CL-USER> (REVERSE-LIST '(A B C))
+'(C B A)
+CL-USER> (REVERSE-LIST 'NIL)
+'NIL
 #+END_EXAMPLE
+
+- **Part 2:** Write a function =palindrome?= that takes a list as an argument and returns =T= if the list is a palindrome (reads the same forwards and backwards), and =NIL= otherwise. You may not use =REVERSE= or =NREVERSE=.
+
+#+BEGIN_EXAMPLE
+CL-USER> (PALINDROME? '(1 2 3 2 1))
+T
+CL-USER> (PALINDROME? '(A B C D))
+NIL
+CL-USER> (PALINDROME? 'NIL)
+T
+#+END_EXAMPLE
+
 

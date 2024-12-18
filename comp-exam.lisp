@@ -4,7 +4,7 @@
 
 (defparameter *question-marker* "** Question ")
 
-(defparameter *forbidden-marker* "#+FORBIDDEN:")
+(defparameter *folder-marker* "#+FOLDER:")
 
 (defparameter *begin-examples-marker* "#+BEGIN_EXAMPLE")
 
@@ -24,11 +24,11 @@
     (let ((tkn (subseq (string-upcase line) 0 (length str))))
       (if (equal (string-upcase str) tkn) (subseq line (length str))))))
 
-(defun get-qnumber (line)
-  (let ((number (read-from-string line nil nil)))
-    (if number number
-        (error "Missing question number!"))))
-
+(defun get-params (line)
+  (let ((params (read-from-string line nil nil)))
+    (if params params
+        (error "Missing question parameters!"))))
+#|
 (defun get-item (kind input-string)
   "Sequentially read and process items from a string."
   (let ((position 0)
@@ -42,6 +42,7 @@
               (when (and (listp item) (string= (string-upcase kind) (string-upcase (format nil "~a" (car item)))))
                 (return (cdr item))) 
               (setf position new-position)))))
+|#
 
 (defun emit (out str)
   (format out "~a~%" str))
@@ -76,7 +77,8 @@
 	  (with-open-file (out to :direction :output
 				  :if-exists :supersede)
             (emit out "#+Options: toc:nil num:nil date:nil author:nil")
-            (let ((question-flag nil)
+            (let ((folder-flag nil)
+                  (question-flag nil)
                   (examples-flag nil)
                   (test-cases-flag nil)                  
                   (examples nil)
@@ -84,34 +86,45 @@
 	      (loop for line = (read-line in nil nil)
 		    while line do
 		      (format t ".")
-		      (cond ((sect-marker? line *question-marker*)
-                             (setf question-flag (get-qnumber (subseq line (length *question-marker*)))
-                                   (gethash question-flag ht) (make-question :number question-flag)
-                                   examples nil)
-                             (emit out (format nil "~a~a" *question-marker* question-flag)))
-                            ((sect-marker? line *forbidden-marker*)
-                             (setf (question-forbidden (gethash question-flag ht))
-                                   (read-from-string (subseq line (length *forbidden-marker*)) nil nil)))
-                            ((sect-marker? line *begin-examples-marker*) ;; Examples begin
-                             (setf examples-flag t)
-                             (emit out *begin-examples-marker*))
-                            ((sect-marker? line *end-examples-marker*) ;; Examples end
-                             (setf (question-examples (gethash question-flag ht))
-                                   (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
-                             (setf examples-flag nil)
-                             (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
-                             (setf examples nil)
-                             (emit out *end-examples-marker*))
-                            (examples-flag (push line examples))
-                            ((sect-marker? line *begin-test-cases-maker*) ;; Test cases begin
-                             (setf test-cases-flag t))
-                            ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
-                             (setf test-cases-flag nil)
-                             (setf (question-test-cases (gethash question-flag ht))
-                                   (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
-                             (setf test-cases nil))
-                            (test-cases-flag (push line test-cases))
-                            (t (emit out line))))))))))
+		      (cond
+                        ((sect-marker? line *folder-marker*)
+                         (setf folder-flag (get-params (subseq line (length *folder-marker*)))))
+                        ((sect-marker? line *question-marker*)
+                         (unless folder-flag
+                           (error "Missing #+FOLDER from org file header"))
+                         (let ((params (get-params (subseq line (length *question-marker*)))))
+                           (unless (numberp (car params))
+                             (error "Missing question number!"))
+                           (setf question-flag (car params)
+                                 (gethash question-flag ht) (make-question :number question-flag
+                                                                           :forbidden (cadr params))
+                                 examples nil)
+                           (emit out (format nil "~a~a" *question-marker* question-flag))
+                           (emit out "")
+                           (emit out "*NOTE*:")
+                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag question-flag))
+                           (when (second params)
+                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{~a, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question" (cdr (second params)) (* 100 (first (second params))))))))
+                        ((sect-marker? line *begin-examples-marker*) ;; Examples begin
+                         (setf examples-flag t)
+                         (emit out *begin-examples-marker*))
+                        ((sect-marker? line *end-examples-marker*) ;; Examples end
+                         (setf (question-examples (gethash question-flag ht))
+                               (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
+                         (setf examples-flag nil)
+                         (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
+                         (setf examples nil)
+                         (emit out *end-examples-marker*))
+                        (examples-flag (push line examples))
+                        ((sect-marker? line *begin-test-cases-maker*) ;; Test cases begin
+                         (setf test-cases-flag t))
+                        ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
+                         (setf test-cases-flag nil)
+                         (setf (question-test-cases (gethash question-flag ht))
+                               (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
+                         (setf test-cases nil))
+                        (test-cases-flag (push line test-cases))
+                        (t (emit out line))))))))))
 
 (defun gen-packages (from qlabel tcs)
   (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
