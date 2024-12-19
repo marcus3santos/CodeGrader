@@ -2,6 +2,7 @@
 #+folder: pt 
 
 * Questions
+
 ** Question 1 
  
 
@@ -22,6 +23,8 @@
   (contains-all? '(1 5) '(1 2 3 4)) nil
   (contains-all? '() '(1 2 3)) t)
 #+end_example
+
+# Test cases for Q1
 
 #+begin_tcs
 (deftest count-occurrences
@@ -54,6 +57,8 @@
   (palindrome? '(a b c d)) nil
   (palindrome? '()) t)
 #+end_example
+
+# Test cases for Q2
 
 #+begin_tcs
 (deftest reverse-list
