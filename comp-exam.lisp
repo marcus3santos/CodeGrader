@@ -28,21 +28,7 @@
   (let ((params (read-from-string line nil nil)))
     (if params params
         (error "Missing question parameters!"))))
-#|
-(defun get-item (kind input-string)
-  "Sequentially read and process items from a string."
-  (let ((position 0)
-        (length (length input-string)))
-    (loop while (< position length)
-          do
-            (multiple-value-bind (item new-position)
-                (read-from-string input-string nil nil :start position)
-              (when (null item)
-                (return)) ;; Stop processing if we encounter an invalid read
-              (when (and (listp item) (string= (string-upcase kind) (string-upcase (format nil "~a" (car item)))))
-                (return (cdr item))) 
-              (setf position new-position)))))
-|#
+
 
 (defun emit (out str)
   (format out "~a~%" str))
@@ -88,23 +74,27 @@
 		      (format t ".")
 		      (cond
                         ((sect-marker? line *folder-marker*)
-                         (setf folder-flag (get-params (subseq line (length *folder-marker*)))))
+                         (setf folder-flag (car (read-objects-from-string (subseq line (length *folder-marker*))))))
                         ((sect-marker? line *question-marker*)
                          (unless folder-flag
                            (error "Missing #+FOLDER from org file header"))
-                         (let ((params (get-params (subseq line (length *question-marker*)))))
-                           (unless (numberp (car params))
+                         (let* ((params (read-objects-from-string (subseq line (length *question-marker*))))
+                                (number (first params))
+                                (penalty (nth 2 params))
+                                (forbidden (nth 4 params)))
+                           (unless (numberp number)
                              (error "Missing question number!"))
-                           (setf question-flag (car params)
-                                 (gethash question-flag ht) (make-question :number question-flag
-                                                                           :forbidden (cadr params))
+                           (setf question-flag number
+                                 (gethash question-flag ht) (make-question :number number
+                                                                           :forbidden forbidden)
                                  examples nil)
                            (emit out (format nil "~a~a" *question-marker* question-flag))
                            (emit out "")
                            (emit out "*NOTE*:")
-                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag question-flag))
-                           (when (second params)
-                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{~a, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question" (cdr (second params)) (* 100 (first (second params))))))))
+                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag number))
+                           (if penalty
+                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{~a, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
+                             (emit out (format nil "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.")))))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
                          (setf examples-flag t)
                          (emit out *begin-examples-marker*))
