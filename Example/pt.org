@@ -3,10 +3,12 @@
 
 * Questions
 
-** Question 1 
+** Question 1 :penalty 80 :forbidden (count member)
  
 
-**Part 1:** Write a function =count-occurrences= that takes an element and a list as arguments and returns the number of times the element appears in the list. You may not use the =COUNT= function.
+**Part 1:** Write a function =count-occurrences= that takes an element
+and a list as arguments and returns the number of times the element
+appears in the list. 
 
 #+begin_example
 (deftest count-occurrences
@@ -15,7 +17,9 @@
   (count-occurrences 5 '(1 2 3 4)) 0)
 #+end_example
 
-**Part 2:** Write a function =contains-all?= that takes two lists as arguments and returns =T= if all elements of the first list are contained in the second list, and =NIL= otherwise.
+**Part 2:** Write a function =contains-all?= that takes two lists as
+arguments and returns =T= if all elements of the first list are
+contained in the second list, and =NIL= otherwise.
 
 #+begin_example
 (deftest contains-all
@@ -40,7 +44,9 @@
 
 ** Question 2 :penalty 80 :forbidden (reverse nreverse)
 
-**Part 1:** Write a function =reverse-list= that takes a list as an argument and returns a new list that is the reverse of the original list. You may not use =REVERSE= or =NREVERSE=.
+**Part 1:** Write a function =reverse-list= that takes a list as an
+argument and returns a new list that is the reverse of the original
+list. 
 
 #+begin_example
 (deftest reverse-list
@@ -49,7 +55,10 @@
   (reverse-list '()) '())
 #+end_example
 
-**Part 2:** Write a function =palindrome?= that takes a list as an argument and returns =T= if the list is a palindrome (reads the same forwards and backwards), and =NIL= otherwise. You may not use =REVERSE= or =NREVERSE=.
+**Part 2:** Write a function =palindrome?= that takes a list as an
+argument and returns =T= if the list is a palindrome (reads the same
+forwards and backwards), and =NIL= otherwise. You may not use
+=REVERSE= or =NREVERSE=.
 
 #+begin_example
 (deftest palindrome
