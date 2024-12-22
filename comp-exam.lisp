@@ -74,7 +74,8 @@
 		      (format t ".")
 		      (cond
                         ((sect-marker? line *folder-marker*)
-                         (setf folder-flag (car (read-objects-from-string (subseq line (length *folder-marker*))))))
+                         (let ((folder (subseq line (length *folder-marker*))))
+                           (setf folder-flag (subseq folder (position #\  folder :test-not #'char=)))))
                         ((sect-marker? line *question-marker*)
                          (unless folder-flag
                            (error "Missing #+FOLDER from org file header"))
@@ -93,7 +94,7 @@
                            (emit out "*NOTE*:")
                            (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag number))
                            (if penalty
-                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{~a, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
+                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
                              (emit out (format nil "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.")))))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
                          (setf examples-flag t)
@@ -110,8 +111,8 @@
                          (setf test-cases-flag t))
                         ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
                          (setf test-cases-flag nil)
-                         (setf (question-test-cases (gethash question-flag ht))
-                               (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
+                         (push (car (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
+                               (question-test-cases (gethash question-flag ht)))
                          (setf test-cases nil))
                         (test-cases-flag (push line test-cases))
                         (t (emit out line))))))))))
@@ -172,7 +173,7 @@
                (let ((qlabel (format nil "q~a" (question-number v)))
                      (forbidden (question-forbidden v))
                      (examples (question-examples v))
-                     (test-cases (question-test-cases v)))
+                     (test-cases (reverse (question-test-cases v))))
                  (gen-packages exam-specs qlabel test-cases)                   
                  (gen-tcs exam-specs qlabel forbidden examples "Examples/")
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")

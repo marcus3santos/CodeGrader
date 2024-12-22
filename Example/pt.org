@@ -17,6 +17,13 @@ appears in the list.
   (count-occurrences 5 '(1 2 3 4)) 0)
 #+end_example
 
+# Test cases
+#+begin_tcs
+(deftest count-occurrences
+    (count-occurrences 1 '(1 1 1 1 1)) 5
+    (count-occurrences 0 '(1 2 3 4)) 0
+    (count-occurrences 'z '(a b c z z)) 2)
+#+end_tcs
 **Part 2:** Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
@@ -28,14 +35,8 @@ contained in the second list, and =NIL= otherwise.
   (contains-all? '() '(1 2 3)) t)
 #+end_example
 
-# Test cases for Q1
-
+# Test cases
 #+begin_tcs
-(deftest count-occurrences
-    (count-occurrences 1 '(1 1 1 1 1)) 5
-    (count-occurrences 0 '(1 2 3 4)) 0
-    (count-occurrences 'z '(a b c z z)) 2)
-
 (deftest contains-all
     (contains-all? '(a b) '(a b c d e)) t
     (contains-all? '(a z) '(a b c d)) nil
@@ -55,6 +56,14 @@ list.
   (reverse-list '()) '())
 #+end_example
 
+# Test cases
+#+begin_tcs
+(deftest reverse-list
+    (reverse-list '(1 2 3 4 5)) '(5 4 3 2 1)
+    (reverse-list '()) '()
+    (reverse-list '(a b c)) '(c b a))
+#+end_tcs
+
 **Part 2:** Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same
 forwards and backwards), and =NIL= otherwise. You may not use
@@ -67,14 +76,8 @@ forwards and backwards), and =NIL= otherwise. You may not use
   (palindrome? '()) t)
 #+end_example
 
-# Test cases for Q2
-
+# Test cases
 #+begin_tcs
-(deftest reverse-list
-    (reverse-list '(1 2 3 4 5)) '(5 4 3 2 1)
-    (reverse-list '()) '()
-    (reverse-list '(a b c)) '(c b a))
-
 (deftest palindrome
     (palindrome? '(x y x)) t
     (palindrome? '(x y z)) nil
