@@ -28,7 +28,7 @@ downloaded from D2L as a zip file, or solutions that have been saved
 in the computer where the student took the test. For this tutorial, we
 assume the latter. 
 
-The IT Technicians have created and shared with the instructor a zip archive file containing containing the students' solutions stored in in specific folders named
+We also assume there is zip archive file containing the students' solutions originally stored in specific folders named
 *cps05YY/engXXX-ZZ/pt/* or *cps305YY/otest-KK*, where *YY* is the course section number and *KK* is an integer number,
 *engXX* is the lab room number, and *engXXX-ZZ* is the computer's ID
 number. For example, suppose one student from section 05 took the exam
