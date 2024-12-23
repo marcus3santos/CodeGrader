@@ -52,8 +52,10 @@
 
 (defun gen-example (out examples)
   (dolist (pair (cr-pairs (cddr examples)))
-    (emit out (format nil "~a ~a" *REPL-marker* (car pair)))
-    (emit out (cadr pair))))
+    (emit out (format nil "~a ~s" *REPL-marker* (car pair)))
+    (emit out (if (and (listp (cadr pair)) (eql (car (cadr pair)) 'quote))
+                  (format nil "(~{~s~^ ~})" (second (cadr pair)))
+                  (format nil "~s" (cadr pair))))))
 
 (defun comp-exam (from ht)
   (if (probe-file from)
@@ -71,7 +73,7 @@
                   (test-cases nil))
 	      (loop for line = (read-line in nil nil)
 		    while line do
-		      (format t ".")
+		      (format t "~a" (aref #(#\/ #\\) (random 2)))
 		      (cond
                         ((sect-marker? line *folder-marker*)
                          (let ((folder (subseq line (length *folder-marker*))))
@@ -87,14 +89,14 @@
                              (error "Missing question number!"))
                            (setf question-flag number
                                  (gethash question-flag ht) (make-question :number number
-                                                                           :forbidden forbidden)
+                                                                           :forbidden (list (/ penalty 100.0) forbidden))
                                  examples nil)
                            (emit out (format nil "~a~a" *question-marker* question-flag))
                            (emit out "")
                            (emit out "*NOTE*:")
                            (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag number))
                            (if penalty
-                             (emit out (format nil "- You must not use or refer to the following Lisp built-in functions and symbols: ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
+                             (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
                              (emit out (format nil "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.")))))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
                          (setf examples-flag t)
@@ -142,13 +144,13 @@
   (format out "~%"))
 
 (defun gen-tcs (from qlabel forbidden examples &optional folder-name)
-  (let ((penalty (car forbidden))
-        (funcs (cdr forbidden))
+  (let ((penalty (first forbidden))
+        (funcs (second forbidden))
         (to (ensure-directories-exist
 	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,funcs)))
-      (format out "~%")
+      (emit out "")
       (let ((fm-names))
         (dolist (g-examples  examples)
           (let ((fm-name-cases (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples)))))
