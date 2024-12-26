@@ -13,7 +13,9 @@
   total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
 
 ;; Folder in student's home directory storing their solutions
-(defvar *std-sub-folder* "pt/")
+(defparameter *std-sub-folder* "pt/")
+
+(defparameter *pt-examples-folder* "~/pt-examples/")
 
 (defun check-input-files (lf)
   (when lf
@@ -269,16 +271,20 @@
     htable))
 
 ;; -------- Not integrated to the CodeGrader yet
-(defun ck-my-solution (q# &optional testcase-file)
+(defun ck-my-solution (q#)
   "Q# is a string identifying a question, e.g., \"q1\".
    Checks if the student's solution is in the required folder defined in *std-sub-folder*
    and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
-   and runs the solution against the given examples for that question."
+   and runs the solution against the given examples for that question stored in
+   *pt-examples-folder*/q#.lisp."
   (let* ((folder (format nil "~a~a" (namestring (user-homedir-pathname)) *std-sub-folder*))
          (fname (format nil "~a.lisp" q#))
-         (folder-file (format nil "~a~a" folder fname)))
+         (folder-file (format nil "~a~a" folder fname))
+         (testcase-file (directory (format nil "~a~a" *pt-examples-folder* fname))))
+    (unless testcase-file
+      (error "~%!!! Test case file or folder does not exist !!!"))
     (if (probe-file folder-file)
-        (let ((eval (evaluate-solution folder-file testcase-file)))
+        (let ((eval (evaluate-solution folder-file (namestring (car testcase-file)))))
           (format t "~%Your ~A test results:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))
         (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder)))
   (in-package :cl-user))
