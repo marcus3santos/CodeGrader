@@ -43,3 +43,21 @@ Codegrader will load all defpackages before loading and running the student's so
 Then, in the test cases file for a given question, q_i, where a given function func is tested, we will refer to that function by mentioning its package q_i:func
 |#
 
+(defpackage #:cg-sandbox
+  (:use :cl)
+  (:shadow "OPEN" "LOAD" "EVAL" "DELETE-FILE")) ; Shadow restricted functions
+
+(in-package :cg-sandbox)
+
+;; Redefine restricted functions
+(defun open (path &key (direction :input) &allow-other-keys)
+  (error "Access to OPEN is restricted in the sandbox."))
+
+(defun load (path &key &allow-other-keys)
+  (error "Access to LOAD is restricted in the sandbox."))
+
+(defun eval (form)
+  (error "Access to EVAL is restricted in the sandbox."))
+
+(defun delete-file (path)
+  (error "Access to DELETE-FILE is restricted in the sandbox."))

@@ -122,13 +122,13 @@
 (defun gen-packages (from qlabel tcs)
   (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
         (to (ensure-directories-exist
-		   (concatenate 'string (directory-namestring from) *parent-folder* "Packages/" qlabel ".lisp"))))
+	     (concatenate 'string (directory-namestring from) *parent-folder* "Packages/" qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out
-                 `(defpackage ,(intern (string-upcase (concatenate 'string qlabel "-sandbox")) :keyword) 
-                 (:documentation "Dedicated package for sandboxing the student's solution")
-                 (:use cl)
-                 (:export ,@fnames))))))
+                 `(defpackage ,(intern (string-upcase qlabel) :keyword) 
+                    (:documentation "Dedicated package for sandboxing the student's solution")
+                    (:use cl cg-sandbox)
+                    (:export ,@fnames))))))
 
 (defun cr-pairs (a)
   (if (null a) a
@@ -176,7 +176,6 @@
                      (forbidden (question-forbidden v))
                      (examples (question-examples v))
                      (test-cases (reverse (question-test-cases v))))
-                 (format t "----~a~%" test-cases)
                  (gen-packages exam-specs qlabel test-cases)                   
                  (gen-tcs exam-specs qlabel forbidden examples "Examples/")
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
