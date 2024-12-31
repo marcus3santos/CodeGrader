@@ -28,29 +28,14 @@
   (:use :common-lisp :cl-user :codegrader :grader)
   (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :ck-my-solution))
 
-#|
-(defpackage :q_i
-  (:documentation "Dedicated package for the student's solution store in file q_i,lisp, so it does not polute CodeGrader's name space")
-  (:use cl)
-  (:export <All functions asked in a question>))
-
-The idea here is to have a qpackages.lisp file containing one defpackage for each question of an assessment.
-
-The folder containing the defpackages for an assessment will be provided as a new argument to cg:grade-exam ;
-
-Codegrader will load all defpackages before loading and running the student's solutions.
-
-Then, in the test cases file for a given question, q_i, where a given function func is tested, we will refer to that function by mentioning its package q_i:func
-|#
-
 (defpackage #:cg-sandbox
-  (:use :cl)
+  (:use :cl :rutils)
   (:shadow 
    "OPEN" "LOAD" "EVAL" "DELETE-FILE" 
    "WITH-OPEN-FILE" "RUN-PROGRAM" "SB-EXT:RUN-PROGRAM"
    "PROBE-FILE" "FILE-WRITE-DATE" "RENAME-FILE" "ENSURE-DIRECTORIES-EXIST"
    "DIRECTORY" "READ" "WRITE" "READ-LINE" "READ-FROM-STRING"
-   "COMPILE" "COMPILE-FILE" "SB-EXT:QUIT" "GC" "FORMAT"
+   "COMPILE" "COMPILE-FILE" "QUIT" "GC" "FORMAT"
    "DEFPACKAGE" "IN-PACKAGE"))
 
 (in-package :cg-sandbox)
@@ -68,7 +53,7 @@ Then, in the test cases file for a given question, q_i, where a given function f
 (defun delete-file (path)
   (error "Access to DELETE-FILE is restricted in the sandbox."))
 
-(defun with-open-file (stream-spec &body body)
+(defun with-open-file (&rest args)
   (error "Access to WITH-OPEN-FILE is restricted in the sandbox."))
 
 (defun run-program (&rest args)
@@ -107,7 +92,7 @@ Then, in the test cases file for a given question, q_i, where a given function f
 (defun compile-file (pathname &key &allow-other-keys)
   (error "Access to COMPILE-FILE is restricted in the sandbox."))
 
-(defun sb-ext:quit (&rest args)
+(defun quit (&rest args)
   (error "Access to SB-EXT:QUIT is restricted in the sandbox."))
 
 (defun gc ()

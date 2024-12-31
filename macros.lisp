@@ -104,8 +104,9 @@
     (setf *forbidden-symbols* symbols)))
 
 (defun safely-load (file)
-  (let ((current *package*))
-    (in-package :cg-sandbox)
+  (let ((current *package*)
+        (q-package (intern (string-upcase (pathname-name (file-namestring file))) :keyword)))
+    (in-package q-package)
     (load file)
     (setf *package* current)))
 
