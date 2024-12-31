@@ -103,6 +103,11 @@
     (setf *penalty-forbidden* penalty)
     (setf *forbidden-symbols* symbols)))
 
+(defun safely-load (file)
+  (let ((current *package*))
+    (in-package :cg-sandbox)
+    (load file)
+    (setf *package* current)))
 
 (defun rewrite-load (file)
   "Gets rid of CR characters in file creating new file, signals a warning, loads new file,
@@ -128,11 +133,8 @@
         (return t)))))
 
 (defun load-solution (file)
-  (if (has-cr? file)
-      (rewrite-load file)
-      ;(mod-load-progfile file)
-      (load file)
-      ))
+  (if (has-cr? file) (rewrite-load file)
+      (load file)))
 
 (defun handle-solution-loading (student-solution)
   (handler-case (load-solution student-solution)
