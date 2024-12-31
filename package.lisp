@@ -93,7 +93,7 @@
   (error "Access to COMPILE-FILE is restricted in the sandbox."))
 
 (defun quit (&rest args)
-  (error "Access to SB-EXT:QUIT is restricted in the sandbox."))
+  (error "Access to QUIT is restricted in the sandbox."))
 
 (defun gc ()
   (error "Access to GC is restricted in the sandbox."))
