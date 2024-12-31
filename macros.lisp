@@ -103,7 +103,9 @@
     (setf *penalty-forbidden* penalty)
     (setf *forbidden-symbols* symbols)))
 
-(defun safely-load (file)
+(defun safely-load-std-solution (file)
+  "Changes to the sandboxed name space for the respective test question then loads
+   the student's solution"
   (let ((current *package*)
         (q-package (intern (string-upcase (pathname-name (file-namestring file))) :keyword)))
     (in-package q-package)
