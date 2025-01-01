@@ -125,7 +125,7 @@
 	     (concatenate 'string (directory-namestring from) *parent-folder* "Packages/" qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out
-                 `(defpackage ,(intern (string-upcase qlabel) :keyword) 
+                 `(defpackage ,(string-upcase qlabel) ;,(intern (string-upcase qlabel) :keyword) 
                     (:documentation "Dedicated package for sandboxing the student's solution")
                     (:use cl cg-sandbox)
                     (:export ,@fnames))))))

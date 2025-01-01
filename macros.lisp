@@ -104,11 +104,11 @@
     (setf *forbidden-symbols* symbols)))
 
 (defun safely-load-std-solution (file)
-  "Changes to the sandboxed name space for the respective test question then loads
-   the student's solution"
+  "Changes the current environment to the question's sandboxed environment  then loads
+   the student's solution. Assumes the package for the respective test question has already been loaded."
   (let ((current *package*)
-        (q-package (intern (string-upcase (pathname-name (file-namestring file))) :keyword)))
-    (in-package q-package)
+        (q-package (find-package (string-upcase (pathname-name (file-namestring file))))))
+    (setf *package* q-package)
     (load file)
     (setf *package* current)))
 

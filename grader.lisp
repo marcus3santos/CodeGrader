@@ -201,17 +201,26 @@ the mark is calculated as the # of passes divided by the total # of cases.
             do (format content "~A~%" line))      ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
+;; Test
+
+(defun tester (student-solution q-package)
+  (load q-package)
+  (safely-load-std-solution student-solution)
+  (in-package :test-runtime))
+
+;;
 (defun grade-code (student-solution test-cases &optional ws)
   "Loads the student-solution file, loads the test cases, runs
   the test cases, and returns the percentage of correct results over total results"
   (let ((description "No runtime errors"))
+    ;; ** HERE
     (in-package :test-runtime)
     (setf *results* nil)
     (setf *runtime-error* nil)
     (setf *load-error* nil)
     (setf *cr-warning* nil)
     (setf *forbidden-symbols* nil)
-    (handle-solution-loading student-solution)
+    (handle-solution-loading student-solution) ; this has to be moved to ** HERE
     (load-macros)
     (load test-cases)
     (in-package :grader)

@@ -357,6 +357,134 @@ as shown above)
   CL-USER> 
 #+end_src
 
+
+* Sandboxing (DRAFT) - Package Structure for Exporting Functions to test-runtime
+
+To structure the packages such that the student's packages (`q1`, `q2`, etc.) export specific functions to a `test-runtime` package, the following hierarchy is defined:
+
+**Strategy**
+1. Define the `:sandbox` package:
+   - Implements restrictions on system-level access.
+2. Define student packages (`:q1`, `:q2`, etc.):
+   - Inherit from `:sandbox`.
+   - Export only specific functions to be visible in `:test-runtime`.
+3. Define the `:test-runtime` package:
+   - Uses student packages to access their exported functions.
+4. Control exports to maintain encapsulation.
+
+**Implementation**
+
+*** :sandbox Package
+#+begin_src lisp
+(defpackage :sandbox
+  (:use :cl)
+  (:shadow "OPEN" "LOAD" "EVAL" "DELETE-FILE")) ; Shadow restricted functions
+
+(in-package :sandbox)
+
+(defun open (path &key (direction :input) &allow-other-keys)
+  (error "Access to OPEN is restricted in the sandbox."))
+
+(defun load (path &key &allow-other-keys)
+  (error "Access to LOAD is restricted in the sandbox."))
+
+(defun eval (form)
+  (error "Access to EVAL is restricted in the sandbox."))
+
+(defun delete-file (path)
+  (error "Access to DELETE-FILE is restricted in the sandbox."))
+
+(defun sandbox-message ()
+  (format t "You are working in the sandbox environment.~%"))
+#+end_src
+
+*** :q1 Package (Student Implementation)
+#+begin_src lisp
+(defpackage :q1
+  (:use :sandbox)
+  (:export :solve-q1))  ; Export only the solve-q1 function
+
+(in-package :q1)
+
+(defun solve-q1 ()
+  (format t "Solving Question 1~%"))
+#+end_src
+
+*** :q2 Package (Student Implementation)
+#+begin_src lisp
+(defpackage :q2
+  (:use :sandbox)
+  (:export :solve-q2))  ; Export only the solve-q2 function
+
+(in-package :q2)
+
+(defun solve-q2 ()
+  (format t "Solving Question 2~%"))
+#+end_src
+
+*** :test-runtime Package
+#+begin_src lisp
+(defpackage :test-runtime
+  (:use :cl :q1 :q2))  ; Use the student packages to access their exported functions
+
+(in-package :test-runtime)
+
+(defun test-all ()
+  (solve-q1)  ; Call exported function from :q1
+  (solve-q2)) ; Call exported function from :q2
+#+end_src
+
+** Workflow
+
+*** Student Workflow
+- Students implement their solutions in `:q1`, `:q2`, etc.
+- Ensure only required functions are exported.
+
+*** Test Runtime Workflow
+- `:test-runtime` accesses exported functions from student packages.
+- Test scripts ensure encapsulation.
+
+** Example Usage
+
+*** Question 1 Student File
+#+begin_src lisp
+(in-package :q1)
+
+(defun solve-q1 ()
+  (format t "Solving Question 1~%"))
+#+end_src
+
+*** Question 2 Student File
+#+begin_src lisp
+(in-package :q2)
+
+(defun solve-q2 ()
+  (format t "Solving Question 2~%"))
+#+end_src
+
+*** Test Runtime File
+#+begin_src lisp
+(in-package :test-runtime)
+
+(defun test-all ()
+  (solve-q1)  ; Allowed, since solve-q1 is exported
+  (solve-q2)) ; Allowed, since solve-q2 is exported
+#+end_src
+
+*** Running the Test
+#+begin_src lisp
+(test-all)
+; Output:
+; Solving Question 1
+; Solving Question 2
+#+end_src
+
+** Benefits
+- **Encapsulation**: Only necessary functions are exported, hiding internal details.
+- **Reusability**: `:test-runtime` focuses on testing with a consistent interface.
+- **Flexibility**: Additional student packages (`:q3`, etc.) can be added without modifying the structure.
+
+
 * License and Credits
 
 See LICENSE for usage permissions. See AUTHORS for credits.
