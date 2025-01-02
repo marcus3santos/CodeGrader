@@ -95,9 +95,10 @@
                            (emit out "")
                            (emit out "*NOTE*:")
                            (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag number))
+                           (emit out "- You may create helper functions in your program file.")
                            (if penalty
-                             (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
-                             (emit out (format nil "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.")))))
+                               (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
+                               (emit out "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question."))))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
                          (setf examples-flag t)
                          (emit out *begin-examples-marker*))
