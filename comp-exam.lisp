@@ -120,6 +120,7 @@
                         (test-cases-flag (push line test-cases))
                         (t (emit out line))))))))))
 
+#|
 (defun gen-packages (from qlabel tcs)
   (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
         (to (ensure-directories-exist
@@ -130,6 +131,14 @@
                     (:documentation "Dedicated package for sandboxing the student's solution")
                     (:use cl cg-sandbox)
                     (:export ,@fnames))))))
+|#
+
+(defun gen-package (qlabel tcs)
+  (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs)))
+    `(defpackage ,(string-upcase qlabel) ;,(intern (string-upcase qlabel) :keyword) 
+       (:documentation "Dedicated package for sandboxing the student's solution")
+       (:use cl cg-sandbox)
+       (:export ,@fnames))))
 
 (defun cr-pairs (a)
   (if (null a) a
@@ -137,11 +146,11 @@
 
 (defun gen-cases (out macro-name examples)
   (emit-code out
-             `(deftest ,macro-name ()
-                (check
-                  ,@(let ((res))
-                      (dolist (e examples (reverse res)) 
-                        (push `(equalp ,(car e) ,(cadr e)) res))))))
+               `(deftest ,macro-name ()
+                  (check
+                    ,@(let ((res))
+                        (dolist (e examples (reverse res)) 
+                          (push `(equalp ,(car e) ,(cadr e)) res))))))
   (format out "~%"))
 
 (defun gen-tcs (from qlabel forbidden examples &optional folder-name)
@@ -168,16 +177,36 @@
         (emit out "")
         (emit-code out `(,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))))
 
+(defun gen-rt-pkg (qlabels)
+  `(defpackage #:test-runtime
+     (:documentation "Creates the code testing runtime")
+     (:use cl :rutils ,@qlabels)
+     (:export *results*)
+     (:export *runtime-error*)
+     (:export *load-error*)
+     (:export *cr-warning*)
+     (:export *forbidden-symbols*)
+     (:export *penalty-forbidden*)
+     (:export :handle-solution-loading)))
 
 (defun gen-exam-files (exam-specs)
-  (let ((ht (make-hash-table)))
+  (let ((ht (make-hash-table))
+        (qlabels (list))
+        (packages (list))
+        (to (ensure-directories-exist
+	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Packages/test-runtime-pkg.lisp"))))
     (comp-exam exam-specs ht)
     (maphash (lambda (k v)
                (let ((qlabel (format nil "q~a" (question-number v)))
                      (forbidden (question-forbidden v))
                      (examples (question-examples v))
                      (test-cases (reverse (question-test-cases v))))
-                 (gen-packages exam-specs qlabel test-cases)                   
+                 (push (string-upcase qlabel) qlabels)
+                 (push (gen-package qlabel test-cases) packages)                   
                  (gen-tcs exam-specs qlabel forbidden examples "Examples/")
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
-                 (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)))
+                 (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)
+    (with-open-file (out to :direction :output :if-exists :supersede)
+      (dolist (p (cons (gen-rt-pkg (reverse qlabels)) (reverse packages)))
+        (emit-code out p)
+        (emit out "")))))

@@ -6,8 +6,9 @@
 ** Question 1
 
 *NOTE*:
-- You are required to write the solutions for the parts of this question in the Lisp program file *~/PT/q1.lisp*
-- You must not use or refer to the following Lisp built-in functions and symbols: COUNT, MEMBER, . The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt /q1.lisp*
+- You may create helper functions in your program file.
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
  
 
 **Part 1:** Write a function =count-occurrences= that takes an element
@@ -42,8 +43,9 @@ T
 ** Question 2
 
 *NOTE*:
-- You are required to write the solutions for the parts of this question in the Lisp program file *~/PT/q2.lisp*
-- You must not use or refer to the following Lisp built-in functions and symbols: REVERSE, NREVERSE, . The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt /q2.lisp*
+- You may create helper functions in your program file.
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *REVERSE*, *NREVERSE*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
 
 **Part 1:** Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
@@ -51,11 +53,11 @@ list.
 
 #+BEGIN_EXAMPLE
 CL-USER> (REVERSE-LIST '(1 2 3 4))
-'(4 3 2 1)
+(4 3 2 1)
 CL-USER> (REVERSE-LIST '(A B C))
-'(C B A)
+(C B A)
 CL-USER> (REVERSE-LIST 'NIL)
-'NIL
+()
 #+END_EXAMPLE
 
 # Test cases

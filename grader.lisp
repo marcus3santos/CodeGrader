@@ -203,8 +203,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
 
 ;; Test
 
-(defun tester (student-solution q-package)
-  (load q-package)
+(defun tester (student-solution rt-package)
+  (load rt-package)
   (safely-load-std-solution student-solution)
   (in-package :test-runtime))
 
