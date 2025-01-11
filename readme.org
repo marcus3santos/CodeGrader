@@ -1,7 +1,7 @@
 #+TITLE: CodeGrader
 
-CodeGrader is an automated grader for lisp programming practicum
-assessments.
+CodeGrader is an automated grader for Lisp programming practicum
+assessments
 
 
 * Dependencies
@@ -16,11 +16,117 @@ Type the commands below an a linux or Mac terminal:
    git clone https://github.com/marcus3santos/codegrader.git  
   #+end_src
 
-* Usage
+* Creating a Lisp Programming Assessment with CodeGrader
 
-** Marking
+This tutorial will guide you through the process of creating a Lisp
+programming assessment in an Org-mode file and explain how CodeGrader
+compiles it into evaluation files. We'll break this into clear steps
+with examples.
 
-*** Preamble
+** Step 1: Create the Org-Mode File
+
+1. Set Up Metadata
+   At the top of your Org-mode file, specify the title and folder where students will store their solutions:
+   #+begin_example
+   #+Title: Common Lisp Practicum Test
+   #+folder: ~/pt
+   #+end_example
+2. Define Questions
+   Use headings (=* Questions=, =** Question 1=, etc.) to structure your assessment.  
+   Each question may include:
+   - A **PENALTY**: The percentage score reduction for using forbidden functions.
+   - A **FORBIDDEN** list: The functions students must avoid in their solutions.
+   #+begin_example
+   ** Question 1 :PENALTY 80 :Forbidden (count member)
+   #+end_example
+3. Write Problem Descriptions
+   Clearly describe the problem for the students.  
+   Break questions into parts (e.g., Part 1, Part 2) for clarity:
+   #+begin_example
+   **Part 1:** Write a function =count-occurrences= that takes an element
+   and a list as arguments and returns the number of times the element
+   appears in the list.
+   #+end_example
+
+** Step 2: Provide Examples
+
+CodeGrader rewrites examples for clarity. Include examples in an =#+begin_example= block:
+
+#+begin_example
+(deftest count-occurrences
+  (count-occurrences 3 '(1 2 3 3 3 4)) 3
+  (count-occurrences 'a '(a b a c a)) 3
+  (count-occurrences 5 '(1 2 3 4)) 0)
+#+end_example
+
+When compiled, this becomes:
+
+#+begin_example
+CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
+3
+CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
+3
+CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
+0
+#+end_example
+
+This output helps students understand the expected behavior of their functions.
+
+** Step 3: Create Test Cases
+
+Use a =#+begin_tcs= block to define test cases for evaluating students’ solutions.  
+Each test case uses a =deftest= structure.
+
+#+begin_example
+#+begin_tcs
+(deftest count-occurrences
+    (count-occurrences 1 '(1 1 1 1 1)) 5
+    (count-occurrences 0 '(1 2 3 4)) 0
+    (count-occurrences 'z '(a b c z z)) 2)
+#+end_tcs
+#+end_example
+
+CodeGrader compiles this into a `.lisp` file for automated evaluation. Example of generated code:
+
+#+begin_example
+(FORBIDDEN-SYMBOLS :PENALTY 0.8 :SYMBOLS '(COUNT MEMBER))
+
+(DEFTEST TEST-COUNT-OCCURRENCES NIL
+ (CHECK (EQUALP (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
+  (EQUALP (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
+  (EQUALP (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
+
+(DEFUN TEST-Q1 ()
+  (TEST-COUNT-OCCURRENCES)
+  (FMAKUNBOUND 'COUNT-OCCURRENCES))
+
+(TEST-Q1)
+#+end_example
+
+** Step 4: Add Additional Questions
+
+Repeat the process for subsequent questions, as shown in https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org
+
+** Step 5: Compile with CodeGrader
+
+Use CodeGrader's =(GEN-EXAM-FILES <org-mode assessment file>)= function to compile your org-mode file containing the assessment description.
+
+When compiled, CodeGrader:
+1. Rewrites the org-mode assessment file :
+   - Generates sample outputs in the file for students to understand expected results.
+2. Generates Test Files:
+   - Creates a =.lisp= file for each question with macros and functions for automated testing.
+   - Ensures forbidden symbols are flagged during evaluation.
+
+Example file structure:
+#+begin_example
+./Gen-files/Test-Cases/q1.lisp
+./Gen-files/Test-Cases/q2.lisp
+#+end_example
+
+* Grading students' solutions
+
+** Preamble
 
 
 CodeGrader is able to mark students' solutions that have been
@@ -49,7 +155,7 @@ Here is the command the IT staff used to create the zip file:
 zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/otest*/-x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
 #+end_src
 
-*** Steps for grading students' solutions
+** Steps for grading students' solutions
 
 1. *Create a zipped file containing the students' solutions*: Since
    students from specific sections may have taken different versions
@@ -147,7 +253,7 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/ot
    - (optional) ~exam-grades-export-file~ is a string representing the full path for
      the D2L exam grades exported by D2L
 
-*** If a student's solution causes a Stack Overflow and crashes CodeGrader
+** If a student's solution causes a Stack Overflow and crashes CodeGrader
 While Codegrader is running each student's solution on the test cases it displays, among other things, a message providing information about the student:
 #+begin_example
 ...
@@ -180,7 +286,7 @@ Create a feedback file by copy-pasting the above information as appropriate to a
 
 Add that file to the *Feedback* folder created by CodeGarder, and enter the student's mark in the *grades.csv* file (see Section Output below).
     
-** Output
+* Output
 
 CodeGrader generates the following files in the =results= folder (see above):
 - A csv spreadsheet file called ~grades.csv~  This is a D2L-importable
@@ -222,7 +328,7 @@ The log file *codegrader-history/log.txt* located in the root of the
 user's home directory contains historical information about the
 evaluation of students' assignments.
 
-** Test cases
+* Test cases
 Test cases must follow a specific format and have a specific file name
 in order to be used within CodeGrader.  As an example, suppose the
 exam requires the students to submit a file called *q1.lisp* that
@@ -280,9 +386,9 @@ Notice: you can include more complex forms of tests, but the general idea is tha
 Any errors that the student's solution could raise during runtime will
 be handled by CodeGrader and reported as appropriate.
 
-** Other functions
+* Other functions
 
-*** Marking all the program files submitted by a student
+** Marking all the program files submitted by a student
 
 In case you wish to mark all the program files submitted by a student, you can use the following function:
 #+begin_example
@@ -312,7 +418,7 @@ cases are stored in =/home/John/Test-cases/=, and you want to store the feedback
 #+end_src
 
 
-*** Marking one program file submitted by a student
+** Marking one program file submitted by a student
 In case you wish to mark one specific submission or test your test
 case file, you can use the following function:
 #+begin_example
@@ -356,7 +462,6 @@ as shown above)
   GRADER> (in-package :CL-USER)
   CL-USER> 
 #+end_src
-
 
 * Sandboxing (DRAFT) - Package Structure for Exporting Functions to test-runtime
 
@@ -483,7 +588,6 @@ To structure the packages such that the student's packages (`q1`, `q2`, etc.) ex
 - **Encapsulation**: Only necessary functions are exported, hiding internal details.
 - **Reusability**: `:test-runtime` focuses on testing with a consistent interface.
 - **Flexibility**: Additional student packages (`:q3`, etc.) can be added without modifying the structure.
-
 
 * License and Credits
 

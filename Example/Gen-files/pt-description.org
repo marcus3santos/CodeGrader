@@ -1,12 +1,16 @@
 #+Options: toc:nil num:nil date:nil author:nil
 #+Title: Common Lisp Practicum Test
+# Folder where the students should store their solutions
 
 * Questions
 
+# PENALTY is number representing the percentage to be deducted from
+# the students score if they use a forbidden function in their solution
+# FORBIDDEN is the list of forbidden functions
 ** Question 1
 
 *NOTE*:
-- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt /q1.lisp*
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q1.lisp*
 - You may create helper functions in your program file.
 - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
  
@@ -14,6 +18,11 @@
 **Part 1:** Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
 appears in the list. 
+
+# The instructor creates examples of how functions work by defining a DEFTEST
+# structure in a org-mode EXAMPLE block as shown below. CodeGrader rewrites the
+# the org-mode example block as follows. 
+# For Example
 
 #+BEGIN_EXAMPLE
 CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
@@ -24,7 +33,39 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 0
 #+END_EXAMPLE
 
-# Test cases
+# Is rewritten as
+
+# #+BEGIN_EXAMPLE
+# CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
+# 3
+# CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
+# 3
+# CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
+# 0
+# #+END_EXAMPLE
+
+# The instructor creates test cases which will be used for evaluating the students
+# solutions by defining a DEFTEST structure in an TCS block as shown below. CodeGrader
+# generates a file  ./Gen-files/Test-Cases/q1.lisp where 'i' is the question number contaning
+# Lisps macros and functions that auto evaluate the student's code.
+# For example: 
+
+
+# Produces the following code in ./Gen-files/Test-Cases/q1.lisp
+
+# (FORBIDDEN-SYMBOLS :PENALTY 0.8 :SYMBOLS '(COUNT MEMBER))
+#
+# (DEFTEST TEST-COUNT-OCCURRENCES NIL
+#  (CHECK (EQUALP (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
+#   (EQUALP (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
+#   (EQUALP (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
+# 
+# (DEFUN TEST-Q1 ()
+#   (TEST-COUNT-OCCURRENCES)
+#   (FMAKUNBOUND 'COUNT-OCCURRENCES))
+#
+# (TEST-Q1)
+
 **Part 2:** Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
@@ -43,7 +84,7 @@ T
 ** Question 2
 
 *NOTE*:
-- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt /q2.lisp*
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q2.lisp*
 - You may create helper functions in your program file.
 - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *REVERSE*, *NREVERSE*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
 

@@ -57,6 +57,13 @@
                   (format nil "(~{~s~^ ~})" (second (cadr pair)))
                   (format nil "~s" (cadr pair))))))
 
+(defun trim-head-spcs (str)
+  (subseq str (or (position #\Space str :test-not #'char=) 0)))
+
+(defun trim-tail-spcs (str)
+  (if (zerop (length str)) str
+      (subseq str 0 (1+ (position #\Space  str :test-not #'char= :from-end t)))))
+
 (defun comp-exam (from ht)
   (if (probe-file from)
       (with-open-file (in from)
@@ -77,7 +84,7 @@
 		      (cond
                         ((sect-marker? line *folder-marker*)
                          (let ((folder (subseq line (length *folder-marker*))))
-                           (setf folder-flag (subseq folder (position #\  folder :test-not #'char=)))))
+                           (setf folder-flag (trim-head-spcs (trim-tail-spcs folder)))))
                         ((sect-marker? line *question-marker*)
                          (unless folder-flag
                            (error "Missing #+FOLDER from org file header"))
@@ -94,7 +101,8 @@
                            (emit out (format nil "~a~a" *question-marker* question-flag))
                            (emit out "")
                            (emit out "*NOTE*:")
-                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~~/~a/q~a.lisp*" folder-flag number))
+                           (format t "'~a'~%" folder-flag)
+                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag number))
                            (emit out "- You may create helper functions in your program file.")
                            (if penalty
                                (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
