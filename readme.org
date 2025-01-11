@@ -34,8 +34,8 @@ with examples.
 2. Define Questions
    Use headings (=* Questions=, =** Question 1=, etc.) to structure your assessment.  
    Each question may include:
-   - A **PENALTY**: The percentage score reduction for using forbidden functions.
-   - A **FORBIDDEN** list: The functions students must avoid in their solutions.
+   - A *PENALTY*: The percentage score reduction for using forbidden functions.
+   - A *FORBIDDEN* list: The functions students must avoid in their solutions.
    #+begin_example
    ** Question 1 :PENALTY 80 :Forbidden (count member)
    #+end_example
