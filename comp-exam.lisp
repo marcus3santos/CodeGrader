@@ -16,6 +16,13 @@
 
 (defparameter *REPL-marker* "CL-USER>")
 
+(defparameter *dangerous-functions* '("OPEN" "LOAD" "EVAL" "DELETE-FILE" 
+   "WITH-OPEN-FILE" "RUN-PROGRAM" "SB-EXT:RUN-PROGRAM"
+   "PROBE-FILE" "FILE-WRITE-DATE" "RENAME-FILE" "ENSURE-DIRECTORIES-EXIST"
+   "DIRECTORY" "READ" "WRITE" "READ-LINE" "READ-FROM-STRING"
+   "COMPILE" "COMPILE-FILE" "QUIT" "GC" "FORMAT"
+   "DEFPACKAGE" "IN-PACKAGE"))
+
 (defstruct question
   number forbidden examples test-cases)
 
@@ -49,6 +56,10 @@
               (setf position new-position)) ; Update position for next read
             (return))))           ; Exit the loop when no more objects
     (nreverse result)))
+
+(defun cr-pairs (a)
+  (if (null a) a
+      (cons (list (car a) (cadr a)) (cr-pairs (cddr a)))))
 
 (defun gen-example (out examples)
   (dolist (pair (cr-pairs (cddr examples)))
@@ -139,7 +150,6 @@
                     (:documentation "Dedicated package for sandboxing the student's solution")
                     (:use cl cg-sandbox)
                     (:export ,@fnames))))))
-|#
 
 (defun gen-package (qlabel tcs)
   (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs)))
@@ -147,10 +157,8 @@
        (:documentation "Dedicated package for sandboxing the student's solution")
        (:use cl cg-sandbox)
        (:export ,@fnames))))
+|#
 
-(defun cr-pairs (a)
-  (if (null a) a
-      (cons (list (car a) (cadr a)) (cr-pairs (cddr a)))))
 
 (defun gen-cases (out macro-name examples)
   (emit-code out
@@ -185,36 +193,59 @@
         (emit out "")
         (emit-code out `(,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))))
 
-(defun gen-rt-pkg (qlabels)
-  `(defpackage #:test-runtime
-     (:documentation "Creates the code testing runtime")
-     (:use cl :rutils ,@qlabels)
-     (:export *results*)
-     (:export *runtime-error*)
-     (:export *load-error*)
-     (:export *cr-warning*)
-     (:export *forbidden-symbols*)
-     (:export *penalty-forbidden*)
-     (:export :handle-solution-loading)))
+(defun gen-defs (fnames)
+  (mapcar #'(lambda (name)
+              `(defun ,(intern name) (&rest args)
+                 (handler-case 
+                     (error ,(format nil "!!! Access to function ~a is restricted in this assessment!!!" name))
+                   (error (condition)
+                     (format t "~a~%" condition)
+                     (in-package :cl-user)))))
+          fnames))
+
+(defun gen-sandbox-rt-pkg (fnames)
+  (let ((defs (gen-defs *dangerous-functions*)))
+    `(
+      (in-package :cl-user)
+      
+      (defpackage #:sandbox
+        (:use cl)
+        (:shadow ,@*dangerous-functions*)
+        (:export ,@fnames))
+
+      (defpackage #:runtime
+        (:use :cl :sandbox)
+        (:export *results*)
+        (:export *runtime-error*)
+        (:export *load-error*)
+        (:export *cr-warning*)
+        (:export *forbidden-symbols*)
+        (:export *penalty-forbidden*)
+        (:export :handle-solution-loading))
+
+      (in-package :sandbox)
+
+      ,@defs)))
 
 (defun gen-exam-files (exam-specs)
   (let ((ht (make-hash-table))
         (qlabels (list))
-        (packages (list))
+        (all-fnames (list))
         (to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Packages/test-runtime-pkg.lisp"))))
+	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Packages/sandbox-runtime-package.lisp"))))
     (comp-exam exam-specs ht)
     (maphash (lambda (k v)
-               (let ((qlabel (format nil "q~a" (question-number v)))
-                     (forbidden (question-forbidden v))
-                     (examples (question-examples v))
-                     (test-cases (reverse (question-test-cases v))))
+               (let* ((qlabel (format nil "q~a" (question-number v)))
+                      (forbidden (question-forbidden v))
+                      (examples (question-examples v))
+                      (test-cases (reverse (question-test-cases v)))
+                      (fnames (mapcar #'second test-cases)))
                  (push (string-upcase qlabel) qlabels)
-                 (push (gen-package qlabel test-cases) packages)                   
+                 (setf all-fnames (append fnames all-fnames))
                  (gen-tcs exam-specs qlabel forbidden examples "Examples/")
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)
     (with-open-file (out to :direction :output :if-exists :supersede)
-      (dolist (p (cons (gen-rt-pkg (reverse qlabels)) (reverse packages)))
+      (dolist (p (gen-sandbox-rt-pkg all-fnames))
         (emit-code out p)
         (emit out "")))))
