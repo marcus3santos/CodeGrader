@@ -112,7 +112,6 @@
                            (emit out (format nil "~a~a" *question-marker* question-flag))
                            (emit out "")
                            (emit out "*NOTE*:")
-                           (format t "'~a'~%" folder-flag)
                            (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag number))
                            (emit out "- You may create helper functions in your program file.")
                            (if penalty
@@ -139,25 +138,6 @@
                         (test-cases-flag (push line test-cases))
                         (t (emit out line))))))))))
 
-#|
-(defun gen-packages (from qlabel tcs)
-  (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs))
-        (to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring from) *parent-folder* "Packages/" qlabel ".lisp"))))
-    (with-open-file (out to :direction :output :if-exists :supersede)
-      (emit-code out
-                 `(defpackage ,(string-upcase qlabel) ;,(intern (string-upcase qlabel) :keyword) 
-                    (:documentation "Dedicated package for sandboxing the student's solution")
-                    (:use cl cg-sandbox)
-                    (:export ,@fnames))))))
-
-(defun gen-package (qlabel tcs)
-  (let ((fnames (mapcar #'(lambda (tc) (second tc)) tcs)))
-    `(defpackage ,(string-upcase qlabel) ;,(intern (string-upcase qlabel) :keyword) 
-       (:documentation "Dedicated package for sandboxing the student's solution")
-       (:use cl cg-sandbox)
-       (:export ,@fnames))))
-|#
 
 
 (defun gen-cases (out macro-name examples)
@@ -193,39 +173,24 @@
         (emit out "")
         (emit-code out `(,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))))
 
-(defun gen-defs (fnames)
-  (mapcar #'(lambda (name)
-              `(defun ,(intern name) (&rest args)
-                 (handler-case 
-                     (error ,(format nil "!!! Access to function ~a is restricted in this assessment!!!" name))
-                   (error (condition)
-                     (format t "~a~%" condition)
-                     (in-package :cl-user)))))
-          fnames))
 
 (defun gen-sandbox-rt-pkg (fnames)
-  (let ((defs (gen-defs *dangerous-functions*)))
-    `(
-      (in-package :cl-user)
-      
-      (defpackage #:sandbox
-        (:use cl)
-        (:shadow ,@*dangerous-functions*)
-        (:export ,@fnames))
+  `(
+    (in-package :cl-user)
+    
+    (defpackage #:sandbox
+      (:use :cl :rutils)
+      (:export ,@fnames))
 
-      (defpackage #:runtime
-        (:use :cl :sandbox)
-        (:export *results*)
-        (:export *runtime-error*)
-        (:export *load-error*)
-        (:export *cr-warning*)
-        (:export *forbidden-symbols*)
-        (:export *penalty-forbidden*)
-        (:export :handle-solution-loading))
-
-      (in-package :sandbox)
-
-      ,@defs)))
+    (defpackage #:runtime
+      (:use :cl :sandbox)
+      (:export *results*)
+      (:export *runtime-error*)
+      (:export *load-error*)
+      (:export *cr-warning*)
+      (:export *forbidden-symbols*)
+      (:export *penalty-forbidden*)
+      (:export :handle-solution-loading))))
 
 (defun gen-exam-files (exam-specs)
   (let ((ht (make-hash-table))
