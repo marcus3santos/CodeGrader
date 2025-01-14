@@ -109,19 +109,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
 (defun load-macros ()
   (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
 
-(defun chng-to-string (a)
-  (if (null a) nil
-      (cons (symbol-name (car a)) (chng-to-string (cdr a)))))
-
-(defun capitalize-string (s)
-  (dotimes (i (length s) s)
-    (when (and (char>= (aref s i) #\a)
-             (char<= (aref s i) #\z))
-      (setf (aref s i) (char-upcase (aref s i))))))
-
-(defun capitalize-list (a &optional acc)
-  (if (null a) acc
-      (capitalize-list (cdr a) (cons (capitalize-string (car a)) acc))))
 
 (defun read-lisp-file (file-path)
   (setf *inside-multiline-comment* nil)
@@ -182,6 +169,18 @@ the mark is calculated as the # of passes divided by the total # of cases.
             (process-char char)))))))
 
 
+(defun contains-forbidden-symbol? (prg-file frbn-symbs)
+  (let ((fsymbs (if (stringp (car frbn-symbs))
+                    (mapcar #'string-upcase frbn-symbs)
+                    (mapcar #'symbol-name frbn-symbs)))
+        (cap-symbs (mapcar #'string-upcase (extract-symbols-from-file prg-file))))
+    (labels ((check-fnames (e)
+               (cond ((null e) nil)
+                     ((member (car e) fsymbs :test #'equal) (car e))
+                     (t (check-fnames (cdr e))))))
+      (check-fnames cap-symbs))))
+
+#|
 (defun contains-forbidden-symbol? (prg-file)
   ;;(setf *forbidden-symbols* nil)
   (let ((ffuncs (chng-to-string *forbidden-symbols*))
@@ -191,14 +190,15 @@ the mark is calculated as the # of passes divided by the total # of cases.
                      ((member (car e) ffuncs :test #'equal) (car e))
                      (t (check-fnames (cdr e))))))
       (check-fnames cap-symbs))))
+|#
 
 (defun read-file-as-string (file-name)
   "Reads the content of the file specified by FILE-NAME and returns it as a string."
   (with-open-file (stream file-name :direction :input)
-    (let ((content (make-string-output-stream)))  ;; Create a stream to collect the file content
+    (let ((content (make-string-output-stream))) ;; Create a stream to collect the file content
       (loop for line = (read-line stream nil nil)
             while line
-            do (format content "~A~%" line))      ;; Append each line to content with a newline
+            do (format content "~A~%" line)) ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
 ;; Test
@@ -225,7 +225,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (load test-cases)
     (in-package :grader)
     (let ((score (calc-mark *results* ws))
-          (forbid-symb (contains-forbidden-symbol? student-solution))
+          (forbid-symb (contains-forbidden-symbol? student-solution *forbidden-symbols*))
           (error-types nil))
       (list
        (if forbid-symb

@@ -182,7 +182,7 @@
       (:use :cl :rutils)
       (:export ,@fnames))
 
-    (defpackage #:runtime
+    (defpackage #:test-runtime
       (:use :cl :sandbox)
       (:export *results*)
       (:export *runtime-error*)
