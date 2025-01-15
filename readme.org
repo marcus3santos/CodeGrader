@@ -51,7 +51,7 @@ Note: You must provide the folder where the students solutions will be stored.
 For each assessment question, do the following: write the heading **** *Question* /i/
 /[penalty-forbidden]/, where
 - /i/ is an integer representing the question number;
-- /penalty-forbidden/ is the following optional sequence of parameters *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
+- /penalty-forbidden/ is the following optional sequence of key-value pairs  *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
   - /p/ is an integer representing the percentage score reduction for using forbidden functions;
   - /f/ is a a list in Lisp notation, representing the functions students must avoid in their solutions.
 
