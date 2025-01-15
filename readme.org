@@ -16,113 +16,115 @@ Type the commands below an a linux or Mac terminal:
    git clone https://github.com/marcus3santos/codegrader.git  
   #+end_src
 
-* Creating a Lisp Programming Assessment with CodeGrader
+* The Workflow
 
-This tutorial will guide you through the process of creating a Lisp
-programming assessment in an Org-mode file and explain how CodeGrader
-compiles it into evaluation files. We'll break this into clear steps
-with examples.
+The workflow involves the following steps:
 
-** Step 1: Create the Org-Mode File
+1. The instructor writes the assessment using org-mode markdown.
+2. The instructor uses CodeGrader to generate the necessary support
+   files, including formatted questions, assessment-specific test
+   cases, and packages, based on the org-mode assessment description.
+3. After students complete the assessment, the instructor uses
+   CodeGrader to evaluate and grade their solutions.
 
-1. Set Up Metadata:
-   At the top of your Org-mode file, specify the title and folder where students will store their solutions:
+The following sections provide a detailed explanation of each step.
+
+* Writing a Lisp Programming Assessment Using Org-mode
+
+Your org-mode assessment description should contain the following parts:
+- Header
+- Questions
+
+
+** Writing the Header
+
+At the top of your Org-mode file, specify the title and folder where students will store their solutions, as follows:
    #+begin_example
    #+Title: Common Lisp Practicum Test
    #+folder: ~/pt
    #+end_example
-2. Define Questions:
-   Use headings (=* Questions=, =** Question 1=, etc.) to structure your assessment.  
-   Each question may include:
-   - A *PENALTY*: The percentage score reduction for using forbidden functions.
-   - A *FORBIDDEN* list: The functions students must avoid in their solutions.
+
+Note: You must provide the folder where the students solutions will be stored.
+
+** Writing the assessment Questions
+
+For each assessment question, do the following: write the heading **** *Question* /i/
+/[penalty-forbidden]/, where
+- /i/ is an integer representing the question number;
+- /penalty-forbidden/ is the following optional sequence of parameters *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
+  - /p/ is an integer representing the percentage score reduction for using forbidden functions;
+  - /f/ is a a list in Lisp notation, representing the functions students must avoid in their solutions.
+
+For example:
    #+begin_example
    ** Question 1 :PENALTY 80 :Forbidden (count member)
    #+end_example
-3. Write Problem Descriptions:
-   Clearly describe the problem for the students.  
-   Break questions into parts (e.g., Part 1, Part 2) for clarity:
+
+*Note*: CodeGrader will apply that penalty on the solutions for all parts of the question.
+
+Then write the problem description. You can break questions into parts (e.g., Part 1, Part 2) for clarity, and provide examples. For example:
    #+begin_example
-   **Part 1:** Write a function =count-occurrences= that takes an element
-   and a list as arguments and returns the number of times the element
-   appears in the list.
+     ** Question 1 :PENALTY 80 :Forbidden (count member)
+     
+     **Part 1:** Write a function =count-occurrences= that takes an element
+     and a list as arguments and returns the number of times the element
+     appears in the list.
+     
+     ,#+begin_example
+     (deftest count-occurrences
+       (count-occurrences 3 '(1 2 3 3 3 4)) 3
+       (count-occurrences 'a '(a b a c a)) 3
+       (count-occurrences 5 '(1 2 3 4)) 0)
+     ,#+end_example
+     
+     **Part 2** ...
    #+end_example
 
-** Step 2: Provide Examples
-
-CodeGrader rewrites examples for clarity. Include examples in an =#+begin_example= block:
-
-#+begin_example
-(deftest count-occurrences
-  (count-occurrences 3 '(1 2 3 3 3 4)) 3
-  (count-occurrences 'a '(a b a c a)) 3
-  (count-occurrences 5 '(1 2 3 4)) 0)
-#+end_example
-
-When compiled, this becomes:
-
-#+begin_example
-CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
-3
-CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
-3
-CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
-0
-#+end_example
-
-This output helps students understand the expected behavior of their functions.
-
-** Step 3: Create Test Cases
-
-Use a =#+begin_tcs= block to define test cases for evaluating students’ solutions.  
+Finally, use a =#+begin_tcs ... #+end_tcs= block to define test cases for the question. These are the test cases CodeGrader will use for evaluating students’ solutions.  
 Each test case uses a =deftest= structure.
 
 #+begin_example
-#+begin_tcs
-(deftest count-occurrences
-    (count-occurrences 1 '(1 1 1 1 1)) 5
-    (count-occurrences 0 '(1 2 3 4)) 0
-    (count-occurrences 'z '(a b c z z)) 2)
-#+end_tcs
+ ** Question 1 :PENALTY 80 :Forbidden (count member)
+    
+ **Part 1:** Write a function =count-occurrences= that takes an element
+ and a list as arguments and returns the number of times the element
+ appears in the list.
+     
+ ,#+begin_example
+     (deftest count-occurrences
+       (count-occurrences 3 '(1 2 3 3 3 4)) 3
+       (count-occurrences 'a '(a b a c a)) 3
+       (count-occurrences 5 '(1 2 3 4)) 0)
+ ,#+end_example
+     
+ #+begin_tcs
+ (deftest count-occurrences
+     (count-occurrences 1 '(1 1 1 1 1)) 5
+     (count-occurrences 0 '(1 2 3 4)) 0
+     (count-occurrences 'z '(a b c z z)) 2)
+ #+end_tcs
+ **Part 2** ...
 #+end_example
-
-CodeGrader compiles this into a `.lisp` file for automated evaluation. Example of generated code:
-
-#+begin_example
-(FORBIDDEN-SYMBOLS :PENALTY 0.8 :SYMBOLS '(COUNT MEMBER))
-
-(DEFTEST TEST-COUNT-OCCURRENCES NIL
- (CHECK (EQUALP (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
-  (EQUALP (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
-  (EQUALP (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
-
-(DEFUN TEST-Q1 ()
-  (TEST-COUNT-OCCURRENCES)
-  (FMAKUNBOUND 'COUNT-OCCURRENCES))
-
-(TEST-Q1)
-#+end_example
-
-** Step 4: Add Additional Questions
 
 Repeat the process for subsequent questions, as shown in https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org
 
-** Step 5: Compile with CodeGrader
+* Generate the Assessment Support Files
 
-Use CodeGrader's =(GEN-EXAM-FILES <org-mode assessment file>)= function to compile your org-mode file containing the assessment description.
+Use CodeGrader's *(GEN-EXAM-FILES* /<org-mode assessment file>/ *)*
+function to rewrite your org-mode assessment description file and to
+generate other assessment related files. CodeGrader will create a new folder *Gen-files/* in the root folder of your assessment org-mode file, containing the following folders:
+- *Examples/*: contains lisp program files, one for each assessment question, defining the test cases for the examples mentioned in the questions.
+- *Test-Cases/*: contains lisp program files, one for each assessment question, defining the test cases which will be used for evaluating the students' solutions.
+- *Packages/*: contains a lisp program file defining package used for sandboxing the runtime of students' solutions.
+- The rewritten org-mode file.
 
-When compiled, CodeGrader:
-1. Rewrites the org-mode assessment file :
-   - Generates sample outputs in the file for students to understand expected results.
-2. Generates Test Files:
-   - Creates a =.lisp= file for each question with macros and functions for automated testing.
-   - Ensures forbidden symbols are flagged during evaluation.
 
-Example file structure:
-#+begin_example
-./Gen-files/Test-Cases/q1.lisp
-./Gen-files/Test-Cases/q2.lisp
-#+end_example
+For example: When executed in the REPL, the form (GEN-EXAM-FILES [[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org][pt.org]]) will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files and folders]] in the *./Gen-files* folder.
+
+We encourage you to examine how CodeGrader rewrites the examples and
+test cases from the original =pt.org= file, as well as the generated
+Lisp program files in the *Examples/* and *Packages/* folders.
+
 
 * Grading students' solutions
 
@@ -254,7 +256,7 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/ot
      the D2L exam grades exported by D2L
 
 ** If a student's solution causes a Stack Overflow and crashes CodeGrader
-While Codegrader is running each student's solution on the test cases it displays, among other things, a message providing information about the student:
+While CodeGrader is running each student's solution on the test cases it displays, among other things, a message providing information about the student:
 #+begin_example
 ...
 Running program of student (50123456 John Doe eng205-08)
@@ -276,7 +278,7 @@ Where:
 
 The function above returns a list containing the result of the evaluation. The first item in the list is the number of points CodeGrader assessed for that solution, the last item is the feedback. If a solution caused a stack overflow and crashed CodeGrader, you will take note that that you need to assign zero points to that student's solution and the respective feedbac is "CAUSED A STACK OVERFLOW DUE TO ENDLESS RECURSION."
 
-The student's mark is the sum of the points of the evaluations of all solution files divided by the number of solution files. For example, if a solution for a question consists of files *q1.lisp*, *q2.lisp*, and *q3.lisp* and the sum of the points assessed by Codegrader is 70. Then the student's mark should be 70/3. 
+The student's mark is the sum of the points of the evaluations of all solution files divided by the number of solution files. For example, if a solution for a question consists of files *q1.lisp*, *q2.lisp*, and *q3.lisp* and the sum of the points assessed by CodeGrader is 70. Then the student's mark should be 70/3. 
 
 Create a feedback file by copy-pasting the above information as appropriate to a file and name that file by hashing the student ID using that function below:
 #+begin_src lisp
