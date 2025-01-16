@@ -23,7 +23,8 @@ The workflow involves the following steps:
 1. The instructor writes the assessment using org-mode markdown.
 2. The instructor uses CodeGrader to generate the necessary support
    files, including formatted questions, assessment-specific test
-   cases, and packages, based on the org-mode assessment description.
+   cases, and packages for sandboxing the student's code, based on the
+   org-mode assessment description.
 3. After students complete the assessment, the instructor uses
    CodeGrader to evaluate and grade their solutions.
 
@@ -114,7 +115,7 @@ Each test case uses a =deftest= structure.
 
 Repeat the process for subsequent questions, as shown in https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org
 
-* Generate the Assessment Support Files
+* Generating the Assessment Support Files
 
 Use CodeGrader's *(GEN-EXAM-FILES* /<org-mode assessment file>/ *)*
 function to rewrite your org-mode assessment description file and to
@@ -130,7 +131,6 @@ For example: When executed in the REPL, the form (GEN-EXAM-FILES [[https://raw.g
 We encourage you to examine how CodeGrader rewrites the examples and
 test cases from the original =pt.org= file, as well as the generated
 Lisp program files in the *Examples/* and *Packages/* folders.
-
 
 * Grading students' solutions
 
@@ -471,132 +471,32 @@ as shown above)
   CL-USER> 
 #+end_src
 
-* Sandboxing (DRAFT) - Package Structure for Exporting Functions to test-runtime
+* Sandboxing - Package Structure for Exporting Functions to test-runtime
 
-To structure the packages such that the student's packages (`q1`, `q2`, etc.) export specific functions to a `test-runtime` package, the following hierarchy is defined:
+The security mechanism that isolates the student's code so preventing its execution environment to
+prevent from affecting the CodeGrader is defined in the =sandbox= package. 
 
-**Strategy**
-1. Define the `:sandbox` package:
-   - Implements restrictions on system-level access.
-2. Define student packages (`:q1`, `:q2`, etc.):
-   - Inherit from `:sandbox`.
-   - Export only specific functions to be visible in `:test-runtime`.
-3. Define the `:test-runtime` package:
-   - Uses student packages to access their exported functions.
-4. Control exports to maintain encapsulation.
+Depending on the content of the assessment description file, function
+GEN-EXAM-FILES modifies the =sandbox= package based on the information
+provided in the assessment description file.
 
-**Implementation**
-
-*** :sandbox Package
-#+begin_src lisp
-(defpackage :sandbox
-  (:use :cl)
-  (:shadow "OPEN" "LOAD" "EVAL" "DELETE-FILE")) ; Shadow restricted functions
-
-(in-package :sandbox)
-
-(defun open (path &key (direction :input) &allow-other-keys)
-  (error "Access to OPEN is restricted in the sandbox."))
-
-(defun load (path &key &allow-other-keys)
-  (error "Access to LOAD is restricted in the sandbox."))
-
-(defun eval (form)
-  (error "Access to EVAL is restricted in the sandbox."))
-
-(defun delete-file (path)
-  (error "Access to DELETE-FILE is restricted in the sandbox."))
-
-(defun sandbox-message ()
-  (format t "You are working in the sandbox environment.~%"))
-#+end_src
-
-*** :q1 Package (Student Implementation)
-#+begin_src lisp
-(defpackage :q1
-  (:use :sandbox)
-  (:export :solve-q1))  ; Export only the solve-q1 function
-
-(in-package :q1)
-
-(defun solve-q1 ()
-  (format t "Solving Question 1~%"))
-#+end_src
-
-*** :q2 Package (Student Implementation)
-#+begin_src lisp
-(defpackage :q2
-  (:use :sandbox)
-  (:export :solve-q2))  ; Export only the solve-q2 function
-
-(in-package :q2)
-
-(defun solve-q2 ()
-  (format t "Solving Question 2~%"))
-#+end_src
-
-*** :test-runtime Package
-#+begin_src lisp
-(defpackage :test-runtime
-  (:use :cl :q1 :q2))  ; Use the student packages to access their exported functions
-
-(in-package :test-runtime)
-
-(defun test-all ()
-  (solve-q1)  ; Call exported function from :q1
-  (solve-q2)) ; Call exported function from :q2
-#+end_src
-
-** Workflow
-
-*** Student Workflow
-- Students implement their solutions in `:q1`, `:q2`, etc.
-- Ensure only required functions are exported.
-
-*** Test Runtime Workflow
-- `:test-runtime` accesses exported functions from student packages.
-- Test scripts ensure encapsulation.
-
-** Example Usage
-
-*** Question 1 Student File
-#+begin_src lisp
-(in-package :q1)
-
-(defun solve-q1 ()
-  (format t "Solving Question 1~%"))
-#+end_src
-
-*** Question 2 Student File
-#+begin_src lisp
-(in-package :q2)
-
-(defun solve-q2 ()
-  (format t "Solving Question 2~%"))
-#+end_src
-
-*** Test Runtime File
-#+begin_src lisp
-(in-package :test-runtime)
-
-(defun test-all ()
-  (solve-q1)  ; Allowed, since solve-q1 is exported
-  (solve-q2)) ; Allowed, since solve-q2 is exported
-#+end_src
-
-*** Running the Test
-#+begin_src lisp
-(test-all)
-; Output:
-; Solving Question 1
-; Solving Question 2
-#+end_src
+This sandboxing mechanism is structured as follows:
+1. =sandbox= package:
+   - Restricts system-level access when running the student's code.
+   - Exports only specific functions to be accessed by the =test-runtime= package,
+     which executes those functions against predefined test cases.
+2. =test-runtime= package:
+   - Utilizes the =sandbox= package to access its exported functions.
+   - Exports objects and functions for use by other packages that
+     manage additional aspects of grading.
 
 ** Benefits
 - **Encapsulation**: Only necessary functions are exported, hiding internal details.
-- **Reusability**: `:test-runtime` focuses on testing with a consistent interface.
-- **Flexibility**: Additional student packages (`:q3`, etc.) can be added without modifying the structure.
-
+- **Reusability**: `=test-runtime= focuses on testing with a consistent interface.
+- **Flexibility**: Function GEN-EXAM-FILEs facilitates the
+  reconfiguration of the sandbox mechanism depending on the
+  characteristics of the assessment description.
+  
 * License and Credits
 
 See LICENSE for usage permissions. See AUTHORS for credits.
