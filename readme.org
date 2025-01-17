@@ -49,7 +49,7 @@ Note: You must provide the folder where the students solutions will be stored.
 
 ** Writing the assessment Questions
 
-For each assessment question, do the following: write the heading **** *Question* /i/
+For each assessment question, do the following: write the heading ** *Question* /i/
 /[penalty-forbidden]/, where
 - /i/ is an integer representing the question number;
 - /penalty-forbidden/ is the following optional sequence of key-value pairs  *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
@@ -104,12 +104,13 @@ Each test case uses a =deftest= structure.
        (count-occurrences 5 '(1 2 3 4)) 0)
  ,#+end_example
      
- #+begin_tcs
+ ,#+begin_tcs
  (deftest count-occurrences
      (count-occurrences 1 '(1 1 1 1 1)) 5
      (count-occurrences 0 '(1 2 3 4)) 0
      (count-occurrences 'z '(a b c z z)) 2)
- #+end_tcs
+ ,#+end_tcs
+
  **Part 2** ...
 #+end_example
 
@@ -192,28 +193,14 @@ potential issues early, ensuring their submissions align with the assessment's s
 We make the following assumptions regarding the physical environment where students complete the assessment:
 - The IT staff has created a spreadsheet mapping each student ID to a computer ID in the exam room.
 - That mapping is shared with the instructor and the students in advance of the assessment.
-- In the Linux test environment, computer IDs are is the computer
-
-We assume there is zip archive file containing the students' solutions originally stored in specific folders named
-*cps305YY/engXXX-ZZ/pt/* or *cps305YY/otest-KK*, where *YY* is the course section number and *KK* is an integer number,
-*engXX* is the lab room number, and *engXXX-ZZ* is the computer's ID
-number. For example, suppose one student from section 05 took the exam
-in lab room ENG203 on a PC whose ID is eng203-03, and another student
-from section 08 took the same version of the exam in at the Accommodation Test Centre 
-on a PC whose ID is otest-07. Then, the diagram below represents the
-corresponding file structure where the two Lisp files containing the
-solutions for each student have been stored:
-   - cps30505/eng203-03/pt/
-     - q1.lisp
-     - q2.lisp
-   - cps30508/otest-07/pt/
-     - q1.lisp
-     - q2.lisp
-
-Here is the command the IT staff used to create the zip file:
-#+begin_src shell
-zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/otest*/-x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
-#+end_src
+- In the Linux test environment, the home folder's name is the computer ID.
+- In the assessment description, students were asked to store their solutions in the *~/pt/* folder.
+- After students completed the assessment, the IT staff has transfered the contents of the *~/pt/* folders of all machines to the */tmp/cps305PracticumTest/cps305XX* folder, where *cps305XX* represents different folders (e.g., cps30501, cps30502, etc.) storing students' solutions from different assesssment versions.
+- The IT staff has created a zip archive file containing the students' solutions originally stored in specific the *~/pt/~ folders of the Linux machines. Here is the command the IT staff used to create that zip file:
+  #+begin_src shell
+  zip -r cps305PracticumTest.zip /tmp/cps305PracticumTest/cps305*/<computer ID>*/ -x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
+  #+end_src
+  
 
 ** Steps for grading students' solutions
 
@@ -239,8 +226,7 @@ zip -r cps305mocktest.zip cps305mocktest/cps305*/eng*/ cps305mocktest/cps305*/ot
      zip -r ~/tmp/PT1/Sections/10/std-sol.zip 
    #+end_src
    By zipping this way, you would create a zip archive that does not
-   include the parent directories (cps30505 and cps30508); it only
-   includes the eng*/ and otest*/ folders in your zip archive.
+   include the parent directories (cps30505 and cps30508).
 
 2. *Create a CSV file containing the mapping of students-to-computers*:
    We assume the IT technicians have sent you CSV files containing the
