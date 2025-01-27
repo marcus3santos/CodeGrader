@@ -1,3 +1,5 @@
+(defparameter *max-depth* 10)
+
 (defun replace-in-expr (s ns expr)
   (cond
     ((eq expr s) ns)
@@ -6,36 +8,44 @@
            (mapcar (lambda (item) (replace-in-expr s ns item)) (cdr expr)))) 
     (t expr)))
 
-#|
-(defun params2args (args &optional oflag kflag acc)
-  (cond ((null args) (reverse acc))
-        ((eq (car args) '&rest) (cons (cdr args) acc))
-        ((eq (car args) '&optional)
+(defun params2args (params &optional oflag kflag acc)
+  (cond ((null params) (reverse acc))
+        ((eq (car params) '&rest) (reverse (cons (cdr params) acc)))
+        ((eq (car params) '&optional)
          (when kflag (error "&key should not come before &optional"))
-         (params2args (cdr args) t kflag acc))
-        ((eq (car args) '&key) (params2args (cdr args) oflag t acc))
-        (oflag )))
-|#
+         (params2args (cdr params) t kflag acc))
+        ((eq (car params) '&key) (params2args (cdr params) oflag t acc))
+        ((and kflag (listp (first params)))
+         (params2args (cdr params) oflag kflag
+                      (append (list (second (first params))
+                                    (intern (symbol-name (first (first params))) :keyword)) acc)))
+        ((and oflag (listp (first params)))
+         (params2args (cdr params) oflag kflag (cons (second (first params)) acc)))
+        ((and oflag (null (first params)))
+         (params2args (cdr params) oflag kflag (cons nil acc)))
+        (t (params2args (cdr params) oflag kflag (cons (first params) acc)))))
+
 
 (defun get-fname (s)
   (let ((name (symbol-name s)))
     (string-upcase (subseq name 0 (position #\- name :test #'char-equal)))))
 
-(defun wrp-func (name args bdy)
-  (unless (listp args)
+(defun wrp-func (name params bdy)
+  (unless (listp params)
     (error "Invalid syntax for DEFUN form!"))
   (let* ((new-name (gensym (format nil "~a-" (symbol-name name))))
-         (new-args (replace-in-expr name new-name args))
+         (new-params (replace-in-expr name new-name params))
+         (args (params2args new-params))
          (new-bdy (replace-in-expr name new-name bdy)))
-    `(defun ,name (,@new-args)
+    `(defun ,name (,@new-params)
        (let ((depth 0))
-         (labels ((,new-name (,@new-args)
+         (labels ((,new-name (,@new-params)
                     (if (> depth *MAX-DEPTH*)
                         (error "Recursion too deep in function ~a !" ,(get-fname new-name))
                         (progn
                           (incf depth)
                           ,@new-bdy))))
-           (apply #',new-name (list ,@new-args)))))))
+           (apply #',new-name (list ,@args)))))))
 
 
 ;; (wrp-func 'fact '(x &optional (acc 1)) '((if (< x 2) acc (fact (1- x) (* x acc)))))
