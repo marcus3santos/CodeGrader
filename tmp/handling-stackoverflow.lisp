@@ -30,10 +30,13 @@
   (let ((name (symbol-name s)))
     (string-upcase (subseq name 0 (position #\- name :test #'char-equal)))))
 
-(defun wrp-func (name params bdy)
-  (unless (listp params)
+(defun wrp-func (func)
+  (unless (listp (third func))
     (error "Invalid syntax for DEFUN form!"))
-  (let* ((new-name (gensym (format nil "~a-" (symbol-name name))))
+  (let* ((name (second func))
+         (params (third func))
+         (bdy (cdddr func))
+         (new-name (gensym (format nil "~a-" (symbol-name name))))
          (new-params (replace-in-expr name new-name params))
          (args (params2args new-params))
          (new-bdy (replace-in-expr name new-name bdy)))
@@ -48,4 +51,4 @@
            (apply #',new-name (list ,@args)))))))
 
 
-;; (wrp-func 'fact '(x &optional (acc 1)) '((if (< x 2) acc (fact (1- x) (* x acc)))))
+;; (wrp-func '(defun fact (x &optional (acc 1) (if (< x 2) acc (fact (1- x) (* x acc)))))
