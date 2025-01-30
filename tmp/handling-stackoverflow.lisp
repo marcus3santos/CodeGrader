@@ -30,12 +30,12 @@
   (let ((name (symbol-name s)))
     (string-upcase (subseq name 0 (position #\- name :test #'char-equal)))))
 
-(defun wrp-func (func)
-  (unless (listp (third func))
+(defmacro wrp-defun (defun)
+  (unless (listp (third defun))
     (error "Invalid syntax for DEFUN form!"))
-  (let* ((name (second func))
-         (params (third func))
-         (bdy (cdddr func))
+  (let* ((name (second defun))
+         (params (third defun))
+         (bdy (cdddr defun))
          (new-name (gensym (format nil "~a-" (symbol-name name))))
          (new-params (replace-in-expr name new-name params))
          (args (params2args new-params))
@@ -50,5 +50,16 @@
                           ,@new-bdy))))
            (apply #',new-name (list ,@args)))))))
 
+
+(defun wrp-load-std-sols (file)
+  "Reads the forms in the file, if it is a DEFUN, wraps it to avoid it causing
+   a stack overflow when the respective function is called, then evals the form.
+   Otherwise, evals the form."
+  (with-open-file (in file :direction :input)
+    (loop for form = (read in nil nil)
+          while form 
+          do (eval (if (and (consp form) (eq (car form) 'defun))
+                       `(wrp-defun ,form)
+                       form)))))
 
 ;; (wrp-func '(defun fact (x &optional (acc 1) (if (< x 2) acc (fact (1- x) (* x acc)))))
