@@ -213,14 +213,13 @@ the mark is calculated as the # of passes divided by the total # of cases.
   "Loads the student-solution file, loads the test cases, runs
   the test cases, and returns the percentage of correct results over total results"
   (let ((description "No runtime errors"))
-    ;; ** HERE
+    (handle-solution-loading student-solution) 
     (in-package :test-runtime)
     (setf *results* nil)
     (setf *runtime-error* nil)
     (setf *load-error* nil)
     (setf *cr-warning* nil)
     (setf *forbidden-symbols* nil)
-    (handle-solution-loading student-solution) ; this has to be moved to ** HERE
     (load-macros)
     (load test-cases)
     (in-package :grader)

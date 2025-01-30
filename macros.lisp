@@ -20,7 +20,7 @@
 
 ; Defines the max depth of recursion for functions
 
-(defparameter *max-depth* 10)
+(defparameter *max-depth* 20000)
 
 
 ;; Maximum running time (in seconds) allotted to the
@@ -104,12 +104,12 @@
     (setf *forbidden-symbols* symbols)))
 
 (defun replace-in-expr (s ns expr)
-  (cond
-    ((eq expr s) ns)
-    ((listp expr)
-     (cons (replace-in-expr s ns (car expr))  
-           (mapcar (lambda (item) (replace-in-expr s ns item)) (cdr expr)))) 
-    (t expr)))
+  (cond ((null expr) expr)
+        ((eq expr s) ns)
+        ((listp expr)
+         (cons (replace-in-expr s ns (car expr))  
+               (mapcar (lambda (item) (replace-in-expr s ns item)) (cdr expr)))) 
+        (t expr)))
 
 (defun params2args (params &optional oflag kflag acc)
   (cond ((null params) (reverse acc))
@@ -140,19 +140,21 @@
          (params (third defun))
          (bdy (cdddr defun))
          (new-name (gensym (format nil "~a-" (symbol-name name))))
+         (depth (gensym "DEPTH-"))
+         (max-depth (gensym "*max-depth*"))
          (new-params (replace-in-expr name new-name params))
          (args (params2args new-params))
          (new-bdy (replace-in-expr name new-name bdy)))
     `(defun ,name (,@new-params)
-       (let ((depth 0))
+       (let ((,depth 0)
+             (,max-depth ,*max-depth*))
          (labels ((,new-name (,@new-params)
-                    (if (> depth *MAX-DEPTH*)
+                    (if (> ,depth ,max-depth)
                         (error "Recursion too deep in function ~a !" ,(get-fname new-name))
                         (progn
-                          (incf depth)
+                          (incf ,depth)
                           ,@new-bdy))))
            (apply #',new-name (list ,@args)))))))
-
 
 (defun wrp-load-std-sols (file)
   "This function should be used for loading the student's lisp file.

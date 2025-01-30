@@ -15,7 +15,17 @@
 ;; Folder in student's home directory storing their solutions
 (defparameter *std-sub-folder* "pt/")
 
-(defparameter *pt-examples-folder* "~/pt-examples/")
+(defparameter *examples-folder* "~/tmp/Examples/")
+
+(defparameter *sandbox-pkg-folder* "~/tmp/Sandbox/")
+
+;; List of assessments and labs
+
+(defparameter *assessments* '("lab01" "lab02"
+                              "lab03" "lab04"
+                              "lab05" "lab06"
+                              "lab07" "lab08"
+                              "lab09" "pt1" "pt2"))
 
 (defun check-input-files (lf)
   (when lf
@@ -271,8 +281,9 @@
     htable))
 
 ;; -------- Not integrated to the CodeGrader yet
-(defun ck-my-solution (q#)
+(defun ck-my-solution (a# q#)
   "Q# is a string identifying a question, e.g., \"q1\".
+   A# is a string identifying the assessment name, e.g., \"lab01\", \"pt1\", \"pt2\", etc.
    Checks if the student's solution is in the required folder defined in *std-sub-folder*
    and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
    and runs the solution against the given examples for that question stored in
@@ -280,14 +291,19 @@
   (let* ((folder (format nil "~a~a" (namestring (user-homedir-pathname)) *std-sub-folder*))
          (fname (format nil "~a.lisp" q#))
          (folder-file (format nil "~a~a" folder fname))
-         (testcase-file (directory (format nil "~a~a" *pt-examples-folder* fname))))
+         (testcase-file (directory (format nil "~a~a" *examples-folder* (string-upcase a#) fname)))
+         (sandbox-pkg-file (directory (format nil "~a~a" *sandbox-pkg-folder* (string-upcase a#) "/sandbox-runtime-package.lisp")))
+         (current-pckg *package*))
+    (unless (member a# *assessments* :test #'string=)
+      (error "~%!!! Assessment/Lab does not exist !!!"))
     (unless testcase-file
       (error "~%!!! Test case file or folder does not exist !!!"))
-    (if (probe-file folder-file)
-        (let ((eval (evaluate-solution folder-file (namestring (car testcase-file)))))
-          (format t "~%Your ~A test results:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))
-        (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder)))
-  (in-package :cl-user))
+    (unless (probe-file folder-file)
+      (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder))
+    (load sandbox-pkg-file)
+    (let ((eval (evaluate-solution folder-file (namestring (car testcase-file)))))
+      (format t "~%Your ~A test results:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))))
+    (setf *package* current-pckg)))
 ;;----------
 
 (defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
