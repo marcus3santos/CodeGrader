@@ -52,9 +52,10 @@
 
 
 (defun wrp-load-std-sols (file)
-  "Reads the forms in the file, if it is a DEFUN, wraps it to avoid it causing
-   a stack overflow when the respective function is called, then evals the form.
-   Otherwise, evals the form."
+  "This function should be used for loading the student's lisp file.
+   It reads the forms in the student's lisp file.  If a form is a DEFUN, uses a macro 
+   to rewrite the function to avoid it causing a stack overflow when the function is called, 
+   then evals the form. Otherwise, evals the form."
   (with-open-file (in file :direction :input)
     (loop for form = (read in nil nil)
           while form 
