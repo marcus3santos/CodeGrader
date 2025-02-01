@@ -5,7 +5,7 @@
 
 (defpackage #:test-runtime
   (:documentation "Creates the code testing runtime")
-  (:use cl :rutils :sandbox)
+  (:use cl :sandbox)
   (:export *results*)
   (:export *runtime-error*)
   (:export *load-error*)
