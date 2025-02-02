@@ -50,7 +50,7 @@
          (ret (third test)))
     (cond ((string= res "Pass")
            (format nil "Passed: ~a returned ~a" fcall ret))
-          ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   Runtime error in function ~a.~%~t   ~a" (car (second test)) rt-error))
+          ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   ~a when evaluating  ~a.~%" rt-error fcall))
           (t (format nil "Failed: ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
@@ -309,9 +309,11 @@
            (error-type (second eval)))
       (setf *package* current-pckg)
       (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
-          (format t "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
-          (format t "~%Your mark for this solution will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
-      (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))
+        (format t "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
+        (format t "~%Your mark for this solution will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
+      (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))
+      (when (and (stringp error-type) (string= error-type "runtime-error"))
+        (format t "~a" (nth 2 eval))))
     t))
 ;;--0--------
 

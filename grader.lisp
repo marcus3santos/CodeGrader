@@ -213,7 +213,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
   "Loads the student-solution file, loads the test cases, runs
   the test cases, and returns the percentage of correct results over total results"
   (let ((description "No runtime errors"))
-    (handle-solution-loading student-solution) 
+    (handle-solution-loading student-solution)
     (in-package :test-runtime)
     (setf *results* nil)
     (setf *runtime-error* nil)
@@ -239,12 +239,13 @@ the mark is calculated as the # of passes divided by the total # of cases.
          (if *runtime-error* 
              (setf description (format nil "Runtime error(s) when evaluating the following expressions:~%~{- ~A~%~}" (reverse *runtime-error*)))
              (setf description "No runtime errors."))
-         (if *load-error*
-             (setf description  (concatenate 'string  description "Load/Compiling error.")))    
-         (if *cr-warning*
-             (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
-         (if forbid-symb
-             (setf description  (concatenate 'string  description (format nil "~%Used forbidden symbol ~a !!!~%" forbid-symb)))))
+         (when *load-error*
+           (setf description  (concatenate 'string  description "Load/Compiling error.")))    
+         (when *cr-warning*
+           (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
+         (when forbid-symb
+           (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
+         description)
        (change-results-readable *results*)
        (read-file-as-string student-solution)))))
 
