@@ -19,9 +19,9 @@
 ;; Root folder where the examples' test case files  and the sandbox package are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
 
-(defparameter *examples-folder* "~/tmp/Examples/")
+(defparameter *examples-folder* "~/Codegrader/Examples/")
 
-(defparameter *sandbox-pkg-folder* "~/tmp/Sandbox/")
+(defparameter *sandbox-pkg-folder* "~/Codegrader/Sandbox/")
 
 ;; List of assessments and labs
 
@@ -49,9 +49,9 @@
          (fcall (second test))
          (ret (third test)))
     (cond ((string= res "Pass")
-           (format nil "Passed.~%~t   ~a returned ~a" fcall ret))
+           (format nil "Passed: ~a returned ~a" fcall ret))
           ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   Runtime error in function ~a.~%~t   ~a" (car (second test)) rt-error))
-          (t (format nil "Failed.~%~t   ~a did not return ~a." fcall  ret)))))
+          (t (format nil "Failed: ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
   (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- Each question is worth 100 points.~%- Your score is the sum of your questions' points divided by the number of questions in the assessment.~%~%")
@@ -305,9 +305,14 @@
     (unless (probe-file folder-file)
       (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder))
     (load sandbox-pkg-file)
-    (let ((eval (evaluate-solution folder-file (namestring testcase-file))))
+    (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
+           (error-type (second eval)))
       (setf *package* current-pckg)
-      (format t "~%Your ~A test results:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))))
+      (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
+          (format t "~%!!! Used forbidden symbol ~A !!!~%" (cadr error-type))
+          (format t "~%Your mark for this solution will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
+      (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval))))
+    t))
 ;;--0--------
 
 (defun grade-exam (submissions-zipped-file std-pc-map tests-folder results-folder &optional exam-grades-export-file)
