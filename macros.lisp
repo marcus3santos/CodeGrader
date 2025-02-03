@@ -33,6 +33,7 @@
 
 (defun report-result (result form)
   (let ((res (not (or (eq result 'runtime-error)
+                      (string= result "runtime-lim")
                       (equalp result "runtime-error")
 		      (typep result 'condition)
 		      (not result)))))
@@ -71,7 +72,7 @@
 			 (progn
 			   (sb-thread:terminate-thread ,thread)
 			   (push ',(cadr expr) *runtime-error*)
-			   (setf ,res 'runtime-error)))
+			   (setf ,res "runtime-lim")))
 			 ((sb-thread:thread-alive-p ,thread) (,keep-time ,stime))
 			 (t ,res))))
 	 (,keep-time (get-internal-real-time))))))
@@ -131,15 +132,15 @@
 
 (defun get-fname (s)
   (let ((name (symbol-name s)))
-    (string-upcase (subseq name 0 (position #\- name :test #'char-equal)))))
+    (string-upcase (subseq name 0 (position #\Space name :test #'char-equal)))))
 
-(defmacro wrp-defun (defun)
+(defun wrp-defun (defun)
   (unless (listp (third defun))
     (error "Invalid syntax for DEFUN form!"))
   (let* ((name (second defun))
          (params (third defun))
          (bdy (cdddr defun))
-         (new-name (gensym (format nil "~a-" (symbol-name name))))
+         (new-name (gensym (format nil "~a " (symbol-name name))))
          (depth (gensym "DEPTH-"))
          (max-depth (gensym "*max-depth*"))
          (new-params (replace-in-expr name new-name params))
@@ -149,11 +150,11 @@
        (let ((,depth 0)
              (,max-depth ,*max-depth*))
          (labels ((,new-name (,@new-params)
-                    (if (> ,depth ,max-depth)
-                        (error "Recursion too deep in function ~a !" ,(get-fname new-name))
-                        (progn
-                          (incf ,depth)
-                          ,@new-bdy))))
+                    (unless (> ,depth ,max-depth)                     
+                      (progn
+                        (incf ,depth)
+                        ,@new-bdy))
+                    (error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))
            (apply #',new-name (list ,@args)))))))
 
 (defun wrp-load-std-sols (file)

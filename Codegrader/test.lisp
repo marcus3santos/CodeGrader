@@ -1,0 +1,11 @@
+(in-package :runtime)
+
+(defun test ()
+  (in-package :sandbox)
+  (load "~/tmp/q1.lisp")
+  (load "~/tmp/q2.lisp")
+  (load "~/tmp/q3.lisp")
+  (in-package :runtime)
+  (f1 "~/tmp/test.lisp")
+  (f2 "~/tmp/test.lisp")
+  (f3 "~/tmp/test.lisp"))

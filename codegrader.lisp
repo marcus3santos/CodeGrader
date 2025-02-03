@@ -44,13 +44,15 @@
 
 (defun gen-message (r)
   (let* ((res (first r))
-         (rt-error (second r))
+         (rt-error (if (string=  (second r) "runtime-lim")
+                       "Exceeded maximum runtime limit"
+                       "Runtime error"))
          (test (nth 3 r))
          (fcall (second test))
          (ret (third test)))
     (cond ((string= res "Pass")
            (format nil "Passed: ~a returned ~a" fcall ret))
-          ((and (string= res "Fail") rt-error) (format nil "Failed.~%~t   ~a when evaluating  ~a.~%" rt-error fcall))
+          ((and (string= res "Fail") rt-error) (format nil "Failed: ~a when evaluating ~a.~%" rt-error fcall))
           (t (format nil "Failed: ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
@@ -506,6 +508,6 @@
    To go back to CL-USER, type: (quit)")
   (in-package :cg))
 
-(defun quit ()
+(defun quit ()<
   (in-package :cl-user))
 
