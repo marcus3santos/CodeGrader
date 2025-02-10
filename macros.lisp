@@ -134,7 +134,7 @@
   (let ((name (symbol-name s)))
     (string-upcase (subseq name 0 (position #\Space name :test #'char-equal)))))
 
-(defun wrp-defun (defun)
+(defmacro wrp-defun (defun)
   (unless (listp (third defun))
     (error "Invalid syntax for DEFUN form!"))
   (let* ((name (second defun))
@@ -150,11 +150,11 @@
        (let ((,depth 0)
              (,max-depth ,*max-depth*))
          (labels ((,new-name (,@new-params)
-                    (unless (> ,depth ,max-depth)                     
+                    (if (< ,depth ,max-depth)                     
                       (progn
                         (incf ,depth)
-                        ,@new-bdy))
-                    (error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))
+                        ,@new-bdy)
+                      (error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name))))))
            (apply #',new-name (list ,@args)))))))
 
 (defun wrp-load-std-sols (file)
