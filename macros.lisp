@@ -153,7 +153,7 @@
                     (cond ((< ,depth ,max-depth)                     
                            (incf ,depth)
                            ,@(if (= (length new-bdy) 1)
-                                 `((car (list ,@new-bdy)))
+                                 `((car (list ,@new-bdy))) ; the car-list hack is to trick sbcl's TOC mechanism
                                  new-bdy))
                           ((error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))))
            (apply #',new-name (list ,@args)))))))
