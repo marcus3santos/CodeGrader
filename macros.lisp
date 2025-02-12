@@ -150,11 +150,12 @@
        (let ((,depth 0)
              (,max-depth ,*max-depth*))
          (labels ((,new-name (,@new-params)
-                    (if (< ,depth ,max-depth)                     
-                      (progn
-                        (incf ,depth)
-                        ,@new-bdy)
-                      (error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name))))))
+                    (cond ((< ,depth ,max-depth)                     
+                           (incf ,depth)
+                           ,@(if (= (length new-bdy) 1)
+                                 `((car (list ,@new-bdy)))
+                                 new-bdy))
+                          ((error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))))
            (apply #',new-name (list ,@args)))))))
 
 (defun wrp-load-std-sols (file)
