@@ -83,6 +83,9 @@
      ,@(loop for f in forms collect
 	     `(report-result (time-execution
 			      (handler-case ,f
+                                (storage-condition (condition)
+                                  (push condition *runtime-error*)
+                                  condition)
 				(error (condition)
 				  (push condition *runtime-error*)
 				  condition))
@@ -153,7 +156,7 @@
                     (cond ((< ,depth ,max-depth)                     
                            (incf ,depth)
                            ,@(if (= (length new-bdy) 1)
-                                 `((car (list ,@new-bdy))) ; the car-list hack is to trick sbcl's TOC mechanism
+                                 `((car (list ,@new-bdy)))
                                  new-bdy))
                           ((error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))))
            (apply #',new-name (list ,@args)))))))
@@ -175,7 +178,8 @@
    the student's solution."
   (let ((current *package*))
     (in-package :sandbox)
-    (wrp-load-std-sols file)
+    (load file)
+    ;;(wrp-load-std-sols file)
     (setf *package* current)))
 
 (defun rewrite-load (file)
