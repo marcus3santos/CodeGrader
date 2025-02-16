@@ -310,12 +310,13 @@
     (unwind-protect 
          (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
                 (error-type (second eval)))
+           (format t "%%%%%%%~%~{- ~a~%~}~%" eval)
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
              (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
-           (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))
-           (when (and (stringp error-type) (string= error-type "runtime-error"))
-             (format t "~a" (nth 2 eval))))
+           (if (and (stringp error-type) (string= error-type "runtime-error"))
+             (format t "~a" (nth 2 eval))
+             (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))))
       (setf *package* current-pckg))
     t))
 ;;--0--------
