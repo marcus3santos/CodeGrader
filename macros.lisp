@@ -51,7 +51,6 @@
        ,@(loop for f in forms collect `(unless ,f (setf ,result nil)))
        ,result)))
 
-;; Added to handle detection of endless loop when evaluating test cases
 (defmacro time-execution  (expr maxtime)
   "Evaluates expr in a separate thread. 
    If expr's execution time reaches maxtime seconds, then kills the thread and
@@ -63,7 +62,7 @@
 	(res (gensym)))
     `(let* ((,res nil)
 	    (,thread (sb-thread:make-thread 
-		     (lambda () (setf ,res ,expr)))))
+		      (lambda () (setf ,res ,expr)))))
        (labels ((,keep-time (,stime)
 		  (cond ((and (> (/ (- (get-internal-real-time) ,stime) 
 				    internal-time-units-per-second)
@@ -73,23 +72,22 @@
 			   (sb-thread:terminate-thread ,thread)
 			   (push ',(cadr expr) *runtime-error*)
 			   (setf ,res "runtime-lim")))
-			 ((sb-thread:thread-alive-p ,thread) (,keep-time ,stime))
-			 (t ,res))))
+			((sb-thread:thread-alive-p ,thread) (,keep-time ,stime))
+			(t ,res))))
 	 (,keep-time (get-internal-real-time))))))
-
-
-(defmacro check (&body forms)
-  `(combine-results
-     ,@(loop for f in forms collect
-	     `(report-result (time-execution
-			      (handler-case ,f
-                                (storage-condition (condition)
-                                  (push condition *runtime-error*)
-                                  condition)
-				(error (condition)
-				  (push condition *runtime-error*)
-				  condition))
-			      ,*max-time*) ',f))))
+                                        
+                                        
+(defmacro check (&body forms)           
+  `(combine-results                     
+     ,@(loop for f in forms collect     
+             `(report-result (handler-case (time-execution ,f ,*max-time*) 
+                               (storage-condition (condition)
+                                 (push condition *runtime-error*) 
+                                 (symbol-name (class-name (class-of condition))))
+                               (error (condition)                 
+                                 (push condition *runtime-error*) 
+                                 (symbol-name (class-name (class-of condition))))) 
+                             ',f))))                                 
 
 (defmacro deftest (name parameters &body body)
   `(defun ,name ,parameters
