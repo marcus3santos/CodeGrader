@@ -100,8 +100,7 @@
 (define-condition computation-too-long (error)
   ((timeout :initarg :timeout :reader computation-too-long-timeout))
   (:report (lambda (condition stream)
-             (format stream "Computation took longer than the maximum allowed time of ~A seconds."
-                     (computation-too-long-timeout condition)))))
+             (format stream "Execution timed out after ~a seconds. The program is taking too long to complete, possibly due to infinite recursion or an endless loop. Please check your logic and consider adding a termination condition.~%" (computation-too-long-timeout condition)))))
 
 
 (defmacro time-execution (form max-time)
@@ -124,7 +123,7 @@
                                  ,condition)))
                        (setf ,done t)))))
        (do ((,i 0 (1+ ,i)))
-           ((> ,i (* 10 ,max-time)))
+           ((or ,done (> ,i (* 10 ,max-time))))
          (sleep 0.1))
        (if (sb-thread:thread-alive-p ,worker)
            (sb-thread:terminate-thread ,worker))
