@@ -32,10 +32,8 @@
 
 
 (defun report-result (result form)
-  (let ((res (not (or (eq result 'runtime-error)
+  (let ((res (not (or (typep result 'condition)
                       (string= result "runtime-lim")
-                      (equalp result "runtime-error")
-		      (typep result 'condition)
 		      (not result)))))
     (push (list res result *test-name* form) *results*)
     ;; (format t "~:[FAIL~;pass~] ...~a: ~a~%" result *test-name* form)
@@ -50,6 +48,8 @@
     `(let ((,result t))
        ,@(loop for f in forms collect `(unless ,f (setf ,result nil)))
        ,result)))
+
+#|
 
 (defmacro time-execution  (expr maxtime)
   "Evaluates expr in a separate thread. 
@@ -75,19 +75,87 @@
 			((sb-thread:thread-alive-p ,thread) (,keep-time ,stime))
 			(t ,res))))
 	 (,keep-time (get-internal-real-time))))))
-                                        
-                                        
+|#                                        
+
+#|
+(defmacro time-execution (expr maxtime)
+    "Evaluates expr in a separate thread. 
+   If expr's execution time reaches maxtime seconds, then kills the thread and
+   pushes the expression that ran out of execution time in *RUNTIME-ERROR*
+   then returns *RUNTIME-ERROR*. Otherwise returns the result of evaluating expr."
+  (let ((thread (gensym))
+	(stime (gensym))
+	(res (gensym)))
+    `(let* ((,res nil)
+	    (,thread (sb-thread:make-thread 
+		      (lambda () (setf ,res ,expr)))))
+       (do ((,stime (get-internal-real-time) (get-internal-real-time)))
+           ((> (/ (- (get-internal-real-time) ,stime) 
+		  internal-time-units-per-second)
+	       ,maxtime) (signal 'computation-too-long))
+         (unless (sb-thread:thread-alive-p ,thread)
+           ,res)))))
+|#
+
+(define-condition computation-too-long (error)
+  ((timeout :initarg :timeout :reader computation-too-long-timeout))
+  (:report (lambda (condition stream)
+             (format stream "Computation took longer than the maximum allowed time of ~A seconds."
+                     (computation-too-long-timeout condition)))))
+
+
+(defmacro time-execution (form max-time)
+  (let ((result (gensym))
+        (done (gensym))
+        (worker (gensym))
+        (condition (gensym))
+        (i (gensym)))
+    `(let* ((,result nil)
+            (,done nil)
+            (,worker (sb-thread:make-thread
+                     (lambda ()
+                       (setf ,result
+                             (handler-case ,form
+                               (storage-condition (,condition)
+                                 (push (list ,condition ',form) *runtime-error*)
+                                 ,condition)
+                               (error (,condition)                 
+                                 (push (list ,condition ',form) *runtime-error*)
+                                 ,condition)))
+                       (setf ,done t)))))
+       (do ((,i 0 (1+ ,i)))
+           ((> ,i (* 10 ,max-time)))
+         (sleep 0.1))
+       (if (sb-thread:thread-alive-p ,worker)
+           (sb-thread:terminate-thread ,worker))
+       (if ,done
+           ,result
+           (error 'computation-too-long :timeout ,max-time)))))
+
+
+#|
 (defmacro check (&body forms)           
   `(combine-results                     
      ,@(loop for f in forms collect     
              `(report-result (handler-case (time-execution ,f ,*max-time*) 
                                (storage-condition (condition)
-                                 (push condition *runtime-error*) 
-                                 (symbol-name (class-name (class-of condition))))
+                                 (push (list condition ',f) *runtime-error*)
+                                 condition)
                                (error (condition)                 
-                                 (push condition *runtime-error*) 
-                                 (symbol-name (class-name (class-of condition))))) 
+                                 (push (list condition ',f) *runtime-error*)
+                                 condition)) 
                              ',f))))                                 
+|#
+
+(defmacro check (&body forms)
+  (let ((condition (gensym)))
+    `(combine-results                     
+       ,@(loop for f in forms collect     
+               `(report-result (handler-case (time-execution ,f ,*max-time*)
+                                 (error (,condition)
+                                   (push (list ,condition ',f) *runtime-error*)
+                                   ,condition)) 
+                               ',f)))))                                 
 
 (defmacro deftest (name parameters &body body)
   `(defun ,name ,parameters

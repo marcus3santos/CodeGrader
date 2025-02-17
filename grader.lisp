@@ -229,7 +229,10 @@ the mark is calculated as the # of passes divided by the total # of cases.
 	     (t "No RT-error"))
        (progn
          (if *runtime-error* 
-             (setf description (format nil "Runtime error(s) when evaluating the following expressions:~%~{- ~A~%~}" (reverse *runtime-error*)))
+             (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
+                                       (mapcar #'(lambda (ce)
+                                                   (format nil "~s~%~a" (second ce) (first ce)))
+                                               (reverse *runtime-error*))))
              (setf description "No runtime errors."))
          (when *load-error*
            (setf description  (concatenate 'string  description "Load/Compiling error.")))    

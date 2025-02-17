@@ -1,4 +1,3 @@
-;; manager.lisp
 
 (in-package #:codegrader)
 
@@ -45,8 +44,7 @@
 (defun gen-message (r)
   (let* ((res (first r))
          (rt-error (if (string=  (second r) "runtime-lim")
-                       "Exceeded maximum runtime limit"
-                       "Runtime error"))
+                       "Exceeded maximum runtime limit"))
          (test (nth 3 r))
          (fcall (second test))
          (ret (third test)))
@@ -310,7 +308,7 @@
     (unwind-protect 
          (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
                 (error-type (second eval)))
-           (format t "%%%%%%%~%~{- ~a~%~}~%" eval)
+           ;;(format t "---- ~s~%" eval)
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
              (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
