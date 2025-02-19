@@ -33,7 +33,7 @@
 
 (defun report-result (result form)
   (let ((res (not (or (typep result 'condition)
-                      (string= result "runtime-lim")
+                      (typep result 'sb-ext:timeout)
 		      (not result)))))
     (push (list res result *test-name* form) *results*)
     ;; (format t "~:[FAIL~;pass~] ...~a: ~a~%" result *test-name* form)
@@ -56,56 +56,32 @@
              (format stream "Execution timed out after ~a seconds. The program is taking too long to complete, possibly due to infinite recursion or an endless loop. Please check your logic and consider adding a termination condition.~%" (computation-too-long-timeout condition)))))
 
 
-(defmacro time-execution (form max-time)
-  (let ((result (gensym))
-        (done (gensym))
-        (worker (gensym))
-        (condition (gensym))
-        (i (gensym)))
-    `(let* ((,result nil)
-            (,done nil)
-            (,worker (sb-thread:make-thread
-                     (lambda ()
-                       (setf ,result
-                             (handler-case ,form
-                               (storage-condition (,condition)
-                                 (push (list ,condition ',form) *runtime-error*)
-                                 ,condition)
-                               (error (,condition)                 
-                                 (push (list ,condition ',form) *runtime-error*)
-                                 ,condition)))
-                       (setf ,done t)))))
-       (do ((,i 0 (1+ ,i)))
-           ((or ,done (> ,i (* 10 ,max-time))))
-         (sleep 0.1))
-       (if (sb-thread:thread-alive-p ,worker)
-           (sb-thread:terminate-thread ,worker))
-       (if ,done
-           ,result
-           (error 'computation-too-long :timeout ,max-time)))))
-
-
+(defmacro time-execution (expression max-time)
+  "Evaluates the given expression and returns its result. If the expression
+   does not complete within the specified max-time (in seconds), it returns
+   a timeout error condition. If the expression triggers a stack overflow
+   the store-condition captures that condition. Other kinds of errors are
+   captured by the general ERROR condition"
+  (let ((c (gensym)))
+    `(handler-case
+         (sb-ext:with-timeout ,max-time
+           (handler-case ,expression
+             (storage-condition (,c)
+               ,c)
+             (error (,c)
+               ,c)))
+       (sb-ext:timeout (,c)
+         ,c))))
 
 (defmacro check (&body forms)
-  (let ((condition (gensym)))
-    `(combine-results                     
-       ,@(loop for f in forms collect     
-               `(report-result (handler-case (time-execution ,f ,*max-time*)
-                                 (error (,condition)
-                                   (push (list ,condition ',f) *runtime-error*)
-                                   ,condition)) 
-                               ',f)))))                                 
+  `(combine-results                     
+     ,@(loop for f in forms collect     
+             `(report-result (time-execution ,f ,*max-time*) ',f))))
 
 (defmacro deftest (name parameters &body body)
   `(defun ,name ,parameters
      (setf *test-name* ',name)
      ,@body))
-
-#|
-(let ((*test-name* ',name))   ;(append *test-na
-  me* (list ',name))
-       ,@body)))
-|#
 
 (defun forbidden-symbols (&key (penalty .5) symbols)
   (progn 

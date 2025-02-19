@@ -43,8 +43,8 @@
 
 (defun gen-message (r)
   (let* ((res (first r))
-         (rt-error (if (string=  (second r) "runtime-lim")
-                       "Exceeded maximum runtime limit"))
+         (rt-error (when (second r)
+                     (symbol-name (class-name (class-of (second r))))))         
          (test (nth 3 r))
          (fcall (second test))
          (ret (third test)))
