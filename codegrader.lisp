@@ -284,6 +284,11 @@
               (get-insert-std line htable)))
     htable))
 
+(defun export-functions (file)
+  (with-open-file (in file :direction :input)
+    (dolist (fname (read in))
+      (export (intern fname :sandbox)))))
+
 ;; -------- Not integrated to the CodeGrader yet
 (defun chk-my-solution (a# q#)
   "Q# is a string identifying a question, e.g., \"q1\".
@@ -296,6 +301,7 @@
          (fname (format nil "~a.lisp" q#))
          (folder-file (format nil "~a~a" folder fname))
          (testcase-file (car (directory (format nil "~a~a/~a" *examples-folder* (string-upcase a#) fname))))
+         ;; (sandbox-functions-file (car (directory (format nil "~a~a/~a" *sandbox-funcs-folder* (string-upcase a#) "sandbox-runtime-functions.lisp"))))
          (sandbox-pkg-file (car (directory (format nil "~a~a/~a" *sandbox-pkg-folder* (string-upcase a#) "sandbox-runtime-package.lisp"))))
          (current-pckg *package*))
     (unless (member a# *assessments* :test #'string=)
@@ -304,6 +310,8 @@
       (error "~%!!! Test case file or folder does not exist !!!"))
     (unless (probe-file folder-file)
       (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder))
+    ;; Should instead intern and export the assessment's function names to the sandbox package
+    ;; (export-functions sandbox-functions-file)
     (load sandbox-pkg-file)
     (unwind-protect 
          (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
@@ -313,8 +321,8 @@
              (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
              (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
            (if (and (stringp error-type) (string= error-type "runtime-error"))
-             (format t "~a" (nth 2 eval))
-             (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))))
+               (format t "~a" (nth 2 eval))
+               (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))))
       (setf *package* current-pckg))
     t))
 ;;--0--------

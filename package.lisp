@@ -1,6 +1,7 @@
 (in-package :cl-user)
 
 (defpackage #:sandbox
+  (:documentation "Sandbox for code evaluation")
   (:use :cl :rutils))
 
 (defpackage #:test-runtime
