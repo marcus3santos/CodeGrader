@@ -15,12 +15,14 @@
 (defparameter *std-sub-folder* "pt/")
 
 
-;; Root folder where the examples' test case files  and the sandbox package are stored.
+;; Root folder where the examples' test case files  and the names of the
+;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
 
 (defparameter *examples-folder* "~/Codegrader/Examples/")
 
-(defparameter *sandbox-pkg-folder* "~/Codegrader/Sandbox/")
+(defparameter *assessment-funcs-folder* "~/Codegrader/Assessment-funcs/")
+;;(defparameter *sandbox-pkg-folder* "~/Codegrader/Sandbox/")
 
 ;; List of assessments and labs
 
@@ -50,7 +52,7 @@
          (ret (third test)))
     (cond ((string= res "Pass")
            (format nil "Passed: ~a returned ~a" fcall ret))
-          ((and (string= res "Fail") rt-error) (format nil "Failed: ~a when evaluating ~a.~%" rt-error fcall))
+          ((and (string= res "Fail") rt-error) (format nil "Failed: ~a when evaluating ~a." rt-error fcall))
           (t (format nil "Failed: ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
@@ -285,9 +287,12 @@
     htable))
 
 (defun export-functions (file)
-  (with-open-file (in file :direction :input)
-    (dolist (fname (read in))
-      (export (intern fname :sandbox)))))
+  (let ((current *package*))
+    (in-package :sandbox)
+    (with-open-file (in file :direction :input)
+      (dolist (fname (read in))
+        (export (intern (symbol-name fname) :sandbox))))
+    (setf *package* current)))
 
 ;; -------- Not integrated to the CodeGrader yet
 (defun chk-my-solution (a# q#)
@@ -301,8 +306,8 @@
          (fname (format nil "~a.lisp" q#))
          (folder-file (format nil "~a~a" folder fname))
          (testcase-file (car (directory (format nil "~a~a/~a" *examples-folder* (string-upcase a#) fname))))
-         ;; (sandbox-functions-file (car (directory (format nil "~a~a/~a" *sandbox-funcs-folder* (string-upcase a#) "sandbox-runtime-functions.lisp"))))
-         (sandbox-pkg-file (car (directory (format nil "~a~a/~a" *sandbox-pkg-folder* (string-upcase a#) "sandbox-runtime-package.lisp"))))
+         (sandbox-functions-file (car (directory (format nil "~a~a/~a" *assessment-funcs-folder* (string-upcase a#) "assessment-functions.lisp"))))
+         ;;(sandbox-pkg-file (car (directory (format nil "~a~a/~a" *sandbox-pkg-folder* (string-upcase a#) "sandbox-runtime-package.lisp"))))
          (current-pckg *package*))
     (unless (member a# *assessments* :test #'string=)
       (error "~%!!! Assessment/Lab does not exist !!!"))
@@ -311,8 +316,8 @@
     (unless (probe-file folder-file)
       (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder))
     ;; Should instead intern and export the assessment's function names to the sandbox package
-    ;; (export-functions sandbox-functions-file)
-    (load sandbox-pkg-file)
+    (export-functions sandbox-functions-file)
+    ;;(load sandbox-pkg-file)
     (unwind-protect 
          (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
                 (error-type (second eval)))

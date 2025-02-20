@@ -197,7 +197,7 @@
         (qlabels (list))
         (all-fnames (list))
         (to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Packages/sandbox-runtime-package.lisp"))))
+	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Assessment-funcs/assessment-functions.lisp"))))
     (comp-exam exam-specs ht)
     (maphash (lambda (k v)
                (let* ((qlabel (format nil "q~a" (question-number v)))
@@ -211,6 +211,4 @@
                  (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)
     (with-open-file (out to :direction :output :if-exists :supersede)
-      (dolist (p (gen-sandbox-rt-pkg all-fnames))
-        (emit-code out p)
-        (emit out "")))))
+      (format out "~a" all-fnames))))
