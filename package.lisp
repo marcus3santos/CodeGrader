@@ -5,7 +5,9 @@
   (:use :cl :rutils)
   (:export :dangerous-function
            :dangerous-function-name)
-  (:shadow :open))
+  (:shadow open with-open-file load delete-file rename-file probe-file directory
+           ensure-directories-exist file-author file-write-date file-length
+           ql:quickload require))
 
 (in-package :sandbox)
 
@@ -15,9 +17,38 @@
              (format stream "Use of forbidden function: ~A"
                      (function-name condition)))))
 
-(defun open (&rest args)
-  (declare (ignore args))
-  (error 'dangerous-function :function-name 'open))
+(defmacro define-dangerous-function (name)
+  `(defun ,name (&rest args)
+     (declare (ignore args))
+     (error 'dangerous-function :function-name ',name)))
+#|
+(dolist (fn '(open with-open-file load delete-file rename-file probe-file directory
+              ensure-directories-exist file-author file-write-date file-length
+              #|
+              run-program ext:run-shell-command sb-ext:run-program uiop:run-program
+              sb-ext:quit ext:exit sb-ext:exit uiop:quit quit sleep
+
+              open-stream-p make-socket usocket:socket-connect usocket:socket-listen
+              usocket:socket-accept usocket:socket-close
+              |#
+              intern eval compile compile-file load
+              #|
+              inspect disassemble describe room gc sb-ext:gc
+              trace untrace sb-int:with-fasl-lock
+              |#
+              defmacro defmethod define-method-combination defpackage defclass
+              in-package
+
+              catch throw restart-case restart-bind handler-bind handler-case
+              ignore-errors))
+  (eval `(define-dangerous-function ,fn)))
+
+|#
+
+(dolist (fn '(open with-open-file load delete-file rename-file probe-file directory
+              ensure-directories-exist file-author file-write-date file-length
+              ql:quickload require))
+  (eval `(define-dangerous-function ,fn)))
 
 (in-package :cl-user)
 
