@@ -2,7 +2,24 @@
 
 (defpackage #:sandbox
   (:documentation "Sandbox for code evaluation")
-  (:use :cl :rutils))
+  (:use :cl :rutils)
+  (:export :dangerous-function
+           :dangerous-function-name)
+  (:shadow :open))
+
+(in-package :sandbox)
+
+(define-condition dangerous-function (error)
+  ((function-name :initarg :function-name :reader dangerous-function-name))
+  (:report (lambda (condition stream)
+             (format stream "Use of forbidden function: ~A"
+                     (function-name condition)))))
+
+(defun open (&rest args)
+  (declare (ignore args))
+  (error 'dangerous-function :function-name 'open))
+
+(in-package :cl-user)
 
 (defpackage #:test-runtime
   (:documentation "Creates the code testing runtime")
