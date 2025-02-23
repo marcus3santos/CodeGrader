@@ -197,9 +197,10 @@
         (qlabels (list))
         (all-fnames (list))
         (to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Assessment-funcs/assessment-functions.lisp"))))
+	     (concatenate 'string (directory-namestring exam-specs) *parent-folder* "Assessment-functions/assessment-functions.lisp"))))
     (comp-exam exam-specs ht)
     (maphash (lambda (k v)
+               (declare (ignore k))
                (let* ((qlabel (format nil "q~a" (question-number v)))
                       (forbidden (question-forbidden v))
                       (examples (question-examples v))

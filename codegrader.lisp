@@ -21,7 +21,7 @@
 
 (defparameter *examples-folder* "~/Codegrader/Examples/")
 
-(defparameter *assessment-funcs-folder* "~/Codegrader/Assessment-funcs/")
+(defparameter *assessment-funcs-folder* "~/Codegrader/Assessment-functions/")
 ;;(defparameter *sandbox-pkg-folder* "~/Codegrader/Sandbox/")
 
 ;; List of assessments and labs
