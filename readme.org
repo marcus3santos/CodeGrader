@@ -141,8 +141,7 @@ file, containing the following folders:
 - *Test-Cases/*: contains lisp program files, one for each assessment
   question, defining the test cases which will be used for evaluating
   the students' solutions.
-- *Packages/*: contains a lisp program file defining package used for
-  sandboxing the runtime of students' solutions.
+- *Assessment-functions/assessment-functions.lisp*: lists the names of the assessment's functions.
 - The rewritten org-mode file.
 
 
