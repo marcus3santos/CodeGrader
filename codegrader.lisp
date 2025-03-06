@@ -303,8 +303,11 @@
    A# is a string identifying the assessment name, e.g., \"lab01\", \"pt1\", \"pt2\", etc.
    Checks if the student's solution is in the required folder defined in *std-sub-folder*
    and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
-   and runs the solution against the given examples for that question stored in
-   *pt-examples-folder*/q#.lisp."
+   and runs the solution against the given examples for that question.
+   ASSUMPTIONS:
+   - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/A#/q#.lisp
+   - THE LIST CONTAINING THE NAMES OF THE ASSESSMENT FUNCTIONS ARE IN 
+     *ASSESSMENT-FUNCS-FOLDER*/A#/assessment-functions.lisp"
   (let* ((folder (format nil "~a~a" (namestring (user-homedir-pathname)) *std-sub-folder*))
          (fname (format nil "~a.lisp" q#))
          (folder-file (format nil "~a~a" folder fname))
