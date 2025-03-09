@@ -29,7 +29,8 @@
 (defun sect-marker? (line str)
   (when (and (coerce line 'list) (>= (length line) (length str)))
     (let ((tkn (subseq (string-upcase line) 0 (length str))))
-      (if (equal (string-upcase str) tkn) (subseq line (length str))))))
+      (if (equal (string-upcase str) tkn)
+          (subseq line (length str))))))
 
 (defun get-params (line)
   (let ((params (read-from-string line nil nil)))
@@ -89,7 +90,7 @@
                   (test-cases-flag nil)                  
                   (examples nil)
                   (test-cases nil))
-	      (loop for line = (read-line in nil nil)
+	      (loop for line = (trim-head-spcs (read-line in nil nil))
 		    while line do
 		      ;;(format t "~a" (aref #(#\/ #\\) (random 2)))
                       (format t "Read: ~a~%" line)
