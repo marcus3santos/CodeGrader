@@ -91,7 +91,8 @@
                   (test-cases nil))
 	      (loop for line = (read-line in nil nil)
 		    while line do
-		      (format t "~a" (aref #(#\/ #\\) (random 2)))
+		      ;;(format t "~a" (aref #(#\/ #\\) (random 2)))
+                      (format t "Read: ~a~%" line)
 		      (cond
                         ((sect-marker? line *folder-marker*)
                          (let ((folder (subseq line (length *folder-marker*))))
@@ -107,7 +108,8 @@
                              (error "Missing question number!"))
                            (setf question-flag number
                                  (gethash question-flag ht) (make-question :number number
-                                                                           :forbidden (list (/ penalty 100.0) forbidden))
+                                                                           :forbidden (when forbidden
+                                                                                        (list (/ penalty 100.0) forbidden)))
                                  examples nil)
                            (emit out (format nil "~a~a" *question-marker* question-flag))
                            (emit out "")
@@ -121,9 +123,9 @@
                          (setf examples-flag t)
                          (emit out *begin-examples-marker*))
                         ((sect-marker? line *end-examples-marker*) ;; Examples end
-                         (setf (question-examples (gethash question-flag ht))
-                               (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
                          (setf examples-flag nil)
+                         (push (car (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
+                               (question-examples (gethash question-flag ht)))
                          (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
                          (setf examples nil)
                          (emit out *end-examples-marker*))
@@ -174,24 +176,6 @@
         (emit-code out `(,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))))
 
 
-(defun gen-sandbox-rt-pkg (fnames)
-  `(
-    (in-package :cl-user)
-    
-    (defpackage #:sandbox
-      (:use :cl :rutils)
-      (:export ,@fnames))
-
-    (defpackage #:test-runtime
-      (:use :cl :sandbox)
-      (:export *results*)
-      (:export *runtime-error*)
-      (:export *load-error*)
-      (:export *cr-warning*)
-      (:export *forbidden-symbols*)
-      (:export *penalty-forbidden*)
-      (:export :handle-solution-loading))))
-
 (defun gen-exam-files (exam-specs)
   (let ((ht (make-hash-table))
         (qlabels (list))
@@ -203,7 +187,7 @@
                (declare (ignore k))
                (let* ((qlabel (format nil "q~a" (question-number v)))
                       (forbidden (question-forbidden v))
-                      (examples (question-examples v))
+                      (examples (reverse (question-examples v)))
                       (test-cases (reverse (question-test-cases v)))
                       (fnames (mapcar #'second test-cases)))
                  (push (string-upcase qlabel) qlabels)
