@@ -12,7 +12,7 @@
   total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
 
 ;; Folder in student's home directory storing their solutions
-(defparameter *std-sub-folder* "pt/")
+;;(defparameter *std-sub-folder* "pt/")
 
 
 ;; Root folder where the examples' test case files  and the names of the
@@ -308,12 +308,11 @@
    - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/A#/q#.lisp
    - THE LIST CONTAINING THE NAMES OF THE ASSESSMENT FUNCTIONS ARE IN 
      *ASSESSMENT-FUNCS-FOLDER*/A#/assessment-functions.lisp"
-  (let* ((folder (format nil "~a~a" (namestring (user-homedir-pathname)) *std-sub-folder*))
+  (let* ((folder (format nil "~a~a/" (namestring (user-homedir-pathname)) a#))
          (fname (format nil "~a.lisp" q#))
          (folder-file (format nil "~a~a" folder fname))
          (testcase-file (car (directory (format nil "~a~a/~a" *examples-folder* (string-upcase a#) fname))))
          (sandbox-functions-file (car (directory (format nil "~a~a/~a" *assessment-funcs-folder* (string-upcase a#) "assessment-functions.lisp"))))
-         ;;(sandbox-pkg-file (car (directory (format nil "~a~a/~a" *sandbox-pkg-folder* (string-upcase a#) "sandbox-runtime-package.lisp"))))
          (current-pckg *package*))
     (unless (member a# *assessments* :test #'string=)
       (error "~%!!! Assessment/Lab does not exist !!!"))

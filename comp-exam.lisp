@@ -190,7 +190,7 @@
                       (forbidden (question-forbidden v))
                       (examples (reverse (question-examples v)))
                       (test-cases (reverse (question-test-cases v)))
-                      (fnames (mapcar #'second test-cases)))
+                      (fnames (mapcar #'second examples)))
                  (push (string-upcase qlabel) qlabels)
                  (setf all-fnames (append fnames all-fnames))
                  (gen-tcs exam-specs qlabel forbidden examples "Examples/")
