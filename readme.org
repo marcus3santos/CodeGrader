@@ -42,6 +42,7 @@ The workflow involves the following steps:
    providing their solutions to the given programming questions.
 4. The instructor uses CodeGrader to evaluate and grade the students'
    solutions.
+The next sections explain each of these workflow steps.
 
 * Writing a Lisp Programming Assessment Using Org-mode
 
