@@ -153,7 +153,7 @@ folder.
 
 We encourage you to examine how CodeGrader rewrites the examples and
 test cases from the original =pt.org= file, as well as the generated
-Lisp program files in the *Examples/* and *Packages/* folders.
+Lisp program files in the *Examples/*, *Test-Cases/*, and *Assessment-functions/* folders.
 
 * Student Interaction with the Assessment  
 
