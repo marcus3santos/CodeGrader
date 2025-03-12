@@ -1,4 +1,5 @@
 #+TITLE: CodeGrader
+#+Options: tc:t
 
 CodeGrader is an automated grader for Lisp programming practicum
 assessments.
