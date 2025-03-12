@@ -75,7 +75,7 @@ For example:
 
 *Note*: CodeGrader will apply that penalty on the solutions for all parts of the question.
 
-Then write the problem description. You can break questions into parts (e.g., Part 1, Part 2) for clarity, and provide examples. *Note:* Examples should follow a specific notation where you specify the function name, a sequence of function calls, and their expected return values.
+Then write the problem description. You can break questions into parts (e.g., Part 1, Part 2) for clarity, and provide examples. *Note:* Examples are written using a =#+begin_example ... #+end_example= block and should follow a specific notation where you specify the function name, a sequence of function calls, and their expected return values.
 
 For example:
    #+begin_example
