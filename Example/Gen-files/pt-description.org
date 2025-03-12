@@ -4,9 +4,6 @@
 
 * Questions
 
-# PENALTY is number representing the percentage to be deducted from
-# the students score if they use a forbidden function in their solution
-# FORBIDDEN is the list of forbidden functions
 ** Question 1
 
 *NOTE*:
@@ -86,7 +83,7 @@ T
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q2.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *REVERSE*, *NREVERSE*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
+- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.
 
 **Part 1:** Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
