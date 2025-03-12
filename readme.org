@@ -99,7 +99,7 @@ For example:
    #+end_example
 
 Finally, use a =#+begin_tcs ... #+end_tcs= block to define test cases for the question. These are the test cases CodeGrader will use for evaluating students’ solutions.  
-Each test case uses a =deftest= structure.
+Each test case is written in the same notation used for writting examples (both use the =deftest= structure).
 
 #+begin_example
  #+Title: Common Lisp Practicum Test
