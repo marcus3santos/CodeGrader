@@ -4,6 +4,8 @@
 
 (defparameter *question-marker* "** Question ")
 
+(defparameter *exercise-marker* "** Exercise ")
+
 (defparameter *folder-marker* "#+FOLDER:")
 
 (defparameter *begin-examples-marker* "#+BEGIN_EXAMPLE")
@@ -84,7 +86,8 @@
 	  (with-open-file (out to :direction :output
 				  :if-exists :supersede)
             (emit out "#+Options: toc:nil num:nil date:nil author:nil")
-            (let ((folder-flag nil)
+            (let ((title-flag nil)
+		  (folder-flag nil)
                   (question-flag nil)
                   (examples-flag nil)
                   (test-cases-flag nil)                  
@@ -95,10 +98,16 @@
 		      ;;(format t "~a" (aref #(#\/ #\\) (random 2)))
                       (format t "Read: ~a~%" line)
 		      (cond
+			((sect-marker? line *title-marker*)
+                         (setf title-flag t)
+                         (emit out line))
                         ((sect-marker? line *folder-marker*)
                          (let ((folder (subseq line (length *folder-marker*))))
                            (setf folder-flag (trim-head-spcs (trim-tail-spcs folder)))))
-                        ((sect-marker? line *question-marker*)
+                        ((or (sect-marker? line *question-marker*)
+                             (sect-marker? line *exercise-marker*))
+			 (unless title-flag
+                           (error "Missing ~a from org file header" *title-marker*))
                          (unless folder-flag
                            (error "Missing #+FOLDER from org file header"))
                          (let* ((params (read-objects-from-string (subseq line (length *question-marker*))))
