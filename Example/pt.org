@@ -2,19 +2,14 @@
 # Folder where the students should store their solutions
 #+folder: ~/pt 
 
-* Questions
-
 ** Question 1 :PENALTY 80 :Forbidden (count member)
  
+*** What you are asked
 
-**Part 1:** Write a function =count-occurrences= that takes an element
+Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
-appears in the list. 
+appears in the list. For example:
 
-# The instructor creates examples of how functions work by defining a DEFTEST
-# structure in a org-mode EXAMPLE block as shown below. CodeGrader rewrites the
-# the org-mode example block as follows. 
-# For Example
 
 #+begin_example
 (deftest count-occurrences
@@ -23,23 +18,6 @@ appears in the list.
   (count-occurrences 5 '(1 2 3 4)) 0)
 #+end_example
 
-# Is rewritten as
-
-# #+BEGIN_EXAMPLE
-# CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
-# 3
-# CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
-# 3
-# CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
-# 0
-# #+END_EXAMPLE
-
-# The instructor creates test cases which will be used for evaluating the students
-# solutions by defining a DEFTEST structure in an TCS block as shown below. CodeGrader
-# generates a file  ./Gen-files/Test-Cases/q1.lisp where 'i' is the question number contaning
-# Lisps macros and functions that auto evaluate the student's code.
-# For example: 
-
 #+begin_tcs
 (deftest count-occurrences
     (count-occurrences 1 '(1 1 1 1 1)) 5
@@ -47,22 +25,12 @@ appears in the list.
     (count-occurrences 'z '(a b c z z)) 2)
 #+end_tcs
 
-# Produces the following code in ./Gen-files/Test-Cases/q1.lisp
 
-# (FORBIDDEN-SYMBOLS :PENALTY 0.8 :SYMBOLS '(COUNT MEMBER))
-#
-# (DEFTEST TEST-COUNT-OCCURRENCES NIL
-#  (CHECK (EQUALP (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
-#   (EQUALP (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
-#   (EQUALP (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
-# 
-# (DEFUN TEST-Q1 ()
-#   (TEST-COUNT-OCCURRENCES)
-#   (FMAKUNBOUND 'COUNT-OCCURRENCES))
-#
-# (TEST-Q1)
+** Question 2 :PENALTY 80 :Forbidden (count member)
+ 
+*** What you are asked
 
-**Part 2:** Write a function =contains-all?= that takes two lists as
+Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
 
@@ -73,7 +41,7 @@ contained in the second list, and =NIL= otherwise.
   (contains-all? '() '(1 2 3)) t)
 #+end_example
 
-# Test cases
+
 #+begin_tcs
 (deftest contains-all
     (contains-all? '(a b) '(a b c d e)) t
@@ -81,9 +49,11 @@ contained in the second list, and =NIL= otherwise.
     (contains-all? '() '()) t)
 #+end_tcs
 
-** Question 2 
+** Question 3 :PENALTY 80 :Forbidden (count member)
 
-**Part 1:** Write a function =reverse-list= that takes a list as an
+*** What you are asked
+
+Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
 list. 
 
@@ -94,7 +64,6 @@ list.
   (reverse-list '()) '())
 #+end_example
 
-# Test cases
 #+begin_tcs
 (deftest reverse-list
     (reverse-list '(1 2 3 4 5)) '(5 4 3 2 1)
@@ -102,7 +71,11 @@ list.
     (reverse-list '(a b c)) '(c b a))
 #+end_tcs
 
-**Part 2:** Write a function =palindrome?= that takes a list as an
+** Question 4 :PENALTY 80 :Forbidden (count member)
+
+*** What you are asked
+
+Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same
 forwards and backwards), and =NIL= otherwise. You may not use
 =REVERSE= or =NREVERSE=.
@@ -114,7 +87,7 @@ forwards and backwards), and =NIL= otherwise. You may not use
   (palindrome? '()) t)
 #+end_example
 
-# Test cases
+
 #+begin_tcs
 (deftest palindrome
     (palindrome? '(x y x)) t

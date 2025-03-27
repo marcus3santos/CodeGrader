@@ -2,24 +2,19 @@
 #+Title: Common Lisp Practicum Test
 # Folder where the students should store their solutions
 
-* Questions
-
 ** Question 1
-
+ 
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q1.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80% on the score of your solutions for this question.
- 
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
+*WHAT YOU ARE ASKED*:
 
-**Part 1:** Write a function =count-occurrences= that takes an element
+
+Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
-appears in the list. 
+appears in the list. For example:
 
-# The instructor creates examples of how functions work by defining a DEFTEST
-# structure in a org-mode EXAMPLE block as shown below. CodeGrader rewrites the
-# the org-mode example block as follows. 
-# For Example
 
 #+BEGIN_EXAMPLE
 CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
@@ -30,40 +25,18 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 0
 #+END_EXAMPLE
 
-# Is rewritten as
-
-# #+BEGIN_EXAMPLE
-# CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
-# 3
-# CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
-# 3
-# CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
-# 0
-# #+END_EXAMPLE
-
-# The instructor creates test cases which will be used for evaluating the students
-# solutions by defining a DEFTEST structure in an TCS block as shown below. CodeGrader
-# generates a file  ./Gen-files/Test-Cases/q1.lisp where 'i' is the question number contaning
-# Lisps macros and functions that auto evaluate the student's code.
-# For example: 
 
 
-# Produces the following code in ./Gen-files/Test-Cases/q1.lisp
+** Question 2
+ 
+*NOTE*:
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q2.lisp*
+- You may create helper functions in your program file.
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
+*WHAT YOU ARE ASKED*:
 
-# (FORBIDDEN-SYMBOLS :PENALTY 0.8 :SYMBOLS '(COUNT MEMBER))
-#
-# (DEFTEST TEST-COUNT-OCCURRENCES NIL
-#  (CHECK (EQUALP (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
-#   (EQUALP (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
-#   (EQUALP (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
-# 
-# (DEFUN TEST-Q1 ()
-#   (TEST-COUNT-OCCURRENCES)
-#   (FMAKUNBOUND 'COUNT-OCCURRENCES))
-#
-# (TEST-Q1)
 
-**Part 2:** Write a function =contains-all?= that takes two lists as
+Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
 
@@ -76,16 +49,18 @@ CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
 T
 #+END_EXAMPLE
 
-# Test cases
 
-** Question 2
+
+** Question 3
 
 *NOTE*:
-- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q2.lisp*
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q3.lisp*
 - You may create helper functions in your program file.
-- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
+*WHAT YOU ARE ASKED*:
 
-**Part 1:** Write a function =reverse-list= that takes a list as an
+
+Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
 list. 
 
@@ -98,9 +73,17 @@ CL-USER> (REVERSE-LIST 'NIL)
 ()
 #+END_EXAMPLE
 
-# Test cases
 
-**Part 2:** Write a function =palindrome?= that takes a list as an
+** Question 4
+
+*NOTE*:
+- You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q4.lisp*
+- You may create helper functions in your program file.
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
+*WHAT YOU ARE ASKED*:
+
+
+Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same
 forwards and backwards), and =NIL= otherwise. You may not use
 =REVERSE= or =NREVERSE=.
@@ -114,5 +97,5 @@ CL-USER> (PALINDROME? 'NIL)
 T
 #+END_EXAMPLE
 
-# Test cases
+
 

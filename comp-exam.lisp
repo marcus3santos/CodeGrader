@@ -6,6 +6,12 @@
 
 (defparameter *exercise-marker* "** Exercise ")
 
+(defparameter *preamble-marker* "*** Preamble")
+
+(defparameter *wyaa-marker* "*** What you are asked")
+
+(defparameter *title-marker* "#+TITLE:")
+
 (defparameter *folder-marker* "#+FOLDER:")
 
 (defparameter *begin-examples-marker* "#+BEGIN_EXAMPLE")
@@ -26,7 +32,7 @@
    "DEFPACKAGE" "IN-PACKAGE"))
 
 (defstruct question
-  number forbidden examples test-cases)
+  number forbidden penalty wyaa examples test-cases)
 
 (defun sect-marker? (line str)
   (when (and (coerce line 'list) (>= (length line) (length str)))
@@ -41,7 +47,8 @@
 
 
 (defun emit (out str)
-  (format out "~a~%" str))
+  (format out "~a~%" str)
+  str)
 
 (defun emit-code (out form)
   (pprint form out))
@@ -89,8 +96,10 @@
             (let ((title-flag nil)
 		  (folder-flag nil)
                   (question-flag nil)
+                  (preamble-flag nil)
                   (examples-flag nil)
-                  (test-cases-flag nil)                  
+                  (test-cases-flag nil)
+                  (qtext nil)
                   (examples nil)
                   (test-cases nil))
 	      (loop for line = (trim-head-spcs (read-line in nil nil))
@@ -98,13 +107,13 @@
 		      ;;(format t "~a" (aref #(#\/ #\\) (random 2)))
                       (format t "Read: ~a~%" line)
 		      (cond
-			((sect-marker? line *title-marker*)
+			((sect-marker? line *title-marker*)  ;; Title
                          (setf title-flag t)
                          (emit out line))
-                        ((sect-marker? line *folder-marker*)
+                        ((sect-marker? line *folder-marker*)   ;; Folder
                          (let ((folder (subseq line (length *folder-marker*))))
                            (setf folder-flag (trim-head-spcs (trim-tail-spcs folder)))))
-                        ((or (sect-marker? line *question-marker*)
+                        ((or (sect-marker? line *question-marker*)     ;; Question/Exercise
                              (sect-marker? line *exercise-marker*))
 			 (unless title-flag
                            (error "Missing ~a from org file header" *title-marker*))
@@ -116,39 +125,57 @@
                                 (forbidden (nth 4 params)))
                            (unless (numberp number)
                              (error "Missing question number!"))
+                           (when question-flag
+                               (setf (question-wyaa (gethash question-flag ht)) qtext
+                                     qtext nil))
                            (setf question-flag number
                                  (gethash question-flag ht) (make-question :number number
-                                                                           :forbidden (when forbidden
-                                                                                        (list (/ penalty 100.0) forbidden)))
-                                 examples nil)
-                           (emit out (format nil "~a~a" *question-marker* question-flag))
-                           (emit out "")
-                           (emit out "*NOTE*:")
-                           (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag number))
-                           (emit out "- You may create helper functions in your program file.")
-                           (if penalty
-                               (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." forbidden penalty))
-                               (emit out "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question."))))
+                                                                           :penalty (when forbidden (/ penalty 100.0))
+                                                                           :forbidden forbidden)
+                                 examples nil))
+                         (emit out (format nil "~a~a" *question-marker* question-flag)))
+                        ((sect-marker? line *preamble-marker*)  ;; In question preamble
+                         (setf preamble-flag t)
+                         (emit out *preamble-marker*))
+                        ((sect-marker? line *wyaa-marker*)  ;; In the What You are Asked section
+                         (setf preamble-flag nil)
+                         (push (emit out "*NOTE*:") qtext)
+                         (push (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag question-flag)) qtext)
+                         (push (emit out "- You may create helper functions in your program file.") qtext)
+                         (push (if (question-penalty (gethash question-flag ht))
+                                   (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." (question-forbidden (gethash question-flag ht)) (* 100 (question-penalty (gethash question-flag ht)))))
+                                   (emit out "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question."))
+                               qtext)
+                         (push (emit out "*WHAT YOU ARE ASKED*:") qtext)
+                         (push (emit out "") qtext))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
-                         (setf examples-flag t)
+                         (unless preamble-flag
+                           (setf examples-flag t))
                          (emit out *begin-examples-marker*))
                         ((sect-marker? line *end-examples-marker*) ;; Examples end
-                         (setf examples-flag nil)
-                         (push (car (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
-                               (question-examples (gethash question-flag ht)))
-                         (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
-                         (setf examples nil)
+                         (unless preamble-flag
+                           (setf examples-flag nil)
+                           (push (car (read-objects-from-string (apply #'concatenate 'string (reverse examples))))
+                                 (question-examples (gethash question-flag ht)))
+                           (gen-example out (car (read-objects-from-string (apply #'concatenate 'string (reverse examples)))))
+                           (setf examples nil))
                          (emit out *end-examples-marker*))
-                        (examples-flag (push line examples))
+                        ((and (not preamble-flag) examples-flag) (push line examples))  ;; Inside an example block
                         ((sect-marker? line *begin-test-cases-maker*) ;; Test cases begin
-                         (setf test-cases-flag t))
+                         (unless preamble-flag
+                           (setf test-cases-flag t)))
                         ((sect-marker? line *end-test-cases-maker*) ;; Test cases end
-                         (setf test-cases-flag nil)
-                         (push (car (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
-                               (question-test-cases (gethash question-flag ht)))
-                         (setf test-cases nil))
-                        (test-cases-flag (push line test-cases))
-                        (t (emit out line))))))))))
+                         (unless preamble-flag
+                           (setf test-cases-flag nil)
+                           (push (car (read-objects-from-string (apply #'concatenate 'string (reverse test-cases))))
+                                 (question-test-cases (gethash question-flag ht)))
+                           (setf test-cases nil)))
+                        ((and (not preamble-flag) test-cases-flag) (push line test-cases))  ; Inside a test case block
+                        (t (if (and question-flag (not preamble-flag))
+                               (push (emit out line) qtext)
+                               (emit out line)))))
+              (when question-flag
+                (setf (question-wyaa (gethash question-flag ht)) qtext))))))))
 
 
 
@@ -161,13 +188,11 @@
                           (push `(equalp ,(car e) ,(cadr e)) res))))))
   (format out "~%"))
 
-(defun gen-tcs (from qlabel forbidden examples &optional folder-name)
-  (let ((penalty (first forbidden))
-        (funcs (second forbidden))
-        (to (ensure-directories-exist
+(defun gen-tcs (from qlabel forbidden penalty examples &optional folder-name)
+  (let ((to (ensure-directories-exist
 	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
-      (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,funcs)))
+      (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
       (emit out "")
       (let ((fm-names))
         (dolist (g-examples  examples)
@@ -197,13 +222,16 @@
                (declare (ignore k))
                (let* ((qlabel (format nil "q~a" (question-number v)))
                       (forbidden (question-forbidden v))
+                      (penalty (question-penalty v))
+                      (wyaa (reverse (question-wyaa v)))
                       (examples (reverse (question-examples v)))
                       (test-cases (reverse (question-test-cases v)))
                       (fnames (mapcar #'second examples)))
                  (push (string-upcase qlabel) qlabels)
                  (setf all-fnames (append fnames all-fnames))
-                 (gen-tcs exam-specs qlabel forbidden examples "Examples/")
-                 (gen-tcs exam-specs qlabel forbidden test-cases "Test-Cases/")
-                 (format t "~%~a:~%Forbidden: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden examples test-cases))) ht)
+                 (gen-tcs exam-specs qlabel forbidden penalty examples "Examples/")
+                 (gen-tcs exam-specs qlabel forbidden penalty test-cases "Test-Cases/")
+                 (format t "~%~a:~%Forbidden: ~a~%Penalty: ~a~%Question: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden penalty wyaa examples test-cases
+                         ))) ht)
     (with-open-file (out to :direction :output :if-exists :supersede)
       (format out "~a" all-fnames))))
