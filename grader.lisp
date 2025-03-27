@@ -207,6 +207,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
   (let ((description "No runtime errors"))
     (handle-solution-loading student-solution)
     (in-package :test-runtime)
+    (setf *questions* nil)
     (setf *results* nil)
     (setf *runtime-error* nil)
     (setf *load-error* nil)
@@ -242,7 +243,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
            (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
          description)
        (change-results-readable *results*)
-       (read-file-as-string student-solution)))))
+       (read-file-as-string student-solution)
+       *question*))))
 
 
 (defun evaluate-solution (student-solution  test-cases &optional ddate sdate)

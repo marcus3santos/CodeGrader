@@ -4,6 +4,8 @@
 
 ;; Unit test macros
 
+(defparameter *question* nil)
+
 (defparameter *results* nil)
 
 (defvar *runtime-error* nil)
@@ -82,6 +84,9 @@
   `(defun ,name ,parameters
      (setf *test-name* ',name)
      ,@body))
+
+(defun whats-asked (question)
+  (setf *question* question))
 
 (defun forbidden-symbols (&key (penalty .5) symbols)
   (progn 

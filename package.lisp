@@ -55,6 +55,7 @@
 (defpackage #:test-runtime
   (:documentation "Creates the code testing runtime")
   (:use cl :sandbox)
+  (:export *question*)
   (:export *results*)
   (:export *runtime-error*)
   (:export *load-error*)

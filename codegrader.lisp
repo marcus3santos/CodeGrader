@@ -22,7 +22,7 @@
 (defparameter *examples-folder* "~/Codegrader/Examples/")
 
 (defparameter *assessment-funcs-folder* "~/Codegrader/Assessment-functions/")
-;;(defparameter *sandbox-pkg-folder* "~/Codegrader/Sandbox/")
+
 
 ;; List of assessments and labs
 
@@ -69,16 +69,18 @@
 	   (descr (third qeval))
 	   (res (clean-symbol-names (fourth qeval)))
            (std-sol (nth 4 qeval))
+           (question-text (nth 5 qeval))
            (unit-test-name (symbol-name (third (car res))))
            (pos (position #\- unit-test-name))
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
       (format out "~%---------------------------------------------------------------------------~%* ~a: ~a points (out of 100).~%" q mark)
+      (format out "---- Description, as provided in the assessment ----~%~{~a~%~}---- End of description ----" question-text)
       (unless (or (equalp error-type "missing-question-file")
-                 (equalp error-type "no-submitted-file")
-		 (equalp error-type "not-lisp-file")
-		 (equal error-type "late-submission"))
-        (format out "~%------ Your Solution ------~%~%~A~%~%--- End of Your Solution --~%" std-sol))
+                  (equalp error-type "no-submitted-file")
+		  (equalp error-type "not-lisp-file")
+		  (equal error-type "late-submission"))
+        (format out "~%---- Your Solution ----~%~%~A~%~%--- End of Your Solution --~%" std-sol))
       (cond ((or (equalp error-type "missing-question-file")
                  (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
@@ -248,7 +250,6 @@
 
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
-
 
 
 (defun grade-solutions (solution-files test-cases-files)

@@ -126,8 +126,8 @@
                            (unless (numberp number)
                              (error "Missing question number!"))
                            (when question-flag
-                               (setf (question-wyaa (gethash question-flag ht)) qtext
-                                     qtext nil))
+                             (setf (question-wyaa (gethash question-flag ht)) (remove "" qtext :test #'string=)
+                                   qtext nil))
                            (setf question-flag number
                                  (gethash question-flag ht) (make-question :number number
                                                                            :penalty (when forbidden (/ penalty 100.0))
@@ -143,7 +143,7 @@
                          (push (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag question-flag)) qtext)
                          (push (emit out "- You may create helper functions in your program file.") qtext)
                          (push (if (question-penalty (gethash question-flag ht))
-                                   (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{*~a*~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." (question-forbidden (gethash question-flag ht)) (* 100 (question-penalty (gethash question-flag ht)))))
+                                   (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{~a~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." (question-forbidden (gethash question-flag ht)) (* 100 (question-penalty (gethash question-flag ht)))))
                                    (emit out "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question."))
                                qtext)
                          (push (emit out "*WHAT YOU ARE ASKED*:") qtext)
@@ -188,10 +188,12 @@
                           (push `(equalp ,(car e) ,(cadr e)) res))))))
   (format out "~%"))
 
-(defun gen-tcs (from qlabel forbidden penalty examples &optional folder-name)
+(defun gen-tcs (from qlabel wyaa forbidden penalty examples &optional folder-name)
   (let ((to (ensure-directories-exist
 	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
     (with-open-file (out to :direction :output :if-exists :supersede)
+      (emit-code out `(whats-asked (quote ,wyaa)))
+      (emit out "")
       (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
       (emit out "")
       (let ((fm-names))
@@ -229,8 +231,8 @@
                       (fnames (mapcar #'second examples)))
                  (push (string-upcase qlabel) qlabels)
                  (setf all-fnames (append fnames all-fnames))
-                 (gen-tcs exam-specs qlabel forbidden penalty examples "Examples/")
-                 (gen-tcs exam-specs qlabel forbidden penalty test-cases "Test-Cases/")
+                 (gen-tcs exam-specs qlabel wyaa forbidden penalty examples "Examples/")
+                 (gen-tcs exam-specs qlabel wyaa forbidden penalty test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Penalty: ~a~%Question: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden penalty wyaa examples test-cases
                          ))) ht)
     (with-open-file (out to :direction :output :if-exists :supersede)
