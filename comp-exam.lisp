@@ -39,7 +39,7 @@
     (when (and (coerce nhline 'list) (>= (length nhline) (length str)))
       (let ((tkn (subseq (string-upcase nhline) 0 (length str))))
         (if (equal (string-upcase str) tkn)
-            str)))))
+            line)))))
 
 (defun get-params (line)
   (let ((params (read-from-string line nil nil)))
