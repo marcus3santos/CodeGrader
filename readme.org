@@ -63,8 +63,9 @@ Note: You must provide the folder where the students solutions will be stored.
 
 ** Writing the assessment Questions
 
-For each assessment question, do the following: write the heading ** *Question* /i/
+For each assessment question, do the following: write the heading ** /header/  /i/
 /[penalty-forbidden]/, where
+- /header/ is either *Question* or *Exercise*
 - /i/ is an integer representing the question number;
 - /penalty-forbidden/ is the following optional sequence of key-value pairs  *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
   - /p/ is an integer representing the percentage score reduction for using forbidden functions;
@@ -77,7 +78,14 @@ For example:
 
 *Note*: CodeGrader will apply that penalty on the solutions for all parts of the question.
 
-Then write the problem description. You can break questions into parts (e.g., Part 1, Part 2) for clarity, and provide examples. *Note:* Examples are written using a =#+begin_example ... #+end_example= block and should follow a specific notation where you specify the function name, a sequence of function calls, and their expected return values.
+Then you write an optional preamble initiated by the header =***
+Preamble=, followed by the problem description, initiated by the
+header =*** What you are asked=. You can break the *What you are
+asked* section into parts (e.g., Part 1, Part 2) for clarity, and
+provide examples. *Note:* Examples are written using a
+=#+begin_example ... #+end_example= block and should follow a specific
+notation where you specify the function name, a sequence of function
+calls, and their expected return values.
 
 For example:
    #+begin_example
@@ -85,6 +93,11 @@ For example:
      #+folder: ~/pt
      
      ** Question 1 :PENALTY 80 :Forbidden (count member)
+
+     *** Preamble
+     This question contains two parts
+
+     *** What you are asked
      
      **Part 1:** Write a function =count-occurrences= that takes an element
      and a list as arguments and returns the number of times the element
@@ -108,7 +121,12 @@ Each test case is written in the same notation used for writting examples (both 
  #+folder: ~/pt
 
  ** Question 1 :PENALTY 80 :Forbidden (count member)
-    
+
+ *** Preamble
+ This question contains two parts
+
+ *** What you are asked
+
  **Part 1:** Write a function =count-occurrences= that takes an element
  and a list as arguments and returns the number of times the element
  appears in the list.
