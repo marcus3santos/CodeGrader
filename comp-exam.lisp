@@ -139,15 +139,16 @@
                          (emit out *preamble-marker*))
                         ((sect-marker? line *wyaa-marker*)  ;; In the What You are Asked section
                          (setf preamble-flag nil)
+                         (push "*WHAT YOU ARE ASKED*:" qtext)
+                         (emit out "*** WHAT YOU ARE ASKED")
+                         (push (emit out "") qtext)                         
                          (push (emit out "*NOTE*:") qtext)
                          (push (emit out (format nil "- You are required to write the solutions for the parts of this question in the Lisp program file *~a/q~a.lisp*" folder-flag question-flag)) qtext)
                          (push (emit out "- You may create helper functions in your program file.") qtext)
                          (push (if (question-penalty (gethash question-flag ht))
                                    (emit out (format nil "- You must not use or refer to the following Lisp built-in function(s) and symbol(s): ~{~a~^, ~}. The penalty for doing so is a deduction of ~a% on the score of your solutions for this question." (question-forbidden (gethash question-flag ht)) (* 100 (question-penalty (gethash question-flag ht)))))
                                    (emit out "- There are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question."))
-                               qtext)
-                         (push (emit out "*WHAT YOU ARE ASKED*:") qtext)
-                         (push (emit out "") qtext))
+                               qtext))
                         ((sect-marker? line *begin-examples-marker*) ;; Examples begin
                          (unless preamble-flag
                            (setf examples-flag t))
