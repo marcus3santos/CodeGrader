@@ -78,8 +78,7 @@ For example:
 
 *Note*: CodeGrader will apply that penalty on the solutions for all parts of the question.
 
-Then you write an optional preamble initiated by the header =***
-Preamble=, followed by the problem description, initiated by the
+Then you write an optional preamble initiated by the header =*** Preamble=, followed by the problem description, initiated by the
 header =*** What you are asked=. You can break the *What you are
 asked* section into parts (e.g., Part 1, Part 2) for clarity, and
 provide examples. *Note:* Examples are written using a
