@@ -35,10 +35,11 @@
   number forbidden penalty wyaa examples test-cases)
 
 (defun sect-marker? (line str)
-  (when (and (coerce line 'list) (>= (length line) (length str)))
-    (let ((tkn (subseq (string-upcase line) 0 (length str))))
-      (if (equal (string-upcase str) tkn)
-          (subseq line (length str))))))
+  (let ((nhline (trim-head-spcs line)))
+    (when (and (coerce nhline 'list) (>= (length nhline) (length str)))
+      (let ((tkn (subseq (string-upcase nhline) 0 (length str))))
+        (if (equal (string-upcase str) tkn)
+            str)))))
 
 (defun get-params (line)
   (let ((params (read-from-string line nil nil)))
