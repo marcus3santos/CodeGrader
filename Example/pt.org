@@ -2,9 +2,9 @@
 # Folder where the students should store their solutions
 #+folder: ~/pt 
 
-** Question 1 :PENALTY 80 :Forbidden (count member)
+* Question 1 :PENALTY 80 :Forbidden (count member)
  
-*** What you are asked
+** What you are asked
 
 Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
@@ -26,9 +26,9 @@ appears in the list. For example:
 #+end_tcs
 
 
-** Question 2 :PENALTY 80 :Forbidden (count member)
+* Question 2 :PENALTY 80 :Forbidden (count member)
  
-*** What you are asked
+** What you are asked
 
 Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
@@ -49,9 +49,9 @@ contained in the second list, and =NIL= otherwise.
     (contains-all? '() '()) t)
 #+end_tcs
 
-** Question 3 :PENALTY 80 :Forbidden (count member)
+* Question 3 :PENALTY 80 :Forbidden (count member)
 
-*** What you are asked
+** What you are asked
 
 Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
@@ -71,9 +71,9 @@ list.
     (reverse-list '(a b c)) '(c b a))
 #+end_tcs
 
-** Question 4 :PENALTY 80 :Forbidden (count member)
+* Question 4 :PENALTY 80 :Forbidden (count member)
 
-*** What you are asked
+** What you are asked
 
 Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same

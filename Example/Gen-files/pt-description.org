@@ -2,14 +2,14 @@
 #+Title: Common Lisp Practicum Test
 # Folder where the students should store their solutions
 
-** Question 1
+* Question 1
  
+*** WHAT YOU ARE ASKED
+
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q1.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
-*WHAT YOU ARE ASKED*:
-
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): COUNT, MEMBER. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
 
 Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
@@ -27,14 +27,14 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 
 
 
-** Question 2
+* Question 2
  
+*** WHAT YOU ARE ASKED
+
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q2.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
-*WHAT YOU ARE ASKED*:
-
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): COUNT, MEMBER. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
 
 Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
@@ -51,14 +51,14 @@ T
 
 
 
-** Question 3
+* Question 3
+
+*** WHAT YOU ARE ASKED
 
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q3.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
-*WHAT YOU ARE ASKED*:
-
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): COUNT, MEMBER. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
 
 Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
@@ -74,14 +74,14 @@ CL-USER> (REVERSE-LIST 'NIL)
 #+END_EXAMPLE
 
 
-** Question 4
+* Question 4
+
+*** WHAT YOU ARE ASKED
 
 *NOTE*:
 - You are required to write the solutions for the parts of this question in the Lisp program file *~/pt/q4.lisp*
 - You may create helper functions in your program file.
-- You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
-*WHAT YOU ARE ASKED*:
-
+- You must not use or refer to the following Lisp built-in function(s) and symbol(s): COUNT, MEMBER. The penalty for doing so is a deduction of 80.0% on the score of your solutions for this question.
 
 Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same
