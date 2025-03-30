@@ -2,13 +2,13 @@
 
 (defparameter *parent-folder* "Gen-files/")
 
-(defparameter *question-marker* "** Question ")
+(defparameter *question-marker* "* Question ")
 
-(defparameter *exercise-marker* "** Exercise ")
+(defparameter *exercise-marker* "* Exercise ")
 
-(defparameter *preamble-marker* "*** Preamble")
+(defparameter *preamble-marker* "** Preamble")
 
-(defparameter *wyaa-marker* "*** What you are asked")
+(defparameter *wyaa-marker* "** What you are asked")
 
 (defparameter *title-marker* "#+TITLE:")
 
