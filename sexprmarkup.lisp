@@ -25,7 +25,6 @@
 
 ;; Serializer
 
-
 (defun sexprmark->org (sexpr)
   (labels
       ((emit (node &optional (depth 0))
@@ -62,11 +61,10 @@
                                                                                (emit e depth))
                                                                              item))))
                    (t (error "Improper item ~a" item)))))
-              (hl (let ((link (second node))
-                        (text (third node)))
-                    (list (format nil (if text  "[[~a][~a]] " "[[~a]]") link text))))
-              ($
-               (list (format nil "$~{~a~}$ " (cdr node))))
+              (hl
+               (let ((link (second node))
+                     (text (third node)))
+                 (list (format nil (if text  "[[~a][~a]] " "[[~a]]") link text))))
               (b
                (list (format nil "*~{~a~}* " (trim-spc-last (mapcar #'emit (cdr node))))))
               (tt
@@ -75,20 +73,21 @@
                (list (format nil "/~{~a~}/ " (trim-spc-last (mapcar #'emit  (cdr node))))))
               (rp
                (list (format nil "(~{~a~}) " (trim-spc-last (mapcar #'emit  (cdr node))))))
-              
-              
+              (example-block
+               (cons (format nil "~%#+BEGIN_SRC lisp~%")
+                     (append (mapcar (lambda (line) (format nil "~a~%" line))
+                                     (mapcar #'emit (cdr node)))
+                             (list (format nil "#+END_SRC~%")))))
+              (example
+               (let ((expected (second node))
+                     (result (third node)))
+                 (format nil "CL-USER> ~a~%~a" expected result)))
               (code-block
                (let ((lang (getf (cdr node) :lang))
                      (lines (cdddr node)))
                  (cons (format nil "~%#+BEGIN_SRC ~a~%" lang)
                        (append (mapcar (lambda (line) (format nil "~a~%" line)) lines)
                                (list (format nil "#+END_SRC~%"))))))
-              (cc (if (and (symbolp (cadr node))
-                           (null (cddr node)))
-                      (let ((symbname (symbol-name (cadr node))))
-                        (format nil "~a " (concatenate 'string 
-                                                       (string (aref symbname 0)) 
-                                                       (string-downcase (subseq symbname 1)))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (format nil "~a " (string-downcase (symbol-name node))))
            ((atom node) (format nil "~a " node)))))
@@ -101,19 +100,21 @@
              (p "Some paragraph text under \"a\" heading 1.")
              (p "This" is a text.))
             (section :level 2 :title "Heading 2"
-             (p "Another" paragraph  ($ "x=2")  and (em the rest.))
+             (p "Another" paragraph  "$x=2$"  and (em the rest.))
              (P "Write" a (tt function)  (b count-occurrences and another) )
              (ul
-              (li (cc Item) one)
-              (li (cc Item) two
+              (li "Item" one)
+              (li "Item" two
                (ul
-                (li (cc Subitem)
+                (li "Subitem"
                  (ul
-                  (li (cc Subsubitem))))
-                (li (cc Another) item)))
-              (li (todo (cc Task))))
+                  (li "Subsubitem")))
+                (li "Another" item)))
+              (li (todo "Task")))
              (p)
+             (example-block
+              (example (fact 3) 6)
+              (example (fact 0) 1))
              (code-block :lang "python"
-              "print(\"Hello, Org!\")"))
-            )))
+              "print(\"Hello, Org!\")")))))
     (sexprmark->org sexpr)))
