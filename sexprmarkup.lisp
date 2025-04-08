@@ -27,7 +27,8 @@
 
 (defun sexprmark->org (sexpr)
   (labels
-      ((emit (node &optional (depth 0))
+      ((emit (node &key qnumber (depth 0))
+         "qnumber is the question number, and depth is space indentation"
          (cond
            ((consp node)
             (case (car node)
@@ -42,23 +43,31 @@
                      (children (cdr (cddddr node))))
                  (cons (format nil "~a ~a~%" (stars level) title)
                        (mapcar #'emit children))))
+              (question
+               (let ((title (getf (cdr node) :title))
+                     (number (getf (cdr node) :number))
+                     (children (cdr (cddddr node))))
+                 (cons (format nil "~a ~a ~a~%" (stars 1) title number)
+                       (mapcar (lambda (item)
+                                 (emit item :qnumber number))
+                               children))))              
               (p
                (append (mapcar #'emit (cdr node))
                        (list (format nil "~%"))))
               (ul
                (mapcar (lambda (item)
-                         (cons (format nil "~%") (emit item (1+ depth))))
+                         (cons (format nil "~%") (emit item :depth (1+ depth))))
                        (cdr node)))
               (li
                (let ((item (cdr node)))
                  (cond
                    ((and (consp (car item)) (eq (caar item) 'todo))
                     (format nil "~a- [ ] ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
-                                                                                   (emit e depth))
+                                                                                   (emit e :depth depth))
                                                                                  (cdar item)))))
                    ((consp item)
                     (format nil "~a- ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
-                                                                               (emit e depth))
+                                                                               (emit e :depth depth))
                                                                              item))))
                    (t (error "Improper item ~a" item)))))
               (hl
@@ -99,6 +108,14 @@
             (section :level 1 :title "Heading 1"
              (p "Some paragraph text under \"a\" heading 1.")
              (p "This" is a text.))
+            (question :title "Question" :number 1
+             (example-block
+              (example (fact 3) 6)
+              (example (fact 0) 1))
+             (p "Question" comes here.))
+            (question :title "Question" :number 2
+             (p "Question" comes here.)
+             )
             (section :level 2 :title "Heading 2"
              (p "Another" paragraph  "$x=2$"  and (em the rest.))
              (P "Write" a (tt function)  (b count-occurrences and another) )
