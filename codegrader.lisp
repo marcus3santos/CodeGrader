@@ -26,12 +26,6 @@
 
 ;; List of assessments and labs
 
-(defparameter *assessments* '("lab01" "lab02"
-                              "lab03" "lab04"
-                              "lab05" "lab06"
-                              "lab07" "lab08"
-                              "lab09" "pt1" "pt2"))
-
 (defun check-input-files (lf)
   (when lf
     (if (probe-file (car lf))
@@ -299,28 +293,25 @@
     (setf *package* current)))
 
 ;; -------- Not integrated to the CodeGrader yet
-(defun chk-my-solution (a# q#)
-  "Q# is a string identifying a question, e.g., \"q1\".
-   A# is a string identifying the assessment name, e.g., \"lab01\", \"pt1\", \"pt2\", etc.
+(defun chk-my-solution (a#)
+  "A# is a string identifying the solution file, e.g., \"~/lab01/q1.lisp\".
    Checks if the student's solution is in the required folder defined in *std-sub-folder*
    and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
    and runs the solution against the given examples for that question.
    ASSUMPTIONS:
-   - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/A#/q#.lisp
+   - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/q#.lisp
    - THE LIST CONTAINING THE NAMES OF THE ASSESSMENT FUNCTIONS ARE IN 
-     *ASSESSMENT-FUNCS-FOLDER*/A#/assessment-functions.lisp"
-  (let* ((folder (format nil "~a~a/" (namestring (user-homedir-pathname)) a#))
-         (fname (format nil "~a.lisp" q#))
-         (folder-file (format nil "~a~a" folder fname))
-         (testcase-file (car (directory (format nil "~a~a/~a" *examples-folder* (string-upcase a#) fname))))
-         (sandbox-functions-file (car (directory (format nil "~a~a/~a" *assessment-funcs-folder* (string-upcase a#) "assessment-functions.lisp"))))
+     *ASSESSMENT-FUNCS-FOLDER*/assessment-functions.lisp"
+  (let* ((pathname  (pathname a#))
+         (fname (format nil "~a.lisp" (pathname-name pathname)))
+         (folder-file a#)
+         (testcase-file (car (directory (format nil "~a~a" *examples-folder*  fname))))
+         (sandbox-functions-file (car (directory (format nil "~a~a" *assessment-funcs-folder* "assessment-functions.lisp"))))
          (current-pckg *package*))
-    (unless (member a# *assessments* :test #'string=)
-      (error "~%!!! Assessment/Lab does not exist !!!"))
     (unless testcase-file
       (error "~%!!! Test case file or folder does not exist !!!"))
     (unless (probe-file folder-file)
-      (error "~%!!! File ~a does not exist in folder ~S !!!" fname folder))
+      (error "~%!!! File does not exist in folder ~S !!!" folder-file))
     ;; Should instead intern and export the assessment's function names to the sandbox package
     (export-functions sandbox-functions-file)
     ;;(load sandbox-pkg-file)
@@ -333,7 +324,7 @@
              (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
            (if (and (stringp error-type) (string= error-type "runtime-error"))
                (format t "~a" (nth 2 eval))
-               (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" q# (mapcar #'gen-message (nth 3 eval)))))
+               (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" pathname (mapcar #'gen-message (nth 3 eval)))))
       (setf *package* current-pckg))
     t))
 ;;--0--------
