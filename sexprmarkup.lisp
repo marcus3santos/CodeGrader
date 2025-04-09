@@ -89,7 +89,8 @@
                               (li "You" may create helper functions in your program file.)
                               ,(if forbidden
                                    `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                   `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.)))))
+                                   `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
+                              (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (code-block :lang "lisp",(format nil "(chk-my-solution \"q~a\")" qnumber))))))
                 (mapcar (lambda (item)
                           (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                         (cdr node))))
@@ -127,10 +128,10 @@
               (rp
                (list (format nil "(~{~a~}) " (trim-spc-last (mapcar #'emit  (cdr node))))))
               (example-block
-               (cons (format nil "~%#+BEGIN_SRC lisp~%")
-                     (append (mapcar (lambda (line) (format nil "~a~%" line))
-                                     (mapcar #'emit (cdr node)))
-                             (list (format nil "#+END_SRC~%")))))
+               (cons (format nil "~a~%#+BEGIN_SRC lisp~%" (indent depth))
+                     (append (mapcar (lambda (line) (format nil "~a~a~%" (indent depth) line))
+                                     (mapcar (lambda (item) (emit item :depth depth)) (cdr node)))
+                             (list (format nil "~a#+END_SRC~%" (indent depth))))))
               (example
                (let ((expected (second node))
                      (result (third node)))
@@ -138,9 +139,9 @@
               (code-block
                (let ((lang (getf (cdr node) :lang))
                      (lines (cdddr node)))
-                 (cons (format nil "~%#+BEGIN_SRC ~a~%" lang)
-                       (append (mapcar (lambda (line) (format nil "~a~%" line)) lines)
-                               (list (format nil "#+END_SRC~%"))))))
+                 (cons (format nil "~%~a#+BEGIN_SRC ~a~%" (indent (* 2 depth)) lang)
+                       (append (mapcar (lambda (line) (format nil "~a~a~%" (indent (* 2 depth)) line)) lines)
+                               (list (format nil "~a#+END_SRC~%" (indent (* 2 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (format nil "~a " (string-downcase (symbol-name node))))
            ((atom node) (format nil "~a " node)))))
@@ -148,7 +149,7 @@
 
 (defun test ()
   (let ((sexpr
-          '(doc (:title "PT 1" :folder "~/pt1")
+          '(doc (:title "PT 1" :folder "~/pt1/")
             (section  (:title "Heading 1" :level 1)
              (p "Some paragraph text under \"a\" heading 1.")
              (p "This" is a text.))
@@ -182,4 +183,5 @@
               (example (fact 0) 1))
              (code-block :lang "python"
               "print(\"Hello, Org!\")")))))
-    (sexprmark->org sexpr)))
+    (with-open-file (out "~/tmp/q1.org" :direction :output :if-exists :supersede)
+      (format out "~a" (sexprmark->org sexpr)))))
