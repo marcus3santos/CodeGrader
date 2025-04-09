@@ -23,10 +23,6 @@
                          (list (string-right-trim " " (car (last strings)))))))
     trimmed))
 
-(defun getkey-value (plist indic)
-  (multiple-value-bind (i v tail)
-      (get-properties plist indic)
-    (values i v tail)))
 ;; Serializer
 
 (defun sexprmark->org (sexpr)
