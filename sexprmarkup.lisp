@@ -4,6 +4,12 @@
 
 (in-package :sexprmark-to-org)
 
+;; Structure to store information about questions
+
+(defstruct question
+  number forbidden penalty description examples testcases)
+
+
 ;; Utility functions
 
 (defun indent (n)
@@ -33,7 +39,7 @@
 
 (defun sexprmark->org (sexpr)
   (let (res
-        questions-info)
+        (questions-info (make-hash-table)))
     (labels
         ((emit (node &key folder qnumber penalty forbidden (depth 0))
            "folder is the where students are required to store their solutions; qnumber is the question number; 
@@ -77,6 +83,7 @@
                                         ((and penalty (not (= penalty 0)) (not forbidden))
                                          (error "You forgot to provide the list of forbidden functions in ~s" node))
                                         (t (nthcdr 2 node)))))
+                   (setf (gethash number questions-info) (make-question :number number :penalty penalty :forbidden forbidden))
                    (cons (emit '(p))
                          (cons (format nil "~a ~a ~a~%" (stars 1) title number)
                                (mapcar (lambda (item)
@@ -132,12 +139,19 @@
                 ((example-block testcase-block)
                  (let ((function-name (getf (second node) :name)))
                    (unless function-name
-                     (error "Missing function name key in node ~a" node))
-                   (push (cons qnumber (list (car node) function-name (cddr node))) questions-info)
-                   (cons (format nil "~a~%#+BEGIN_SRC lisp~%" (indent depth))
-                         (append (mapcar (lambda (line) (format nil "~a~a~%" (indent depth) line))
-                                         (mapcar (lambda (item) (emit item :depth depth)) (cddr node)))
-                                 (list (format nil "~a#+END_SRC~%" (indent depth)))))))
+                     (error "Missing function name key in node ~s" node))
+                   (unless qnumber
+                     (error "Example block not inside a question ~s" node))
+                   (if (equalp (car node) 'example-block)
+                       (push (append (list 'deftest function-name) (cddr node))
+                             (question-examples (gethash qnumber questions-info)))
+                       (push (append (list 'deftest function-name) (cddr node))
+                             (question-testcases (gethash qnumber questions-info))))
+                   (when (equalp (car node) 'example-block)
+                     (cons (format nil "~a~%#+BEGIN_SRC lisp~%" (indent depth))
+                           (append (mapcar (lambda (line) (format nil "~a~a~%" (indent depth) line))
+                                           (mapcar (lambda (item) (emit item :depth depth)) (cddr node)))
+                                   (list (format nil "~a#+END_SRC~%" (indent depth))))))))
                 (assertion
                  (let ((expected (second node))
                        (result (third node)))
@@ -152,7 +166,10 @@
              ((symbolp node) (format nil "~a " (string-downcase (symbol-name node))))
              ((atom node) (format nil "~a " node)))))
       (setf res (flatten (emit sexpr)))
-      (format t ">>> ~a~%" questions-info)
+      (maphash (lambda (k v)
+                 (format t ">>> Question: ~a~%Forbidden: ~a~%Penalty: ~a~%Text: ~a~%Examples: ~a~%Testcases: ~a~%"
+                         k (question-forbidden v) (question-penalty v) (question-description v) (question-examples v) (question-testcases v)))
+               questions-info)
       (format nil "~{~a~}" res))))
 
 (defun test ()
@@ -191,9 +208,6 @@
                 (li "Another" item)))
               (li (todo "Task")))
              (p)
-             (example-block (:name fact)
-              (assertion (fact 3) 6)
-              (assertion (fact 0) 1))
              (code-block :lang "python"
               "print(\"Hello, Org!\")")))))
     (with-open-file (out "~/tmp/q1.org" :direction :output :if-exists :supersede)

@@ -233,6 +233,7 @@
                       (fnames (mapcar #'second examples)))
                  (push (string-upcase qlabel) qlabels)
                  (setf all-fnames (append fnames all-fnames))
+                 (format t ">>> ~a~&" wyaa)
                  (gen-tcs exam-specs qlabel wyaa forbidden penalty examples "Examples/")
                  (gen-tcs exam-specs qlabel wyaa forbidden penalty test-cases "Test-Cases/")
                  (format t "~%~a:~%Forbidden: ~a~%Penalty: ~a~%Question: ~a~%Examples: ~a~%TCs: ~a~%" qlabel forbidden penalty wyaa examples test-cases
