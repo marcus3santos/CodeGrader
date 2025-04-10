@@ -90,19 +90,20 @@
                                          (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth))
                                        children)))))
                 (whats-asked
-                 (append
-                  (list (emit '(p (b "WHAT YOU ARE ASKED:")))
-                        (emit '(p (b "NOTE:")))
-                        (emit `(ul
-                                (li "You" are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
-                                (li "You" may create helper functions in your program file.)
-                                ,(if forbidden
-                                     `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                     `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
-                                (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (code-block :lang "lisp",(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber))))))
-                  (mapcar (lambda (item)
-                            (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
-                          (cdr node))))
+                 (let ((description (append (list (emit '(p (b "WHAT YOU ARE ASKED:")))
+                                                  (emit '(p (b "NOTE:")))
+                                                  (emit `(ul
+                                                          (li "You" are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
+                                                          (li "You" may create helper functions in your program file.)
+                                                          ,(if forbidden
+                                                               `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
+                                                               `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
+                                                          (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (code-block :lang "lisp",(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber))))))
+                                            (mapcar (lambda (item)
+                                                      (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
+                                                    (cdr node)))))
+                   (push (flatten description) (question-description (gethash qnumber questions-info)))
+                   description))
                 (p
                  (append (cons (format nil "~%")
                                (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
