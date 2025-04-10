@@ -4,6 +4,10 @@
 
 (in-package :sexprmark-to-org)
 
+;; Global variables
+
+(defparameter *parent-folder* "Gen-files/")
+
 ;; Structure to store information about questions
 
 (defstruct question
@@ -37,9 +41,8 @@
 
 ;; Serializer
 
-(defun sexprmark->org (sexpr)
-  (let (res
-        (questions-info (make-hash-table)))
+(defun sexprmark->org (sexpr questions-info)
+  (let (res)
     (labels
         ((emit (node &key folder qnumber penalty forbidden (depth 0))
            "folder is the where students are required to store their solutions; qnumber is the question number; 
@@ -56,8 +59,9 @@
                         (children (if folder (nthcdr 2 node)
                                       (error "Missing folder location for student solutions in ~s" node))))
                    (cons (format nil "#+TITLE: ~a~%" title)
-                         (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
-                                 children))))             
+                         (cons (format nil "#+Options: toc:nil num:nil date:nil author:nil")
+                               (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
+                                       children)))))             
                 (section
                  (let* ((proplist (cadr node))
                         (level (getf proplist :level))
@@ -213,3 +217,14 @@
               "print(\"Hello, Org!\")")))))
     (with-open-file (out "~/tmp/q1.org" :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org sexpr)))))
+
+
+(defun gen-exam-files (from)
+  "From is the file containing the assessment's sexprmarkup description"
+  (let ((assessment-sexpr (with-open-file (in from)
+                            (read in)))
+        (questions-info (make-hash-table))
+        (orgmode-version (ensure-directories-exist
+		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
+    (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
+      (format out "~a" (sexprmark->org assessment-sexpr questions-info)))))
