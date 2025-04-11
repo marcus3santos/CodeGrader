@@ -180,17 +180,46 @@
            ((atom node) (list (format nil "~a " node))))))
     (format nil "~{~a~}" (flatten (emit sexpr)))))
 
+
+(defun gen-tcs (from qlabel wyaa forbidden penalty examples &optional folder-name)
+  (let ((to (ensure-directories-exist
+	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
+    (with-open-file (out to :direction :output :if-exists :supersede)
+      `(,qlabel (whats-asked (quote ,wyaa))
+                (forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden))
+                ,@(let ((fm-names))
+                    (list
+                     (dolist (g-examples  examples)
+                       (let ((fm-name-cases (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples)))))
+                         (push fm-name-cases fm-names)
+                         `(deftest ,macro-name ()
+                            (check
+                              ,@(let ((res))
+                                  (dolist (e examples (reverse res)) 
+                                    (push `(equalp ,(car e) ,(cadr e)) res))))))) 
+                     `(defun ,(intern (format nil "TEST-~a" (string-upcase qlabel))) 
+                          ,@(let ((res)
+                                  (rfm-names (reverse fm-names)))
+                              (dolist (e rfm-names)
+                                (push (list (second e)) res))
+                              (dolist (e rfm-names (reverse res))
+                                (push (list 'fmakunbound  (list 'quote (first e))) res))))))
+                (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
+
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
   (let ((assessment-sexpr (with-open-file (in from)
                             (read in)))
         (questions-info (make-hash-table))
         (orgmode-version (ensure-directories-exist
-		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from)))))))
+		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from))))))
+        tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (maphash (lambda (k v)
                (format t "Question: ~a~%Forbidden: ~a~%Penalty: ~a~%Description: ~a~%Examples: ~a~%Testcases: ~a~%"
-                       k (question-forbidden v) (question-penalty v) (question-description v) (question-examples v) (question-testcases v)))
-               questions-info)
-))
+                       k (question-forbidden v) (question-penalty v) (question-description v) (question-examples v) (question-testcases v))
+               (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v))
+                      tcs-driver))
+             questions-info)
+    tcs-driver))
