@@ -48,6 +48,11 @@
   "Returns T if STR is empty or contains only whitespace characters, NIL otherwise."
   (every #'(lambda (ch) (char-whitespace-p ch)) str))
 
+(defun cr-pairs (a)
+  (if (null a) a
+      (cons (list (second (first a)) (third (first a))) (cr-pairs (cdr a)))))
+
+
 ;; Serializer
 
 (defun sexprmark->org (sexpr questions-info)
@@ -70,7 +75,7 @@
                        (cons (format nil "#+Options: toc:nil num:nil date:nil author:nil")
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      children)))))             
-              (section
+              (s ;; Section
                (let* ((proplist (cadr node))
                       (level (getf proplist :level))
                       (title (if level (getf proplist :title)
@@ -82,7 +87,7 @@
                              (mapcar (lambda (item)
                                        (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      children)))))
-              (question
+              (q ;; Question
                (let* ((proplist (cadr node))
                       (title (getf proplist :title))
                       (number (if title (getf proplist :number)
@@ -101,7 +106,7 @@
                              (mapcar (lambda (item)
                                        (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth))
                                      children)))))
-              (whats-asked
+              (wa ;; Whats asked
                (let ((description (append (list (emit '(p (b "WHAT YOU ARE ASKED:")))
                                                 (emit '(p (b "NOTE:")))
                                                 (emit `(ul
@@ -116,16 +121,16 @@
                                                   (cdr node)))))
                  (push (apply #'concatenate 'string (flatten description)) (question-description (gethash qnumber questions-info)))
                  description))
-              (p
+              (p  ;; Paragraph
                (append (cons (format nil "~%")
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      (cdr node)))
                        (list (format nil "~%"))))
-              (ul
+              (ul  ;; Unnumbered items
                (mapcar (lambda (item)
                          (cons (format nil "~%") (emit item :depth (1+ depth))))
                        (cdr node)))
-              (li
+              (li ;; item
                (let ((item (cdr node)))
                  (cond
                    ((and (consp (car item)) (eq (caar item) 'todo))
@@ -137,39 +142,39 @@
                                                                                      (emit e :depth depth))
                                                                                    item)))))
                    (t (error "Improper item ~a" item)))))
-              (hl
+              (hl  ;; Hyper link
                (let ((link (second node))
                      (text (third node)))
                  (list (format nil (if text  "[[~a][~a]] " "[[~a]]") link text))))
-              (b
+              (b  ;; Bold font
                (list (format nil "*~{~a~}* " (trim-spc-last (flatten (mapcar #'emit (cdr node)))))))
-              (tt
+              (tt  ;; True type font
                (list (format nil "=~{~a~}= " (trim-spc-last (flatten (mapcar #'emit (cdr node)))))))
-              (em
+              (em  ;; Italics
                (list (format nil "/~{~a~}/ " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
-              (rp
+              (rp  ;; Parenthesized 
                (list (format nil "(~{~a~}) " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
-              ((example-block testcase-block)
-               (let ((function-name (getf (second node) :name)))
+              ((eb tcb)  ;; Example block , Testcase block
+               (let ((function-name (read-from-string (getf (second node) :name))))
                  (unless function-name
                    (error "Missing function name key in node ~s" node))
                  (unless qnumber
                    (error "Example block not inside a question ~s" node))
-                 (if (equalp (car node) 'example-block)
+                 (if (equalp (car node) 'eb)
                      (push (append (list 'deftest function-name) (cddr node))
                            (question-examples (gethash qnumber questions-info)))
                      (push (append (list 'deftest function-name) (cddr node))
                            (question-testcases (gethash qnumber questions-info))))
-                 (when (equalp (car node) 'example-block)
+                 (when (equalp (car node) 'eb)
                    (cons (format nil "~a~%#+BEGIN_SRC lisp~%" (indent depth))
                          (append (mapcar (lambda (line) (format nil "~a~a~%" (indent depth) line))
                                          (mapcar (lambda (item) (emit item :depth depth)) (cddr node)))
                                  (list (format nil "~a#+END_SRC~%" (indent depth))))))))
-              (assertion
+              (a  ;; Assertion in a testcase or example block
                (let ((expected (second node))
                      (result (third node)))
                  (format nil "CL-USER> ~a~%~a" expected result)))
-              (code-block
+              (cb  ;; Code block
                (let ((lang (getf (cdr node) :lang))
                      (lines (cdddr node)))
                  (cons (format nil "~%~a#+BEGIN_SRC ~a~%" (indent (* 2 depth)) lang)
@@ -181,30 +186,32 @@
     (format nil "~{~a~}" (flatten (emit sexpr)))))
 
 
-(defun gen-tcs (from qlabel wyaa forbidden penalty examples &optional folder-name)
-  (let ((to (ensure-directories-exist
-	     (concatenate 'string (directory-namestring from) *parent-folder* folder-name qlabel ".lisp"))))
-    (with-open-file (out to :direction :output :if-exists :supersede)
-      `(,qlabel (whats-asked (quote ,wyaa))
-                (forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden))
-                ,@(let ((fm-names))
-                    (list
-                     (dolist (g-examples  examples)
-                       (let ((fm-name-cases (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples)))))
-                         (push fm-name-cases fm-names)
-                         `(deftest ,macro-name ()
-                            (check
-                              ,@(let ((res))
-                                  (dolist (e examples (reverse res)) 
-                                    (push `(equalp ,(car e) ,(cadr e)) res))))))) 
-                     `(defun ,(intern (format nil "TEST-~a" (string-upcase qlabel))) 
-                          ,@(let ((res)
-                                  (rfm-names (reverse fm-names)))
-                              (dolist (e rfm-names)
-                                (push (list (second e)) res))
-                              (dolist (e rfm-names (reverse res))
-                                (push (list 'fmakunbound  (list 'quote (first e))) res))))))
-                (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
+(defun gen-tcs (qnumber description forbidden penalty examples)
+  (let ((qlabel (format nil "q~a" qnumber)))
+    `(,qlabel (whats-asked (quote ,description))
+              ,(if forbidden
+                   `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
+              ,@(let (fm-names
+                      deftests)
+                  (append
+                   (dolist (g-examples  examples deftests)
+                     (let ((fm-name-cases (list (second g-examples) (intern (format nil "TEST-~a" (second g-examples))) (cr-pairs (cddr g-examples)))))
+                       (push fm-name-cases fm-names)
+                       (push `(deftest ,(second fm-name-cases) ()
+                                (check
+                                  ,@(let ((res)
+                                          (examples (cddr g-examples)))
+                                      (dolist (e examples (reverse res))
+                                        (push `(equalp ,(cadr e) ,(caddr e)) res)))))
+                             deftests))) 
+                   (list `(defun ,(intern (format nil "TEST-~a" (string-upcase qlabel))) () 
+                              ,@(let ((res)
+                                      (rfm-names (reverse fm-names)))
+                                  (dolist (e rfm-names)
+                                    (push (list (second e)) res))
+                                  (dolist (e rfm-names (reverse res))
+                                    (push (list 'fmakunbound  (list 'quote (first e))) res)))))))
+              (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))
 
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
@@ -217,8 +224,6 @@
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (maphash (lambda (k v)
-               (format t "Question: ~a~%Forbidden: ~a~%Penalty: ~a~%Description: ~a~%Examples: ~a~%Testcases: ~a~%"
-                       k (question-forbidden v) (question-penalty v) (question-description v) (question-examples v) (question-testcases v))
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v))
                       tcs-driver))
              questions-info)

@@ -196,7 +196,8 @@
     (with-open-file (out to :direction :output :if-exists :supersede)
       (emit-code out `(whats-asked (quote ,wyaa)))
       (emit out "")
-      (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
+      (when forbidden
+        (emit-code out `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden))))
       (emit out "")
       (let ((fm-names))
         (dolist (g-examples  examples)
