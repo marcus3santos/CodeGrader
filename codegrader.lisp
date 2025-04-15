@@ -250,7 +250,7 @@
   (let ((results (list))
         (sol-fnames (mapcar #'file-namestring solution-files)))
     (dolist (test-case test-cases-files)
-      (push (list (remove-extension (file-namestring test-case))
+      (push (list (pathname-name (file-namestring test-case))
                   (if (member (file-namestring test-case) sol-fnames :test #'string=)
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
                              (evaluation (evaluate-solution solution test-case)))

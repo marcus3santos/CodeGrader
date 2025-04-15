@@ -57,7 +57,7 @@
 
 (defun sexprmark->org (sexpr questions-info)
   (labels
-      ((emit (node &key folder qnumber penalty forbidden (depth 0))
+      ((emit (node &key folder qnumber penalty forbidden (depth 0) nitem)
          "folder is the where students are required to store their solutions; qnumber is the question number; 
           penalty is the percentage deduction on a solution; forbidden is a list of forbidden functions;
           and depth is space indentation in items"
@@ -115,7 +115,7 @@
                                                         ,(if forbidden
                                                              `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
                                                              `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
-                                                        (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (code-block :lang "lisp",(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber))))))
+                                                        (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb :lang "lisp",(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber))))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
@@ -130,6 +130,20 @@
                (mapcar (lambda (item)
                          (cons (format nil "~%") (emit item :depth (1+ depth))))
                        (cdr node)))
+              (ol   ;; numbered items
+               (let* ((proplist (second node))
+                      (start (getf proplist :start))
+                      res)
+                 (dolist (item (cddr node) (reverse res))
+                   (push (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start))
+                         res)
+                   (incf start))
+                 #|
+                 (mapcar (lambda (item)
+                           (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start)))
+                         (cddr node))
+                 |#
+                 ))
               (li ;; item
                (let ((item (cdr node)))
                  (cond
@@ -137,6 +151,10 @@
                     (list (format nil "~a- [ ] ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
                                                                                          (emit e :depth depth))
                                                                                        (cdar item))))))
+                   ((and nitem (consp item))
+                    (list (format nil "~a~a. [@~a] ~{~a~}" (indent depth) nitem  nitem (flatten (mapcar (lambda (e)
+                                                                                     (emit e :depth depth :nitem (1+ nitem)))
+                                                                                   item)))))
                    ((consp item)
                     (list (format nil "~a- ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
                                                                                      (emit e :depth depth))
