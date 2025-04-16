@@ -132,7 +132,9 @@
                        (cdr node)))
               (ol   ;; numbered items
                (let* ((proplist (second node))
-                      (start (getf proplist :start))
+                      (start (if (equalp (first proplist) :start)
+                               (getf proplist :start)
+                               1))
                       res)
                  (dolist (item (cddr node) (reverse res))
                    (push (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start))
