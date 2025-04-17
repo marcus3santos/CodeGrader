@@ -132,20 +132,15 @@
                        (cdr node)))
               (ol   ;; numbered items
                (let* ((proplist (second node))
-                      (start (if (equalp (first proplist) :start)
-                               (getf proplist :start)
-                               1))
+                      (startp (equalp (first proplist) :start))
+                      (start (if startp
+                                 (getf proplist :start)
+                                 1))
                       res)
-                 (dolist (item (cddr node) (reverse res))
+                 (dolist (item (if startp (cddr node) (cdr node)) (reverse res))
                    (push (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start))
                          res)
-                   (incf start))
-                 #|
-                 (mapcar (lambda (item)
-                           (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start)))
-                         (cddr node))
-                 |#
-                 ))
+                   (incf start))))
               (li ;; item
                (let ((item (cdr node)))
                  (cond
@@ -195,10 +190,11 @@
                      (result (third node)))
                  (format nil "CL-USER> ~a~%~a" expected result)))
               (cb  ;; Code block
-               (let ((lang (getf (cdr node) :lang))
-                     (lines (cdddr node)))
+               (let* ((proplist (second node))
+                      (lang (getf proplist :lang))
+                      (lines (cddr node)))
                  (cons (format nil "~%~a#+BEGIN_SRC ~a~%" (indent (* 2 depth)) lang)
-                       (append (mapcar (lambda (line) (format nil "~a~a~%" (indent (* 2 depth)) line)) lines)
+                       (append (mapcar (lambda (line) (format nil "~a~%" line)) lines)
                                (list (format nil "~a#+END_SRC~%" (indent (* 2 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
