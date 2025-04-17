@@ -194,7 +194,7 @@
                       (lang (getf proplist :lang))
                       (lines (cddr node)))
                  (cons (format nil "~%~a#+BEGIN_SRC ~a~%" (indent (* 2 depth)) lang)
-                       (append (mapcar (lambda (line) (format nil "~a~%" line)) lines)
+                       (append (mapcar (lambda (line) (format nil "~a~a~%" (indent (* 2 depth)) line)) lines)
                                (list (format nil "~a#+END_SRC~%" (indent (* 2 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
