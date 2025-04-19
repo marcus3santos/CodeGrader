@@ -52,6 +52,11 @@
   (if (null a) a
       (cons (list (second (first a)) (third (first a))) (cr-pairs (cdr a)))))
 
+(defun str->list (str)
+  (let ((stream (make-string-input-stream str)))
+    (loop for line = (read-line  stream nil :eof)
+          until (eq line :eof)
+          collect line)))
 
 ;; Serializer
 
@@ -107,30 +112,30 @@
                                        (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth))
                                      children)))))
               (wa ;; Whats asked
-               (let ((description (append (list (emit '(p (b "WHAT YOU ARE ASKED:")))
-                                                (emit '(p (b "NOTE:")))
-                                                (emit `(ul
-                                                        (li "You" are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
-                                                        (li "You" may create helper functions in your program file.)
-                                                        ,(if forbidden
-                                                             `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                                             `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
-                                                        (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb :lang "lisp",(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber))))))
+               (let ((description (append (list (emit `(s (:level 2 :title "WHAT YOU ARE ASKED")
+                                                          (p (b "NOTE:"))
+                                                          (ul
+                                                           (li "You" are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
+                                                           (li "You" may create helper functions in your program file.)
+                                                           ,(if forbidden
+                                                                `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
+                                                                `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
+                                                           (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
                  (push (apply #'concatenate 'string (flatten description)) (question-description (gethash qnumber questions-info)))
                  description))
-              (p  ;; Paragraph
-               (append (cons (format nil "~%")
+              (p ;; Paragraph
+               (append (cons (format nil "~%~a" (indent depth))
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      (cdr node)))
                        (list (format nil "~%"))))
-              (ul  ;; Unnumbered items
+              (ul ;; Unnumbered items
                (mapcar (lambda (item)
-                         (cons (format nil "~%") (emit item :depth (1+ depth))))
+                         (cons (format nil "~%") (emit item :depth (1+ depth) :qnumber qnumber)))
                        (cdr node)))
-              (ol   ;; numbered items
+              (ol ;; numbered items
                (let* ((proplist (second node))
                       (startp (equalp (first proplist) :start))
                       (start (if startp
@@ -138,7 +143,7 @@
                                  1))
                       res)
                  (dolist (item (if startp (cddr node) (cdr node)) (reverse res))
-                   (push (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start))
+                   (push (cons (format nil "~%") (emit item :depth (1+ depth) :nitem start :qnumber qnumber))
                          res)
                    (incf start))))
               (li ;; item
@@ -146,31 +151,32 @@
                  (cond
                    ((and (consp (car item)) (eq (caar item) 'todo))
                     (list (format nil "~a- [ ] ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
-                                                                                         (emit e :depth depth))
+                                                                                         (emit e :depth depth :qnumber qnumber))
                                                                                        (cdar item))))))
                    ((and nitem (consp item))
                     (list (format nil "~a~a. [@~a] ~{~a~}" (indent depth) nitem  nitem (flatten (mapcar (lambda (e)
-                                                                                     (emit e :depth depth :nitem (1+ nitem)))
-                                                                                   item)))))
+                                                                                                          (emit e :depth depth :nitem (1+ nitem) :qnumber qnumber))
+                                                                                                        item)))))
                    ((consp item)
                     (list (format nil "~a- ~{~a~}" (indent depth) (flatten (mapcar (lambda (e)
-                                                                                     (emit e :depth depth))
+                                                                                     (emit e :depth depth :qnumber qnumber))
                                                                                    item)))))
                    (t (error "Improper item ~a" item)))))
-              (hl  ;; Hyper link
+              (hl ;; Hyper link
                (let ((link (second node))
                      (text (third node)))
                  (list (format nil (if text  "[[~a][~a]] " "[[~a]]") link text))))
-              (b  ;; Bold font
+              (b ;; Bold font
                (list (format nil "*~{~a~}* " (trim-spc-last (flatten (mapcar #'emit (cdr node)))))))
-              (tt  ;; True type font
+              (tt ;; True type font
                (list (format nil "=~{~a~}= " (trim-spc-last (flatten (mapcar #'emit (cdr node)))))))
-              (em  ;; Italics
+              (em ;; Italics
                (list (format nil "/~{~a~}/ " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
-              (rp  ;; Parenthesized 
+              (rp ;; Parenthesized 
                (list (format nil "(~{~a~}) " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
-              ((eb tcb)  ;; Example block , Testcase block
-               (let ((function-name (read-from-string (getf (second node) :name))))
+              ((eb tcb) ;; Example block , Testcase block
+               (let* ((proplist (second node))
+                      (function-name (intern (string-upcase (getf proplist :function)))))
                  (unless function-name
                    (error "Missing function name key in node ~s" node))
                  (unless qnumber
@@ -181,21 +187,21 @@
                      (push (append (list 'deftest function-name) (cddr node))
                            (question-testcases (gethash qnumber questions-info))))
                  (when (equalp (car node) 'eb)
-                   (cons (format nil "~a~%#+BEGIN_SRC lisp~%" (indent depth))
-                         (append (mapcar (lambda (line) (format nil "~a~a~%" (indent depth) line))
-                                         (mapcar (lambda (item) (emit item :depth depth)) (cddr node)))
-                                 (list (format nil "~a#+END_SRC~%" (indent depth))))))))
-              (a  ;; Assertion in a testcase or example block
+                   (cons (format nil "~%~a#+BEGIN_SRC lisp" (indent depth))
+                         (append (mapcar (lambda (item) (emit item :depth depth)) (cddr node))
+                                 (list (format nil "~%~a#+END_SRC" (indent depth))))))))
+              (a ;; Assertion in a testcase or example block
                (let ((expected (second node))
                      (result (third node)))
-                 (format nil "CL-USER> ~a~%~a" expected result)))
-              (cb  ;; Code block
+                 (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) result))))
+              (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :lang))
-                      (lines (cddr node)))
-                 (cons (format nil "~%~a#+BEGIN_SRC ~a~%" (indent (* 2 depth)) lang)
-                       (append (mapcar (lambda (line) (format nil "~a~a~%" (indent (* 2 depth)) line)) lines)
-                               (list (format nil "~a#+END_SRC~%" (indent (* 2 depth))))))))
+                      (code (third node)))
+                 (cons (format nil "~%~a#+BEGIN_SRC ~a" (indent depth) lang)
+                       (append (mapcar (lambda (line)
+                                         (format nil "~%~a~a" (indent (* 1 depth)) line)) (str->list code))
+                               (list (format nil "~%~a#+END_SRC~%" (indent (* 1 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
            ((atom node) (list (format nil "~a " node))))))
