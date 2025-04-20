@@ -70,14 +70,16 @@
            ((consp node)
             (case (car node)
               (doc
-               (let* ((proplist (cadr node))
+               (let* ((proplist (second node))
                       (title (getf proplist :title))
                       (folder (if title (check-foldername (getf proplist :folder))
                                   (error "Missing document title in ~s" node)))
-                      (children (if folder (nthcdr 2 node)
-                                    (error "Missing folder location for student solutions in ~s" node))))
+                      (toc (if folder (getf proplist :toc)
+                                    (error "Missing folder location for student solutions in ~s" node)))
+                      (num  (getf proplist :num))
+                      (children (nthcdr 2 node)))
                  (cons (format nil "#+TITLE: ~a~%" title)
-                       (cons (format nil "#+Options: toc:nil num:nil date:nil author:nil")
+                       (cons (format nil "#+Options: toc:~[nil~;t~] num:~[nil~;t~] date:nil author:nil~%" (if toc 1 0) (if num 1 0))
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      children)))))             
               (s ;; Section
@@ -128,7 +130,8 @@
                  description))
               (p ;; Paragraph
                (append (cons (format nil "~%~a" (indent depth))
-                             (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
+                             (mapcar (lambda (item)
+                                        (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      (cdr node)))
                        (list (format nil "~%"))))
               (ul ;; Unnumbered items
@@ -204,6 +207,9 @@
                                (list (format nil "~%~a#+END_SRC~%" (indent (* 1 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
+           ((stringp node) (mapcar (lambda (item)
+                                     (format nil "~a" item))
+                                   (str->list node)))
            ((atom node) (list (format nil "~a " node))))))
     (format nil "~{~a~}" (flatten (emit sexpr)))))
 
