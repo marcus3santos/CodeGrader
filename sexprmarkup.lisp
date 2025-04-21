@@ -117,12 +117,12 @@
                (let ((description (append (list (emit `(s (:level 2 :title "WHAT YOU ARE ASKED")
                                                           (p (b "NOTE:"))
                                                           (ul
-                                                           (li "You" are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
-                                                           (li "You" may create helper functions in your program file.)
+                                                           (li "You " are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
+                                                           (li "You " may create helper functions in your program file.)
                                                            ,(if forbidden
-                                                                `(li "You" must not use or refer to the following Lisp built-in "function(s)" and "symbol(s):" ,(format nil "~{*~a*~^, ~}" forbidden) ".  The" penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                                                `(li "There" are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
-                                                           (li "To" ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
+                                                                `(li "You " must not use or refer to the following Lisp built-in "function(s)" and "symbol(s): " ,(format nil "~{*~a*~^, ~}" forbidden) ".  The " penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
+                                                                `(li "There " are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
+                                                           (li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
@@ -179,7 +179,7 @@
                (list (format nil "(~{~a~}) " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
               ((eb tcb) ;; Example block , Testcase block
                (let* ((proplist (second node))
-                      (function-name (intern (string-upcase (getf proplist :function)))))
+                      (function-name (getf proplist :function)))
                  (unless function-name
                    (error "Missing function name key in node ~s" node))
                  (unless qnumber
@@ -207,9 +207,7 @@
                                (list (format nil "~%~a#+END_SRC~%" (indent (* 1 depth))))))))
               (t (format nil "Invalid node: ~a" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
-           ((stringp node) (mapcar (lambda (item)
-                                     (format nil "~a" item))
-                                   (str->list node)))
+           ((stringp node) (list (format nil "~{~a~^~%~}" (str->list node))))
            ((atom node) (list (format nil "~a " node))))))
     (format nil "~{~a~}" (flatten (emit sexpr)))))
 
@@ -249,7 +247,9 @@
                             (read in)))
         (questions-info (make-hash-table))
         (orgmode-version (ensure-directories-exist
-		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from))))))
+		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.org" (pathname-name (file-namestring from))))))
+        (exam-data (ensure-directories-exist
+		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.data" (pathname-name (file-namestring from))))))
         all-fnames
         tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
@@ -259,4 +259,5 @@
                       tcs-driver)
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
-    (cons (list 'fnames (reverse all-fnames)) (reverse tcs-driver))))
+    (with-open-file (out exam-data :direction :output :if-exists :supersede)
+      (format out "~s" (cons (list 'fnames (reverse all-fnames)) (reverse tcs-driver))))))
