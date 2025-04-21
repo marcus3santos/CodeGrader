@@ -237,13 +237,11 @@
 
 (defun gen-tcs (qnumber description forbidden penalty examples testcases)
   (let ((qlabel (format nil "q~a" qnumber)))
-    (format t ">>> ~a~%" (gen-tc-code qlabel testcases))
     `(,qlabel (whats-asked (quote ,description))
               ,(if forbidden
                    `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
-              (examples ,@(gen-tc-code qlabel examples))
-              (hidden-tests ,@(gen-tc-code qlabel testcases))
-              (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))))
+              (given ,@(gen-tc-code qlabel examples) (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))
+              (hidden ,@(gen-tc-code qlabel testcases) (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
 
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
@@ -252,11 +250,13 @@
         (questions-info (make-hash-table))
         (orgmode-version (ensure-directories-exist
 		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a-description.org" (pathname-name (file-namestring from))))))
+        all-fnames
         tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (maphash (lambda (k v)
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v))
-                      tcs-driver))
+                      tcs-driver)
+               (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
-    tcs-driver))
+    (cons (list 'fnames (reverse all-fnames)) (reverse tcs-driver))))
