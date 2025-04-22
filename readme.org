@@ -157,9 +157,9 @@ Codegrader also generates the following tooling file it will use to support the 
   ("whats-asked"
    '("
 
-** WHAT YOU ARE ASKED
+ ** WHAT YOU ARE ASKED
 
-*NOTE:* 
+ *NOTE:* 
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/intro-lisp/q1.lisp* .
   - You may create helper functions in your program file. 
@@ -171,12 +171,12 @@ Codegrader also generates the following tooling file it will use to support the 
 
 Write a function DOUBLE that doubles a number.
 
-#+BEGIN_SRC lisp
-CL-USER> (DOUBLE 2)
-4
-CL-USER> (DOUBLE -1)
--2
-#+END_SRC"))
+ #+BEGIN_SRC lisp
+ CL-USER> (DOUBLE 2)
+ 4
+ CL-USER> (DOUBLE -1)
+ -2
+ #+END_SRC"))
   NIL
   ("given"
    (DEFTEST TEST-DOUBLE NIL
