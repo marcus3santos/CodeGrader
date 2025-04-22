@@ -165,18 +165,17 @@ Codegrader also generates the following tooling file it will use to support the 
   - You may create helper functions in your program file. 
   - There are no restrictions in the use of lisp built-in functions or symbols in the parts of this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  #+BEGIN_SRC lisp
+  ;#+BEGIN_SRC lisp
   (chk-my-solution \"~/intro-lisp/q1.lisp\")
-  #+END_SRC
-
+  ;#+END_SRC
   Write a function DOUBLE that doubles a number.
 
-  #+BEGIN_SRC lisp
+  ;#+BEGIN_SRC lisp
   CL-USER> (DOUBLE 2)
   4
   CL-USER> (DOUBLE -1)
   -2
-  #+END_SRC"))
+  ;#+END_SRC"))
   NIL
   ("given"
    (DEFTEST TEST-DOUBLE NIL
