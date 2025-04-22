@@ -1,0 +1,3 @@
+(defun reverse (a)
+  (if (null a) a
+      (cons (car a) (reverse (cdr a)))))

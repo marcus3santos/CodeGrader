@@ -1,0 +1,51 @@
+Invalid node: (DOC (TITLE Common Lisp Practicum Test FOLDER ~/pt TOC T NUM T)
+               (Q (TITLE Question NUMBER 1 PENALTY 80 FORBIDDEN (COUNT MEMBER))
+                (WA
+                 (P Write a function =count-occurrences= that takes an element
+and a list as arguments and returns the number of times the element
+appears in the list. For example:)
+                 (EB (FUNCTION COUNT-OCCURRENCES)
+                  (A (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4)) 3)
+                  (A (COUNT-OCCURRENCES 'A '(A B A C A)) 3)
+                  (A (COUNT-OCCURRENCES 5 '(1 2 3 4)) 0)))
+                (TCB (FUNCTION COUNT-OCCURRENCES)
+                 (A (COUNT-OCCURRENCES 1 '(1 1 1 1 1)) 5)
+                 (A (COUNT-OCCURRENCES 0 '(1 2 3 4)) 0)
+                 (A (COUNT-OCCURRENCES 'Z '(A B C Z Z)) 2)))
+               (Q (TITLE Question NUMBER 2 PENALTY 80 FORBIDDEN (COUNT NUMBER))
+                (WA
+                 (P Write a function =contains-all?= that takes two lists as
+arguments and returns =T= if all elements of the first list are
+contained in the second list, and =NIL= otherwise.)
+                 (EB (FUNCTION CONTAINS-ALL)
+                  (A (CONTAINS-ALL? '(1 2) '(1 2 3 4)) T)
+                  (A (CONTAINS-ALL? '(1 5) '(1 2 3 4)) NIL)
+                  (A (CONTAINS-ALL? 'NIL '(1 2 3)) T))
+                 (TCB (FUNCTION CONTAINS)
+                  (A (CONTAINS-ALL? '(A B) '(A B C D E)) T)
+                  (A (CONTAINS-ALL? '(A Z) '(A B C D)) NIL)
+                  (A (CONTAINS-ALL? 'NIL 'NIL) T))))
+               (Q (TITLE Question NUMBER 3 PENALTY 80 FORBIDDEN (COUNT MEMBER))
+                (S (LEVEL 2 TITLE Part 1)
+                 (WA
+                  (P Write a function =reverse-list= that takes a list as an
+argument and returns a new list that is the reverse of the original
+list. )
+                  (EB (FUNCTION REVERSE-LIST)
+                   (A (REVERSE-LIST '(1 2 3 4)) '(4 3 2 1))
+                   (A (REVERSE-LIST '(A B C)) '(C B A))
+                   (A (REVERSE-LIST 'NIL) 'NIL))
+                  (TCB (FUNCTION REVERSE-LIST)
+                   (A (REVERSE-LIST '(1 2 3 4 5)) '(5 4 3 2 1))
+                   (A (REVERSE-LIST 'NIL) 'NIL)
+                   (A (REVERSE-LIST '(A B C)) '(C B A)))))
+                (S (LEVEL 2 TITLE Part 2)
+                 (WA
+                  (P Write a function =palindrome?= that takes a list as an
+argument and returns =T= if the list is a palindrome (reads the same
+forwards and backwards), and =NIL= otherwise. You may not use
+=REVERSE= or =NREVERSE=.)
+                  (EB (FUNCTION PALINDROME?) (A (PALINDROME? '(1 2 3 2 1)) T)
+                   (A (PALINDROME? '(A B C D)) NIL) (A (PALINDROME? 'NIL) T))
+                  (TCB (FUNCTION PALINDROME?) (A (PALINDROME? '(X Y X)) T)
+                   (A (PALINDROME? '(X Y Z)) NIL) (A (PALINDROME? 'NIL) T))))))
