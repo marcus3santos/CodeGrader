@@ -33,121 +33,99 @@ Type the commands below an a linux or Mac terminal:
 
 The workflow involves the following steps:
 
-1. The instructor writes the assessment using org-mode markdown.
-2. The instructor uses CodeGrader to generate the necessary support
-   files, including formatted questions, assessment-specific test
-   cases, and packages for sandboxing the student’s code, based on the
-   org-mode assessment description.
+1. The instructor writes the assessment using the s-expression markdown (SXM).
+2. The instructor uses CodeGrader to generate, from the SXM file, the necessary support
+   files, including the formatted questions translated to orgmode and assessment-specific test
+   cases to be later used by CodeGrader to grade the students' solutions.
 3. Students complete the assessment created by the instructor,
    providing their solutions to the given programming questions.
 4. The instructor uses CodeGrader to evaluate and grade the students'
    solutions.
 The next sections explain each of these workflow steps.
 
-* Writing a Lisp Programming Assessment Using Org-mode
+* Writing a Lisp Programming Assessment Using SXM
 
-Your org-mode assessment description should contain the following parts:
-- Header
-- Questions
+Instructors write their Lisp assessments using the S-expression Markup format (SXM). This structured format simplifies parsing and enables better automation and tooling.
 
+Each SXM file should be a valid Lisp-style expression.
 
-** Writing the Header
-
-At the top of your Org-mode file, specify the title and folder where students will store their solutions, as follows:
-   #+begin_example
-   #+Title: Common Lisp Practicum Test
-   #+folder: ~/pt
-   #+end_example
-
-Note: You must provide the folder where the students solutions will be stored.
-
-** Writing the assessment Questions
-
-For each assessment question, do the following: write the heading ** /header/  /i/
-/[penalty-forbidden]/, where
-- /header/ is either *Question* or *Exercise*
-- /i/ is an integer representing the question number;
-- /penalty-forbidden/ is the following optional sequence of key-value pairs  *:PENALTY* /p/ *:FORBIDDEN* /f/, where:
-  - /p/ is an integer representing the percentage score reduction for using forbidden functions;
-  - /f/ is a a list in Lisp notation, representing the functions students must avoid in their solutions.
-
-For example:
-   #+begin_example
-   ** Question 1 :PENALTY 80 :Forbidden (count member)
-   #+end_example
-
-*Note*: CodeGrader will apply that penalty on the solutions for all parts of the question.
-
-Then you write an optional preamble initiated by the header =*** Preamble=, followed by the problem description, initiated by the
-header =*** What you are asked=. You can break the *What you are
-asked* section into parts (e.g., Part 1, Part 2) for clarity, and
-provide examples. *Note:* Examples are written using a
-=#+begin_example ... #+end_example= block and should follow a specific
-notation where you specify the function name, a sequence of function
-calls, and their expected return values.
-
-For example:
-   #+begin_example
-     #+Title: Common Lisp Practicum Test
-     #+folder: ~/pt
-     
-     ** Question 1 :PENALTY 80 :Forbidden (count member)
-
-     *** Preamble
-     This question contains two parts
-
-     *** What you are asked
-     
-     **Part 1:** Write a function =count-occurrences= that takes an element
-     and a list as arguments and returns the number of times the element
-     appears in the list.
-     
-     ,#+begin_example
-     (deftest count-occurrences
-       (count-occurrences 3 '(1 2 3 3 3 4)) 3
-       (count-occurrences 'a '(a b a c a)) 3
-       (count-occurrences 5 '(1 2 3 4)) 0)
-     ,#+end_example
-     
-     **Part 2** ...
-   #+end_example
-
-Finally, use a =#+begin_tcs ... #+end_tcs= block to define test cases for the question. These are the test cases CodeGrader will use for evaluating students’ solutions.  
-Each test case is written in the same notation used for writting examples (both use the =deftest= structure).
+** SXM Structure Overview
 
 #+begin_example
- #+Title: Common Lisp Practicum Test
- #+folder: ~/pt
-
- ** Question 1 :PENALTY 80 :Forbidden (count member)
-
- *** Preamble
- This question contains two parts
-
- *** What you are asked
-
- **Part 1:** Write a function =count-occurrences= that takes an element
- and a list as arguments and returns the number of times the element
- appears in the list.
-     
- ,#+begin_example
-     (deftest count-occurrences
-       (count-occurrences 3 '(1 2 3 3 3 4)) 3
-       (count-occurrences 'a '(a b a c a)) 3
-       (count-occurrences 5 '(1 2 3 4)) 0)
- ,#+end_example
-     
- ,#+begin_tcs
- (deftest count-occurrences
-     (count-occurrences 1 '(1 1 1 1 1)) 5
-     (count-occurrences 0 '(1 2 3 4)) 0
-     (count-occurrences 'z '(a b c z z)) 2)
- ,#+end_tcs
-
- **Part 2** ...
+(doc ;; The assessment description
+  (:title "Common Lisp Practicum Test"
+   :folder "~/pt") ;; Where students are required to store their solutions
+  (q ;; a question description; transated as a level 1 section "*" in orgmode
+    (:title "Question"
+     :number 1 
+     :penalty 80 ;;  the deduction in the student's score if they use a forbidden function
+     :forbidden (count member)) ;; the list of forbidden functions
+    (p "This question contains two parts.") ;; a paragraph.
+    (wa  ;; What students are asked; must appear within a question expression
+      (p "Part 1:)
+      (p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
+        (eb ;; an example block
+          (:function count-occurrences)
+          (a ;; an assertion specifying a function call and its expected result
+            (count-occurrences 3 '(1 2 3 3 3 4)) 3)
+          (a (count-occurrences 'a '(a b a c a)) 3)
+          (a (count-occurrences 5 '(1 2 3 4)) 0))
+        (tcb ;; a test case block to be used for grading a student's solution
+          (:function count-ocurrences)
+          (a (count-occurrences 1 '(1 1 1 1 1)) 5)
+          (a (count-occurrences 0 '(1 2 3 4)) 0)
+          (a (count-occurrences 'z '(a b c z z)) 2))
+      (p "Part 2:")
+      (p "...")
+        ;; Additional example/test blocks can go here
+       ))
+  (q ;; other question...))
 #+end_example
 
-Repeat the process for subsequent questions, as shown in https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org
+** Explanation of Fields
+
+- `:title` — Title of the assessment.
+- `:folder` — Directory path where students are require to save their solutions.
+- `q` — A section describing an individual exercise or problem.
+  - `:title` — The questions title, e.g.  `"Question"` or `"Exercise"`.
+  - `:number` — Integer identifier for the question.
+  - `:penalty` — (Optional) Penalty percentage for using forbidden functions.
+  - `:forbidden` — (Optional) List of forbidden functions in Lisp syntax.
+  - `p` — a paragraph text.
+  - `wa` — A section describing what the student is being asked. It can contain:
+    - (p ...) - paragraphs
+    - (eb ...)- example blocks containing test assertions; they are translated to code that students can use to test their solutions during the test.
+    - (tcs ...) - test case blocks containing assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
+
+** Notes
+
+- Strings can include newlines and must be properly quoted when spanning multiple lines.
+- The SXM format is fully parsable Lisp syntax, so it must be syntactically valid.
+
+** Example Minimal Assessment File
+
+#+begin_example
+(assessment
+  :title "Intro to Lisp"
+  :folder "~/intro-lisp"
+  (question
+    :type "Exercise"
+    :id 1
+    (what
+      (part
+        :title "Only Part"
+        :description "Write a function DOUBLE that doubles a number."
+        (examples
+          (deftest double
+            (double 2) 4
+            (double -1) -2)))
+    (testcases
+      (deftest double
+        (double 0) 0
+        (double 5) 10))))
+#+end_example
+
+This format ensures instructors can define structured, testable assessments directly using Lisp-style expressions, facilitating better automation in tools like CodeGrader.
 
 * Generating the Assessment Support Files
 
