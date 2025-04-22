@@ -127,6 +127,7 @@ CodeGrader generates the following orgmode file from the above minimal assessmen
 
  * Exercise 1
 
+
  ** WHAT YOU ARE ASKED
 
 *NOTE:* 
@@ -148,6 +149,44 @@ Write a function DOUBLE that doubles a number.
  -2
  #+END_SRC
 #+end_example
+
+Codegrader also generates the following tooling file it will use to support the grading of students' solutions:
+#+begin_src lisp
+(("fnames" (DOUBLE))
+ ("q1"
+  ("whats-asked"
+   '("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+  - You are required to write the solutions for the parts of this question in the lisp program file *~/intro-lisp/q1.lisp* .
+  - You may create helper functions in your program file. 
+  - There are no restrictions in the use of lisp built-in functions or symbols in the parts of this question. 
+  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+  #+BEGIN_SRC lisp
+  (chk-my-solution \"~/intro-lisp/q1.lisp\")
+  #+END_SRC
+
+Write a function DOUBLE that doubles a number.
+
+#+BEGIN_SRC lisp
+CL-USER> (DOUBLE 2)
+4
+CL-USER> (DOUBLE -1)
+-2
+#+END_SRC"))
+  NIL
+  ("given"
+   (DEFTEST TEST-DOUBLE NIL
+    (CHECK (EQUALP (DOUBLE 2) 4) (EQUALP (DOUBLE -1) -2)))
+   (DEFUN TEST-Q1 () (TEST-DOUBLE) (FMAKUNBOUND 'DOUBLE)) (TEST-Q1))
+  ("hidden"
+   (DEFTEST TEST-DOUBLE NIL
+    (CHECK (EQUALP (DOUBLE 0) 0) (EQUALP (DOUBLE 5) 10)))
+   (DEFUN TEST-Q1 () (TEST-DOUBLE) (FMAKUNBOUND 'DOUBLE)) (TEST-Q1))))
+#+end_src
 
 * Generating the Assessment Support Files
 
