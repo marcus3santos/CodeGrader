@@ -108,7 +108,6 @@ Each SXM file should be a valid Lisp-style expression.
 (doc (:title "Intro to Lisp" :folder "~/intro-lisp")
   (q (:title "Exercise" :number 1)
     (wa
-      (p "*Part 1*:)
       (p "Write a function DOUBLE that doubles a number.")
       (eb (:function double)
         (a (double 2) 4)
