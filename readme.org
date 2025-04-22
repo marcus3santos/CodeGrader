@@ -105,24 +105,17 @@ Each SXM file should be a valid Lisp-style expression.
 ** Example Minimal Assessment File
 
 #+begin_example
-(assessment
-  :title "Intro to Lisp"
-  :folder "~/intro-lisp"
-  (question
-    :type "Exercise"
-    :id 1
-    (what
-      (part
-        :title "Only Part"
-        :description "Write a function DOUBLE that doubles a number."
-        (examples
-          (deftest double
-            (double 2) 4
-            (double -1) -2)))
-    (testcases
-      (deftest double
-        (double 0) 0
-        (double 5) 10))))
+(doc (:title "Intro to Lisp" :folder "~/intro-lisp")
+  (q (:title "Exercise" :number 1)
+    (wa
+      (p "*Part 1*:)
+      (p "Write a function DOUBLE that doubles a number.")
+      (eb (:function double)
+        (a (double 2) 4)
+        (a (double -1) -2))
+      (tcb (:function double)
+        (a (double 0) 0)
+        (a (double 5) 10)))))
 #+end_example
 
 This format ensures instructors can define structured, testable assessments directly using Lisp-style expressions, facilitating better automation in tools like CodeGrader.
