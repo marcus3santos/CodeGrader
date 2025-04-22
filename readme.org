@@ -127,7 +127,6 @@ CodeGrader generates the following orgmode file from the above minimal assessmen
 
  * Exercise 1
 
-
  ** WHAT YOU ARE ASKED
 
 *NOTE:* 
