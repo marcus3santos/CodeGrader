@@ -1,7 +1,5 @@
 (in-package :grader)
 
-(defparameter *system-name* :codegrader)
-
 (defvar *inside-multiline-comment* nil)
 
 
@@ -106,10 +104,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
       (cons (cons (if pass-fail "Pass" "Fail") (cdr result))
 	    (change-results-readable (cdr results))))))
 
-(defun load-macros ()
-  (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
-
-
 (defun read-lisp-file (file-path)
   (setf *inside-multiline-comment* nil)
   (with-open-file (stream file-path)
@@ -201,9 +195,9 @@ the mark is calculated as the # of passes divided by the total # of cases.
             do (format content "~A~%" line)) ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
-(defun grade-code (student-solution test-cases &optional ws)
-  "Loads the student-solution file, loads the test cases, runs
-  the test cases, and returns the percentage of correct results over total results"
+(defun grade-code (student-solution kind assessmt-question &optional ws)
+  "Loads the student-solution file, loads and runs the code for the test cases
+   of that assessment and question, and returns the percentage of correct results over total results"
   (let ((description "No runtime errors"))
     (handle-solution-loading student-solution)
     (in-package :test-runtime)
@@ -214,7 +208,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (setf *cr-warning* nil)
     (setf *forbidden-symbols* nil)
     (load-macros)
-    (load test-cases)
+    (load-test-cases kind assessmt-question)
+    ;;(load test-cases)
     (in-package :grader)
     (let ((score (calc-mark *results* ws))
           (forbid-symb (contains-forbidden-symbol? student-solution *forbidden-symbols*))
@@ -247,14 +242,14 @@ the mark is calculated as the # of passes divided by the total # of cases.
        *question*))))
 
 
-(defun evaluate-solution (student-solution  test-cases &optional ddate sdate)
+(defun evaluate-solution (student-solution  kind assessmt-question &optional ddate sdate)
   (cond ((null student-solution)
          (list 0 "no-submitted-file" "No submitted file" nil))
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
         ((and ddate sdate (>date sdate ddate))
          (list 0 "late-submission"  (format nil "Late submission. Assignment due on: ~a Submitted on: ~a~%" ddate sdate) nil))
-        (t (grade-code student-solution test-cases))))
+        (t (grade-code student-solution kind assessmt-question))))
 
 #|
 (defun mark-std-solution (student-solution test-cases-dir &optional (ws nil))

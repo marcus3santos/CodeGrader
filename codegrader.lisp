@@ -12,12 +12,14 @@
   total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
 
 ;; Folder in student's home directory storing their solutions
-;;(defparameter *std-sub-folder* "pt/")
+
+(defparameter *std-sub-folder* "pt/")
 
 
 ;; Root folder where the examples' test case files  and the names of the
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
+
 
 (defparameter *examples-folder* "~/Codegrader/Examples/")
 
@@ -37,19 +39,36 @@
         ((consp e) (cons (clean-symbol-names (car e))  (clean-symbol-names (cdr e))))
         (t e)))
 
+(defun indent-error-msg (str)
+  (labels ((remove-substring (substring string)
+             "Removes all occurrences of SUBSTRING from STRING."
+             (with-output-to-string (out)
+               (loop with len = (length substring)
+                     for start = 0 then (+ pos len)
+                     for pos = (search substring string :start2 start)
+                     while pos
+                     do (write-string string out :start start :end pos)
+                     finally (write-string string out :start start)))))
+    (remove-substring "SANDBOX:" (remove-substring "TEST-RUNTIME::" (format nil "~{    ~a~^~%~}" (str->list str))))))
+
 (defun gen-message (r)
   (let* ((res (first r))
          (rt-error (when (second r)
-                     (let ((error-name (symbol-name (class-name (class-of (second r))))))
+                     (let* ((error-name (symbol-name (class-name (class-of (second r)))))
+                            (error-str  (format nil "~a" (second r)))
+                            (error-message (if (string= error-name "TIMEOUT")
+                                               (format nil "~a ~a" error-str "The program is taking too long to complete, possibly due to infinite recursion or an endless loop. 
+Please check your logic and consider adding a termination condition.")
+                                               error-str)))
                        (cond ((string= error-name "DANGEROUS-FUNCTION")
                               (format nil "USE-OF-~a ~a"error-name (sandbox::dangerous-function-name (second r))))
-                             (t error-name)))))         
+                             (t (format nil "~%  ~a:~%~a" error-name (indent-error-msg error-message)))))))         
          (test (nth 3 r))
          (fcall (second test))
          (ret (third test)))
     (cond ((string= res "Pass")
            (format nil "Passed: ~a returned ~a" fcall ret))
-          ((and (string= res "Fail") rt-error) (format nil "Failed: ~a when evaluating ~a." rt-error fcall))
+          ((and (string= res "Fail") rt-error) (format nil "Failed when evaluating ~a.~a" fcall rt-error))
           (t (format nil "Failed: ~a did not return ~a." fcall  ret)))))
 
 (defun generate-messages (out eval)
@@ -162,11 +181,6 @@
 	      while line do
 	        (get-insert-grade log-file-stream out line ht f))))))
 
-(defun check-input-files (lf)
-  (when lf
-    (if (probe-file (car lf))
-	(check-input-files (cdr lf))
-	(error "Folder/file ~S does not exist." (car lf)))))
 
 (defun cleanup-folder (folder)
   (if  (probe-file folder)
@@ -253,7 +267,7 @@
       (push (list (pathname-name (file-namestring test-case))
                   (if (member (file-namestring test-case) sol-fnames :test #'string=)
                       (let* ((solution (get-solution (file-namestring test-case) solution-files))
-                             (evaluation (evaluate-solution solution test-case)))
+                             (evaluation (evaluate-solution solution "hidden" test-case)))
                         evaluation)
                       (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found" nil))))
             results))
@@ -284,12 +298,11 @@
               (get-insert-std line htable)))
     htable))
 
-(defun export-functions (file)
+(defun export-functions (flist)
   (let ((current *package*))
     (in-package :sandbox)
-    (with-open-file (in file :direction :input)
-      (dolist (fname (read in))
-        (export (intern (symbol-name fname) :sandbox))))
+    (dolist (fname flist)
+      (export (intern (symbol-name fname) :sandbox)))
     (setf *package* current)))
 
 ;; -------- Not integrated to the CodeGrader yet
@@ -302,21 +315,23 @@
    - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/q#.lisp
    - THE LIST CONTAINING THE NAMES OF THE ASSESSMENT FUNCTIONS ARE IN 
      *ASSESSMENT-FUNCS-FOLDER*/assessment-functions.lisp"
-  (let* ((pathname  (pathname a#))
-         (fname (format nil "~a.lisp" (pathname-name pathname)))
+  (let* ((assessment-folder-name  (car (last (pathname-directory a#))))
+         (question-name (pathname-name a#))
          (folder-file a#)
-         (testcase-file (car (directory (format nil "~a~a" *examples-folder*  fname))))
-         (sandbox-functions-file (car (directory (format nil "~a~a" *assessment-funcs-folder* "assessment-functions.lisp"))))
+         (assessment-data-file (format nil "~a~a.data" *assessment-data-folder* assessment-folder-name))
+         (assessment-data
+           (handler-case (with-open-file (in assessment-data-file :direction :input)
+                           (read in))
+             (file-error (e) "Assessment data file error: ~a" e)))
+         (sandbox-functions (second (assoc "fnames" assessment-data :test #'string=)))
          (current-pckg *package*))
-    (unless testcase-file
-      (error "~%!!! Test case file or folder does not exist !!!"))
     (unless (probe-file folder-file)
       (error "~%!!! File does not exist in folder ~S !!!" folder-file))
     ;; Should instead intern and export the assessment's function names to the sandbox package
-    (export-functions sandbox-functions-file)
+    (export-functions sandbox-functions)
     ;;(load sandbox-pkg-file)
     (unwind-protect 
-         (let* ((eval (evaluate-solution folder-file (namestring testcase-file)))
+         (let* ((eval (evaluate-solution folder-file "given" (list assessment-folder-name question-name)))
                 (error-type (second eval)))
            ;;(format t "---- ~s~%" eval)
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
@@ -324,7 +339,7 @@
              (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
            (if (and (stringp error-type) (string= error-type "runtime-error"))
                (format t "~a" (nth 2 eval))
-               (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" pathname (mapcar #'gen-message (nth 3 eval)))))
+               (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval)))))
       (setf *package* current-pckg))
     t))
 ;;--0--------
@@ -470,6 +485,7 @@
       (eval-solutions solutions-folder :exam test-cases-folder out))
      (format t "Feedback saved in ~a~%" folder)))
 
+#|
 (defun eval-solutions (solutions-folder lab &optional  test-cases-folder (out t))
   (unless (probe-file solutions-folder)
     (error "Folder does not exist: ~S~%" solutions-folder))
@@ -494,10 +510,10 @@
                  (otherwise (error "Invalid lab identifier ~a.~%Lab identifiers are in the form :labXX, where XX is the lab number, e.g., :lab03." lab)))))
          (solution-evaluations (grade-solutions solution-files test-cases-files)))
     (generate-messages out (list (/ (reduce #'+ solution-evaluations :key #'caadr)
-                                  (length test-cases-files))
-                               solution-evaluations)))
+                                    (length test-cases-files))
+                                 solution-evaluations)))
   (in-package :cl-user))
-
+|#
 
 (in-package :cg)
 
@@ -518,6 +534,6 @@
    To go back to CL-USER, type: (quit)")
   (in-package :cg))
 
-(defun quit ()<
+(defun quit ()
   (in-package :cl-user))
 

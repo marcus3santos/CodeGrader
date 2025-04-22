@@ -11,4 +11,5 @@
   :components ((:file "package")
                (:file "macros")
                (:file "grader")
+               (:file "sexprmarkup")
                (:file "codegrader")))

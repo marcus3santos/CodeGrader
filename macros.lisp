@@ -2,6 +2,10 @@
 
 (in-package :test-runtime)
 
+(defparameter *system-name* :codegrader)
+
+(defparameter *assessment-data-folder* "~/Codegrader/")
+
 ;; Unit test macros
 
 (defparameter *question* nil)
@@ -23,6 +27,7 @@
 ; Defines the max depth of recursion for functions
 
 (defparameter *max-depth* 20000)
+
 
 
 ;; Maximum running time (in seconds) allotted to the
@@ -202,3 +207,19 @@
       (when (and *cr-warning* (probe-file *cr-warning*))
         (delete-file *cr-warning*))
       (push condition *load-error*))))
+
+(defun load-macros ()
+  (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
+
+(defun load-test-cases (kind assessmt-question)
+  (let* ((assessment (car assessmt-question))
+         (question (cadr assessmt-question))
+         (assessment-data-file (format nil "~a~a.data" *assessment-data-folder* assessment))
+         (assessment-data
+           (handler-case (with-open-file (in assessment-data-file :direction :input)
+                           (read in))
+             (file-error (e) "Assessment data file error: ~a" e)))
+         (question-data (cdr (assoc question assessment-data :test #'string=)))
+         (testcase-code (cdr (assoc kind question-data :test #'string=))))
+    (dolist (code testcase-code)
+      (eval code))))

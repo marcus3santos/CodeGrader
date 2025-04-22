@@ -62,7 +62,8 @@
   (:export *cr-warning*)
   (:export *forbidden-symbols*)
   (:export *penalty-forbidden*)
-  (:export :handle-solution-loading))
+  (:export *assessment-data-folder*)
+  (:export :handle-solution-loading :load-macros :load-test-cases))
 
 (defpackage #:grader
   (:documentation "Creates the code grading apparatus")
@@ -70,15 +71,18 @@
   (:export :evaluate-solution)
   (:export :grade-code))
 
+(defpackage :sexprmark-to-org
+  (:use :cl)
+  (:export :gen-exam-files :str->list))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
-  (:use cl :grader :test-runtime)
-  (:export :grade-it :grade-exam :eval-solutions :eval-student-solutions :ck-my-solution))
+  (:use cl :grader :test-runtime :sexprmark-to-org)
+  (:export :grade-it :grade-exam :eval-solutions :eval-student-solutions :chk-my-solution :gen-exam-files))
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader)
-  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :ck-my-solution))
+  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution :gen-exam-files))
 
 

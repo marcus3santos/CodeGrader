@@ -1,12 +1,10 @@
-(defpackage :sexprmark-to-org
-  (:use :cl)
-  (:export :sexprmark->org))
 
 (in-package :sexprmark-to-org)
 
 ;; Global variables
 
 (defparameter *parent-folder* "Gen-files/")
+
 
 ;; Structure to store information about questions
 
@@ -194,13 +192,16 @@
                          (append (mapcar (lambda (item) (emit item :depth depth)) (cddr node))
                                  (list (format nil "~%~a#+END_SRC" (indent depth))))))))
               (a ;; Assertion in a testcase or example block
+               (unless (= (length (cdr node)) 2)
+                 (error "Incorrect use of Assertion: ~a" node))
                (let ((expected (second node))
                      (result (third node)))
                  (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) result))))
               (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :lang))
-                      (code (third node)))
+                      (code (if lang (third node)
+                                (error ":LANG attribute missing from Code Block: ~a" node))))
                  (cons (format nil "~%~a#+BEGIN_SRC ~a" (indent depth) lang)
                        (append (mapcar (lambda (line)
                                          (format nil "~%~a~a" (indent (* 1 depth)) line)) (str->list code))
@@ -235,11 +236,11 @@
 
 (defun gen-tcs (qnumber description forbidden penalty examples testcases)
   (let ((qlabel (format nil "q~a" qnumber)))
-    `(,qlabel (whats-asked (quote ,description))
+    `(,qlabel ("whats-asked" (quote ,description))
               ,(if forbidden
-                   `(forbidden-symbols :penalty ,penalty :symbols (quote ,forbidden)))
-              (given ,@(gen-tc-code qlabel examples) (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))
-              (hidden ,@(gen-tc-code qlabel testcases) (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
+                   `("forbidden-symbols" :penalty ,penalty :symbols (quote ,forbidden)))
+              ("given" ,@(gen-tc-code qlabel examples) (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))
+              ("hidden" ,@(gen-tc-code qlabel testcases) (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
 
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
@@ -254,10 +255,12 @@
         tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
+    (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
     (maphash (lambda (k v)
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v))
                       tcs-driver)
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
-      (format out "~s" (cons (list 'fnames (reverse all-fnames)) (reverse tcs-driver))))))
+      (format out "~s" (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))
+    (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
