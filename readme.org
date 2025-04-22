@@ -157,7 +157,7 @@ Codegrader also generates the following tooling file it will use to support the 
   ("whats-asked"
    '("
 
- ** WHAT YOU ARE ASKED
+   ** WHAT YOU ARE ASKED
 
  *NOTE:* 
 
@@ -169,7 +169,7 @@ Codegrader also generates the following tooling file it will use to support the 
   (chk-my-solution \"~/intro-lisp/q1.lisp\")
   #+END_SRC
 
-Write a function DOUBLE that doubles a number.
+ Write a function DOUBLE that doubles a number.
 
  #+BEGIN_SRC lisp
  CL-USER> (DOUBLE 2)
