@@ -72,17 +72,18 @@
   (:export :grade-code))
 
 (defpackage :sexprmark-to-org
+  (:nicknames :sxm)
   (:use :cl)
-  (:export :gen-exam-files :str->list))
+  (:export :str->list))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
   (:use cl :grader :test-runtime :sexprmark-to-org)
-  (:export :grade-it :grade-exam :eval-solutions :eval-student-solutions :chk-my-solution :gen-exam-files))
+  (:export :grade-it :grade-exam :eval-solutions :eval-student-solutions :chk-my-solution))
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader)
-  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution :gen-exam-files))
+  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution))
 
 

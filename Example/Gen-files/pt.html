@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2025-04-21 Mon 09:19 -->
+<!-- 2025-04-22 Tue 11:11 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Common Lisp Practicum Test</title>
@@ -200,20 +200,33 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orga02b93c">1. Question 1</a>
+<li><a href="#orge0ef50d">1. Question 1</a>
 <ul>
-<li><a href="#orge0b063f">1.1. WHAT YOU ARE ASKED</a></li>
+<li><a href="#orgb9b486c">1.1. WHAT YOU ARE ASKED</a></li>
+</ul>
+</li>
+<li><a href="#org7cfdb28">2. Question 2</a>
+<ul>
+<li><a href="#orgfac929d">2.1. WHAT YOU ARE ASKED</a></li>
+</ul>
+</li>
+<li><a href="#org3d38e4f">3. Question 3</a>
+<ul>
+<li><a href="#org3830130">3.1. Part 1</a></li>
+<li><a href="#org382b788">3.2. WHAT YOU ARE ASKED</a></li>
+<li><a href="#org90fda9c">3.3. Part 2</a></li>
+<li><a href="#orge83c002">3.4. WHAT YOU ARE ASKED</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orga02b93c" class="outline-2">
-<h2 id="orga02b93c"><span class="section-number-2">1.</span> Question 1</h2>
+<div id="outline-container-orge0ef50d" class="outline-2">
+<h2 id="orge0ef50d"><span class="section-number-2">1.</span> Question 1</h2>
 <div class="outline-text-2" id="text-1">
 </div>
-<div id="outline-container-orge0b063f" class="outline-3">
-<h3 id="orge0b063f"><span class="section-number-3">1.1.</span> WHAT YOU ARE ASKED</h3>
+<div id="outline-container-orgb9b486c" class="outline-3">
+<h3 id="orgb9b486c"><span class="section-number-3">1.1.</span> WHAT YOU ARE ASKED</h3>
 <div class="outline-text-3" id="text-1-1">
 <p>
 <b>NOTE:</b> 
@@ -248,9 +261,135 @@ CL-USER&gt; (COUNT-OCCURRENCES 5 '(1 2 3 4))
 </div>
 </div>
 </div>
+<div id="outline-container-org7cfdb28" class="outline-2">
+<h2 id="org7cfdb28"><span class="section-number-2">2.</span> Question 2</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-orgfac929d" class="outline-3">
+<h3 id="orgfac929d"><span class="section-number-3">2.1.</span> WHAT YOU ARE ASKED</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+<b>NOTE:</b> 
+</p>
+
+<ul class="org-ul">
+<li>You are required to write the solutions for the parts of this question in the lisp program file <b>~/pt/q2.lisp</b> .</li>
+<li>You may create helper functions in your program file.</li>
+<li>You must not use or refer to the following lisp built-in function(s)and symbol(s): <b>COUNT</b>, <b>NUMBER</b>.  The penalty for doing so is a deduction of <b>80 percent</b> on the score of your solutions for this question.</li>
+<li>To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-lisp">(chk-my-solution "~/pt/q2.lisp")
+</pre>
+</div>
+
+<p>
+Write a function <code>contains-all?</code> that takes two lists as
+arguments and returns <code>T</code> if all elements of the first list are
+contained in the second list, and <code>NIL</code> otherwise.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">CL-USER&gt; (CONTAINS-ALL? '(1 2) '(1 2 3 4))
+T
+CL-USER&gt; (CONTAINS-ALL? '(1 5) '(1 2 3 4))
+NIL
+CL-USER&gt; (CONTAINS-ALL? 'NIL '(1 2 3))
+T
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org3d38e4f" class="outline-2">
+<h2 id="org3d38e4f"><span class="section-number-2">3.</span> Question 3</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org3830130" class="outline-3">
+<h3 id="org3830130"><span class="section-number-3">3.1.</span> Part 1</h3>
+</div>
+
+
+<div id="outline-container-org382b788" class="outline-3">
+<h3 id="org382b788"><span class="section-number-3">3.2.</span> WHAT YOU ARE ASKED</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+<b>NOTE:</b> 
+</p>
+
+<ul class="org-ul">
+<li>You are required to write the solutions for the parts of this question in the lisp program file <b>~/pt/q3.lisp</b> .</li>
+<li>You may create helper functions in your program file.</li>
+<li>You must not use or refer to the following lisp built-in function(s)and symbol(s): <b>COUNT</b>, <b>MEMBER</b>.  The penalty for doing so is a deduction of <b>80 percent</b> on the score of your solutions for this question.</li>
+<li>To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-lisp">(chk-my-solution "~/pt/q3.lisp")
+</pre>
+</div>
+
+<p>
+Write a function <code>reverse-list</code> that takes a list as an
+argument and returns a new list that is the reverse of the original
+list. 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">CL-USER&gt; (REVERSE-LIST '(1 2 3 4))
+'(4 3 2 1)
+CL-USER&gt; (REVERSE-LIST '(A B C))
+'(C B A)
+CL-USER&gt; (REVERSE-LIST 'NIL)
+'NIL
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org90fda9c" class="outline-3">
+<h3 id="org90fda9c"><span class="section-number-3">3.3.</span> Part 2</h3>
+</div>
+
+
+<div id="outline-container-orge83c002" class="outline-3">
+<h3 id="orge83c002"><span class="section-number-3">3.4.</span> WHAT YOU ARE ASKED</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+<b>NOTE:</b> 
+</p>
+
+<ul class="org-ul">
+<li>You are required to write the solutions for the parts of this question in the lisp program file <b>~/pt/q3.lisp</b> .</li>
+<li>You may create helper functions in your program file.</li>
+<li>You must not use or refer to the following lisp built-in function(s)and symbol(s): <b>COUNT</b>, <b>MEMBER</b>.  The penalty for doing so is a deduction of <b>80 percent</b> on the score of your solutions for this question.</li>
+<li>To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:</li>
+</ul>
+<div class="org-src-container">
+<pre class="src src-lisp">(chk-my-solution "~/pt/q3.lisp")
+</pre>
+</div>
+
+<p>
+Write a function <code>palindrome?</code> that takes a list as an
+argument and returns <code>T</code> if the list is a palindrome (reads the same
+forwards and backwards), and <code>NIL</code> otherwise. You may not use
+<code>REVERSE</code> or <code>NREVERSE</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp">CL-USER&gt; (PALINDROME? '(1 2 3 2 1))
+T
+CL-USER&gt; (PALINDROME? '(A B C D))
+NIL
+CL-USER&gt; (PALINDROME? 'NIL)
+T
+</pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
-<p class="date">Created: 2025-04-21 Mon 09:19</p>
+<p class="date">Created: 2025-04-22 Tue 11:11</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
