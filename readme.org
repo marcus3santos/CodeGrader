@@ -108,6 +108,7 @@ Each SXM file should be a valid Lisp-style expression.
 (doc (:title "Intro to Lisp" :folder "~/intro-lisp")
   (q (:title "Exercise" :number 1)
     (wa
+      (p "*Part 1*:)
       (p "Write a function DOUBLE that doubles a number.")
       (eb (:function double)
         (a (double 2) 4)
@@ -118,6 +119,36 @@ Each SXM file should be a valid Lisp-style expression.
 #+end_example
 
 This format ensures instructors can define structured, testable assessments directly using Lisp-style expressions, facilitating better automation in tools like CodeGrader.
+
+CodeGrader generates the following orgmode file from the above minimal assessment description file:
+#+begin_example
+ #+TITLE: Intro to Lisp
+ #+Options: toc:nil num:nil date:nil author:nil
+
+ * Exercise 1
+
+
+ ** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+  - You are required to write the solutions for the parts of this question in the lisp program file *~/intro-lisp/q1.lisp* .
+  - You may create helper functions in your program file. 
+  - There are no restrictions in the use of lisp built-in functions or symbols in the parts of this question. 
+  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+  #+BEGIN_SRC lisp
+  (chk-my-solution "~/intro-lisp/q1.lisp")
+  #+END_SRC
+
+Write a function DOUBLE that doubles a number.
+
+ #+BEGIN_SRC lisp
+ CL-USER> (DOUBLE 2)
+ 4
+ CL-USER> (DOUBLE -1)
+ -2
+ #+END_SRC
+#+end_example
 
 * Generating the Assessment Support Files
 
