@@ -139,8 +139,7 @@ their progress, CodeGrader provides the function =CHK-MY-SOLUTION=. Students can
   examples included in the assessment description to verify
   correctness for those specific cases.
 
-*For example*: Suppose a student would like to verify if their solution for Question 1 of the Practicum Test 1 (*pt1*, for short) meets the assessment requirements, assuming students were required to save their solutions in the *~/pt1/* folder. After completing their solution, a student can evaluate the following expression in the
-Lisp REPL to check their work: 
+*For example*: Suppose a student wants to verify whether their solution to Question 1 of Practicum Test 1 meets the assessment requirements. Assuming that solutions must be saved in the *~/pt1/* folder, the student can evaluate the following expression in the Lisp REPL to check their work after completing their solution: 
 #+begin_example  
 CL-USER> (CHK-MY-SOLUTION "~/pt1/q1.lisp")  
 #+end_example  
