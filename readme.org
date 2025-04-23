@@ -84,10 +84,10 @@ Each SXM file should be a valid Lisp-style expression.
 
 ** Explanation of Fields
 
-- =:title= — Title of the assessment.
-- =:folder= — Directory path where students are require to save their solutions.
+- =:title= — Assessment title.
+- =:folder= — Directory path where students are required to save their solutions.
 - =q= — A section describing an individual exercise or problem.
-  - =:title= — The questions title, e.g.  `"Question"` or `"Exercise"`.
+  - =:title= — The question title, e.g.  `"Question"` or `"Exercise"`.
   - =:number= — Integer identifier for the question.
   - =:penalty= — (Optional) Penalty percentage for using forbidden functions.
   - =:forbidden= — (Optional) List of forbidden functions in Lisp syntax.
