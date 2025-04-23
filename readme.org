@@ -33,8 +33,8 @@ Type the commands below an a linux or Mac terminal:
 
 The workflow involves the following steps:
 
-1. The instructor writes the assessment using the s-expression markdown (SXM).
-2. The instructor uses CodeGrader to generate, from the SXM file, the necessary support
+1. The instructor writes the assessment in s-expression markdown (SXM).
+2. The instructor uses CodeGrader to generate from the SXM file the necessary support
    files, including the formatted questions translated to orgmode and assessment-specific test
    cases to be later used by CodeGrader to grade the students' solutions.
 3. Students complete the assessment created by the instructor,
@@ -102,6 +102,19 @@ Each SXM file should be a valid Lisp-style expression.
 - Strings can include newlines and must be properly quoted when spanning multiple lines.
 - The SXM format is fully parsable Lisp syntax, so it must be syntactically valid.
 
+* Generating the Assessment Support Files
+
+Use CodeGrader's *(GEN-EXAM-FILES* /<SXM assessment file>/ *)*
+function to rewrite your assessment description SXM file and to
+generate a tooling file in folder *Gen-files/* in the root folder of your assessment file. T
+
+For example: When executed in the REPL, the form (GEN-EXAM-FILES
+[[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.sxm][pt.sxm]]) will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files and folders]] in the *./Gen-files*
+folder.
+
+We encourage you to examine how CodeGrader rewrites the examples and
+test cases from the original =pt.org= file, as well as the generated
+Lisp program files in the *Examples/*, *Test-Cases/*, and *Assessment-functions/* folders.
 ** Example Minimal Assessment File
 
 #+begin_example
@@ -165,17 +178,16 @@ Codegrader also generates the following tooling file it will use to support the 
   - You may create helper functions in your program file. 
   - There are no restrictions in the use of lisp built-in functions or symbols in the parts of this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  ;#+BEGIN_SRC lisp
+  
   (chk-my-solution \"~/intro-lisp/q1.lisp\")
-  ;#+END_SRC
+  
   Write a function DOUBLE that doubles a number.
 
-  ;#+BEGIN_SRC lisp
   CL-USER> (DOUBLE 2)
   4
   CL-USER> (DOUBLE -1)
   -2
-  ;#+END_SRC"))
+  "))
   NIL
   ("given"
    (DEFTEST TEST-DOUBLE NIL
@@ -186,31 +198,6 @@ Codegrader also generates the following tooling file it will use to support the 
     (CHECK (EQUALP (DOUBLE 0) 0) (EQUALP (DOUBLE 5) 10)))
    (DEFUN TEST-Q1 () (TEST-DOUBLE) (FMAKUNBOUND 'DOUBLE)) (TEST-Q1))))
 #+end_src
-
-* Generating the Assessment Support Files
-
-Use CodeGrader's *(GEN-EXAM-FILES* /<org-mode assessment file>/ *)*
-function to rewrite your org-mode assessment description file and to
-generate other assessment related files. CodeGrader will create a new
-folder *Gen-files/* in the root folder of your assessment org-mode
-file, containing the following folders:
-- *Examples/*: contains lisp program files, one for each assessment
-  question, defining the test cases for the examples mentioned in the
-  questions.
-- *Test-Cases/*: contains lisp program files, one for each assessment
-  question, defining the test cases which will be used for evaluating
-  the students' solutions.
-- *Assessment-functions/assessment-functions.lisp*: lists the names of the assessment's functions.
-- The rewritten org-mode file.
-
-
-For example: When executed in the REPL, the form (GEN-EXAM-FILES
-[[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.org][pt.org]]) will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files and folders]] in the *./Gen-files*
-folder.
-
-We encourage you to examine how CodeGrader rewrites the examples and
-test cases from the original =pt.org= file, as well as the generated
-Lisp program files in the *Examples/*, *Test-Cases/*, and *Assessment-functions/* folders.
 
 * Student Interaction with the Assessment  
 
