@@ -84,18 +84,18 @@ Each SXM file should be a valid Lisp-style expression.
 
 ** Explanation of Fields
 
-- `:title` — Title of the assessment.
-- `:folder` — Directory path where students are require to save their solutions.
-- `q` — A section describing an individual exercise or problem.
-  - `:title` — The questions title, e.g.  `"Question"` or `"Exercise"`.
-  - `:number` — Integer identifier for the question.
-  - `:penalty` — (Optional) Penalty percentage for using forbidden functions.
-  - `:forbidden` — (Optional) List of forbidden functions in Lisp syntax.
-  - `p` — a paragraph text.
-  - `wa` — A section describing what the student is being asked. It can contain:
-    - (p ...) - paragraphs
-    - (eb ...)- example blocks containing test assertions; they are translated to code that students can use to test their solutions during the test.
-    - (tcs ...) - test case blocks containing assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
+- =:title= — Title of the assessment.
+- =:folder= — Directory path where students are require to save their solutions.
+- =q= — A section describing an individual exercise or problem.
+  - =:title= — The questions title, e.g.  `"Question"` or `"Exercise"`.
+  - =:number= — Integer identifier for the question.
+  - =:penalty= — (Optional) Penalty percentage for using forbidden functions.
+  - =:forbidden= — (Optional) List of forbidden functions in Lisp syntax.
+  - =p= — a paragraph of text.
+  - =wa= — A section describing what the student is being asked. It can contain:
+    - =(p ...)= - paragraphs
+    - =(eb ...)=- example blocks containing test assertions; they are translated to code that students can use to test their solutions during the test.
+    - =(tcs ...)= - test case blocks containing assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
 
 ** Notes
 
