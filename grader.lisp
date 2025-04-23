@@ -198,18 +198,17 @@ the mark is calculated as the # of passes divided by the total # of cases.
 (defun grade-code (student-solution kind assessmt-question &optional ws)
   "Loads the student-solution file, loads and runs the code for the test cases
    of that assessment and question, and returns the percentage of correct results over total results"
-  (let ((description "No runtime errors"))
+  (let ((description ""))
+    (setf *load-error* nil)
     (handle-solution-loading student-solution)
     (in-package :test-runtime)
     (setf *questions* nil)
     (setf *results* nil)
     (setf *runtime-error* nil)
-    (setf *load-error* nil)
     (setf *cr-warning* nil)
     (setf *forbidden-symbols* nil)
     (load-macros)
     (load-test-cases kind assessmt-question)
-    ;;(load test-cases)
     (in-package :grader)
     (let ((score (calc-mark *results* ws))
           (forbid-symb (contains-forbidden-symbol? student-solution *forbidden-symbols*))
@@ -224,14 +223,14 @@ the mark is calculated as the # of passes divided by the total # of cases.
              (forbid-symb (list "used forbidden symbol" forbid-symb *penalty-forbidden*))
 	     (t "No RT-error"))
        (progn
-         (if *runtime-error* 
-             (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
+         (when *runtime-error*
+           (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
                                        (mapcar #'(lambda (ce)
                                                    (format nil "~s~%~a" (second ce) (first ce)))
-                                               (reverse *runtime-error*))))
-             (setf description "No runtime errors."))
-         (when *load-error*
-           (setf description  (concatenate 'string  description "Load/Compiling error.")))    
+                                               (reverse *runtime-error*)))))
+         (if  *load-error*
+              (setf description  (concatenate 'string  description "Load/Compiling error."))
+              (setf description "No runtime errors."))    
          (when *cr-warning*
            (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
          (when forbid-symb

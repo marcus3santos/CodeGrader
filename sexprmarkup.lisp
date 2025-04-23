@@ -5,6 +5,7 @@
 
 (defparameter *parent-folder* "Gen-files/")
 
+(defparameter *orgmode-markers* '("#+BEGIN_SRC lisp" "#+BEGIN_SRC shell" "#+END_SRC" "#+BEGIN_EXAMPLE" "#+END_EXAMPLE"))
 
 ;; Structure to store information about questions
 
@@ -56,6 +57,32 @@
           until (eq line :eof)
           collect line)))
 
+(defun remove-substring (substring string)
+  "Removes all occurrences of SUBSTRING from STRING."
+  (with-output-to-string (out)
+    (loop with len = (length substring)
+          for start = 0 then (+ pos len)
+          for pos = (search substring string :start2 start)
+          while pos
+          do (write-string string out :start start :end pos)
+          finally (write-string string out :start start))))
+
+(defun remove-substrings (lstr s)
+  (let ((res s))
+    (dolist (substring lstr res)
+      (setf res (remove-substring substring res)))))
+
+(defun normalize-whitespace (s)
+  (with-output-to-string (out)
+    (loop for ch across s
+          with prev-space = nil
+          do (cond
+               ((char= ch #\Space)
+                (unless prev-space (write-char #\Space out))
+                (setf prev-space t))
+               (t (write-char ch out)
+                  (setf prev-space nil))))))
+
 ;; Serializer
 
 (defun sexprmark->org (sexpr questions-info)
@@ -73,7 +100,7 @@
                       (folder (if title (check-foldername (getf proplist :folder))
                                   (error "Missing document title in ~s" node)))
                       (toc (if folder (getf proplist :toc)
-                                    (error "Missing folder location for student solutions in ~s" node)))
+                               (error "Missing folder location for student solutions in ~s" node)))
                       (num  (getf proplist :num))
                       (children (nthcdr 2 node)))
                  (cons (format nil "#+TITLE: ~a~%" title)
@@ -124,12 +151,12 @@
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
-                 (push (apply #'concatenate 'string (flatten description)) (question-description (gethash qnumber questions-info)))
+                 (push (normalize-whitespace (remove-substrings *orgmode-markers*  (apply #'concatenate 'string  (flatten description)))) (question-description (gethash qnumber questions-info)))
                  description))
               (p ;; Paragraph
                (append (cons (format nil "~%~a" (indent depth))
                              (mapcar (lambda (item)
-                                        (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
+                                       (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                      (cdr node)))
                        (list (format nil "~%"))))
               (ul ;; Unnumbered items
@@ -206,7 +233,7 @@
                        (append (mapcar (lambda (line)
                                          (format nil "~%~a~a" (indent (* 1 depth)) line)) (str->list code))
                                (list (format nil "~%~a#+END_SRC~%" (indent (* 1 depth))))))))
-              (t (format nil "Invalid node: ~a" node))))
+              (t (format nil "Invalid node: ~s" node))))
            ((symbolp node) (list (format nil "~a " (string-downcase (symbol-name node)))))
            ((stringp node) (list (format nil "~{~a~^~%~}" (str->list node))))
            ((atom node) (list (format nil "~a " node))))))
@@ -250,7 +277,7 @@
         (orgmode-version (ensure-directories-exist
 		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.org" (pathname-name (file-namestring from))))))
         (exam-data (ensure-directories-exist
-		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.data" (pathname-name (file-namestring from))))))
+		    (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.data" (pathname-name (file-namestring from))))))
         all-fnames
         tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)

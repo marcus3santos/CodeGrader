@@ -56,13 +56,6 @@
        ,@(loop for f in forms collect `(unless ,f (setf ,result nil)))
        ,result)))
 
-
-(define-condition computation-too-long (error)
-  ((timeout :initarg :timeout :reader computation-too-long-timeout))
-  (:report (lambda (condition stream)
-             (format stream "Execution timed out after ~a seconds. The program is taking too long to complete, possibly due to infinite recursion or an endless loop. Please check your logic and consider adding a termination condition.~%" (computation-too-long-timeout condition)))))
-
-
 (defmacro time-execution (expression max-time)
   "Evaluates the given expression and returns its result. If the expression
    does not complete within the specified max-time (in seconds), it returns
@@ -98,79 +91,12 @@
     (setf *penalty-forbidden* penalty)
     (setf *forbidden-symbols* symbols)))
 
-(defun replace-in-expr (s ns expr)
-  (cond ((null expr) expr)
-        ((eq expr s) ns)
-        ((listp expr)
-         (cons (replace-in-expr s ns (car expr))  
-               (mapcar (lambda (item) (replace-in-expr s ns item)) (cdr expr)))) 
-        (t expr)))
-
-(defun params2args (params &optional oflag kflag acc)
-  (cond ((null params) (reverse acc))
-        ((eq (car params) '&rest) (reverse (cons (cdr params) acc)))
-        ((eq (car params) '&optional)
-         (when kflag (error "&key should not come before &optional"))
-         (params2args (cdr params) t kflag acc))
-        ((eq (car params) '&key) (params2args (cdr params) oflag t acc))
-        ((and kflag (listp (first params)))
-         (params2args (cdr params) oflag kflag
-                      (append (list (second (first params))
-                                    (intern (symbol-name (first (first params))) :keyword)) acc)))
-        ((and oflag (listp (first params)))
-         (params2args (cdr params) oflag kflag (cons (second (first params)) acc)))
-        ((and oflag (null (first params)))
-         (params2args (cdr params) oflag kflag (cons nil acc)))
-        (t (params2args (cdr params) oflag kflag (cons (first params) acc)))))
-
-
-(defun get-fname (s)
-  (let ((name (symbol-name s)))
-    (string-upcase (subseq name 0 (position #\Space name :test #'char-equal)))))
-
-(defmacro wrp-defun (defun)
-  (unless (listp (third defun))
-    (error "Invalid syntax for DEFUN form!"))
-  (let* ((name (second defun))
-         (params (third defun))
-         (bdy (cdddr defun))
-         (new-name (gensym (format nil "~a " (symbol-name name))))
-         (depth (gensym "DEPTH-"))
-         (max-depth (gensym "*max-depth*"))
-         (new-params (replace-in-expr name new-name params))
-         (args (params2args new-params))
-         (new-bdy (replace-in-expr name new-name bdy)))
-    `(defun ,name (,@new-params)
-       (let ((,depth 0)
-             (,max-depth ,*max-depth*))
-         (labels ((,new-name (,@new-params)
-                    (cond ((< ,depth ,max-depth)                     
-                           (incf ,depth)
-                           ,@(if (= (length new-bdy) 1)
-                                 `((car (list ,@new-bdy)))
-                                 new-bdy))
-                          ((error ,(format nil "Recursion too deep in function ~a !" (get-fname new-name)))))))
-           (apply #',new-name (list ,@args)))))))
-
-(defun wrp-load-std-sols (file)
-  "This function should be used for loading the student's lisp file.
-   It reads the forms in the student's lisp file.  If a form is a DEFUN, uses a macro 
-   to rewrite the function to avoid it causing a stack overflow when the function is called, 
-   then evals the form. Otherwise, evals the form."
-  (with-open-file (in file :direction :input)
-    (loop for form = (read in nil nil)
-          while form 
-          do (eval (if (and (consp form) (eq (car form) 'defun))
-                       `(wrp-defun ,form)
-                       form)))))
-
 (defun safely-load-std-solution (file)
   "Changes the current environment to the question's sandboxed environment  then loads
    the student's solution."
   (let ((current *package*))
     (in-package :sandbox)
     (load file)
-    ;;(wrp-load-std-sols file)
     (setf *package* current)))
 
 (defun rewrite-load (file)
@@ -188,7 +114,24 @@
     (safely-load-std-solution newfname)
     ;;(load newfname)
     (delete-file newfname)))
-  
+
+(defun check-balanced-parentheses (code)
+  "Returns T if CODE has balanced parentheses, otherwise NIL."
+  (loop with depth = 0
+        for char across code
+        do (cond
+             ((char= char #\() (incf depth))
+             ((char= char #\)) (decf depth)
+              (when (< depth 0) (return-from check-balanced-parentheses nil))))
+        finally (return (= depth 0))))
+
+(defun file-has-balanced-parentheses-p (filepath)
+  "Reads Lisp source file and checks for balanced parentheses."
+  (when (probe-file filepath)
+    (with-open-file (in filepath :direction :input)
+      (let ((content (make-string (file-length in))))
+        (read-sequence content in)
+        (check-balanced-parentheses content)))))
 
 (defun has-cr? (file)
   (with-open-file (in file)
@@ -197,12 +140,21 @@
       (when (char= c #\Return)
         (return t)))))
 
+(define-condition my-error (error)
+  ((details :initarg :details :reader error-details))
+  (:report (lambda (c s)
+             (format s "My custom error: ~A" (error-details c)))))
+
 (defun load-solution (file)
+  (unless (file-has-balanced-parentheses-p file)
+    (error 'my-error :details "Something specific broke"))
   (if (has-cr? file) (rewrite-load file)
       (safely-load-std-solution file)))
 
 (defun handle-solution-loading (student-solution)
   (handler-case (load-solution student-solution)
+    (my-error (e)
+      (push e *load-error*))
     (error (condition)
       (when (and *cr-warning* (probe-file *cr-warning*))
         (delete-file *cr-warning*))

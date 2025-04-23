@@ -74,7 +74,7 @@
 (defpackage :sexprmark-to-org
   (:nicknames :sxm)
   (:use :cl)
-  (:export :str->list))
+  (:export :str->list :normalize-whitespace :remove-substrings))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
