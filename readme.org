@@ -99,7 +99,7 @@ Each SXM file should be a valid Lisp-style expression.
 
 * Generating the Assessment Support Files
 
-Use CodeGrader’s GEN-EXAM-FILES function (with your /<SXM assessment file>/) to rewrite the assessment description SXM file and generate a tooling file in the *Gen-files/* folder, located in the root directory of your assessment project.
+Use CodeGrader’s GEN-EXAM-FILES function (with your /<SXM assessment file>/) to rewrite the assessment description SXM file and generate a tooling file in the *Gen-files/* folder, located in the root directory of your assessment file.
 
 For example: When executed in the REPL, the form (GEN-EXAM-FILES "[[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.sxm][pt.sxm]]") will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files]] in the *./Gen-files*
 folder.
