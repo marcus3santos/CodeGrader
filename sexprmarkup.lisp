@@ -274,6 +274,7 @@
   (let ((assessment-sexpr (with-open-file (in from)
                             (read in)))
         (questions-info (make-hash-table))
+        (questions)
         (orgmode-version (ensure-directories-exist
 		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.org" (pathname-name (file-namestring from))))))
         (exam-data (ensure-directories-exist
@@ -286,8 +287,9 @@
     (maphash (lambda (k v)
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v))
                       tcs-driver)
+               (push (format nil "q~a" k) questions)
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
-      (format out "~s" (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))
+      (format out "~s" (cons (list "questions" (reverse questions)) (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver)))))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))

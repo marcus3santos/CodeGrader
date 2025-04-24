@@ -1,4 +1,5 @@
-(("fnames" (COUNT-OCCURRENCES CONTAINS-ALL REVERSE-LIST PALINDROME?))
+(("questions" ("q1" "q2" "q3"))
+ ("fnames" (COUNT-OCCURRENCES CONTAINS-ALL REVERSE-LIST PALINDROME?))
  ("q1"
   ("whats-asked"
    '("
@@ -7,26 +8,26 @@
 
 *NOTE:* 
 
-  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q1.lisp* .
-  - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
-  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  #+BEGIN_SRC lisp
-  (chk-my-solution \"~/pt/q1.lisp\")
-  #+END_SRC
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q1.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+ 
+ (chk-my-solution \"~/pt/q1.lisp\")
+ 
 
 Write a function =count-occurrences= that takes an element
 and a list as arguments and returns the number of times the element
 appears in the list. For example:
 
-#+BEGIN_SRC lisp
+
 CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
 3
 CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
 3
 CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 0
-#+END_SRC"))
+"))
   ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT MEMBER))
   ("given"
    (DEFTEST TEST-COUNT-OCCURRENCES NIL
@@ -50,26 +51,26 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 
 *NOTE:* 
 
-  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q2.lisp* .
-  - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *NUMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
-  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  #+BEGIN_SRC lisp
-  (chk-my-solution \"~/pt/q2.lisp\")
-  #+END_SRC
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q2.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *NUMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+ 
+ (chk-my-solution \"~/pt/q2.lisp\")
+ 
 
 Write a function =contains-all?= that takes two lists as
 arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
 
-#+BEGIN_SRC lisp
+
 CL-USER> (CONTAINS-ALL? '(1 2) '(1 2 3 4))
 T
 CL-USER> (CONTAINS-ALL? '(1 5) '(1 2 3 4))
 NIL
 CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
 T
-#+END_SRC"))
+"))
   ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT NUMBER))
   ("given"
    (DEFTEST TEST-CONTAINS-ALL NIL
@@ -92,53 +93,53 @@ T
 
 *NOTE:* 
 
-  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
-  - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
-  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  #+BEGIN_SRC lisp
-  (chk-my-solution \"~/pt/q3.lisp\")
-  #+END_SRC
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+ 
+ (chk-my-solution \"~/pt/q3.lisp\")
+ 
 
 Write a function =palindrome?= that takes a list as an
 argument and returns =T= if the list is a palindrome (reads the same
 forwards and backwards), and =NIL= otherwise. You may not use
 =REVERSE= or =NREVERSE=.
 
-#+BEGIN_SRC lisp
+
 CL-USER> (PALINDROME? '(1 2 3 2 1))
 T
 CL-USER> (PALINDROME? '(A B C D))
 NIL
 CL-USER> (PALINDROME? 'NIL)
 T
-#+END_SRC"
+"
      "
 
 ** WHAT YOU ARE ASKED
 
 *NOTE:* 
 
-  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
-  - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
-  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
-  #+BEGIN_SRC lisp
-  (chk-my-solution \"~/pt/q3.lisp\")
-  #+END_SRC
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
+ 
+ (chk-my-solution \"~/pt/q3.lisp\")
+ 
 
 Write a function =reverse-list= that takes a list as an
 argument and returns a new list that is the reverse of the original
 list. 
 
-#+BEGIN_SRC lisp
+
 CL-USER> (REVERSE-LIST '(1 2 3 4))
 '(4 3 2 1)
 CL-USER> (REVERSE-LIST '(A B C))
 '(C B A)
 CL-USER> (REVERSE-LIST 'NIL)
 'NIL
-#+END_SRC"))
+"))
   ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT MEMBER))
   ("given"
    (DEFTEST TEST-REVERSE-LIST NIL

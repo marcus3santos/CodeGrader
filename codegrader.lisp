@@ -252,7 +252,22 @@ Please check your logic and consider adding a termination condition.")
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
 
-
+(defun grade-solutions (solution-files assess-folder-and-question-names)
+  (let ((results (list))
+        (sol-fnames (mapcar #'file-namestring solution-files))
+        (question-name (second assess-folder-and-question-names)))
+    (dolist (solution solution-files)
+      (push (list (pathname-name (file-namestring solution))
+                  (if (member question-name sol-fnames :test #'string=)
+                      (let* ((solution (get-solution question-name solution-files))
+                             (evaluation (evaluate-solution solution "hidden" assess-folder-and-question-names)))
+                        (if (string= (second evaluation) "load-error")
+                            (list 0 "load-error" "Your program contains unbalanced parentheses and cannot be compiled. Please check for missing or extra parentheses in the source file." nil)
+                            evaluation))
+                      (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found" nil))))
+            results))
+    (reverse results)))
+#|
 (defun grade-solutions (solution-files test-cases-files)
   (let ((results (list))
         (sol-fnames (mapcar #'file-namestring solution-files)))
@@ -267,7 +282,7 @@ Please check your logic and consider adding a termination condition.")
                       (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found" nil))))
             results))
     (reverse results)))
-
+|#
 
 (defun parse-room-pc (str)
   (do ((i 0 (1+ i)))
