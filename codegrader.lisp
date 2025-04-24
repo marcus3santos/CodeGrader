@@ -86,7 +86,7 @@ Please check your logic and consider adding a termination condition.")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
         (format out "~%---- Your Solution ----~%~%~A~%~%--- End of Your Solution --~%" std-sol))
-      (cond ((or (equalp erro-type "load-error")
+      (cond ((or (equalp error-type "load-error")
                  (equalp error-type "missing-question-file")
                  (equalp error-type "no-submitted-file")
 		 (equalp error-type "not-lisp-file")
@@ -252,20 +252,38 @@ Please check your logic and consider adding a termination condition.")
 (defun remove-extension (filename)
   (subseq filename 0 (position #\. filename :from-end t)))
 
-(defun grade-solutions (solution-files assess-folder-and-question-names)
-  (let ((results (list))
+;;; JUST A TESTER
+
+
+(defun tester ()
+  (let* ((data (with-open-file (in "~/Codegrader/pt.data" :direction :input)
+                 (read in)))
+         (fnames (assoc "fnames" data :test #'string=))
+         (questions (assoc "questions" data :test #'string=)))
+    (export-functions (second fnames))
+    (generate-messages t (list 0 (grade-solutions '(#P"/home/marcus/pt/q1.lisp" #P"/home/marcus/pt/q3.lisp") `("pt" ,(second questions)))))))
+;;;
+
+
+(defun grade-solutions (solution-files asmnt-folder-name-and-question-names)
+  "From a list of solution files' paths and a list containing the folder name and
+   the list of question names, e.g., q1, q2, ..., returns a list containing the results
+   of the solutions evaluatios"
+  (let (results
         (sol-fnames (mapcar #'file-namestring solution-files))
-        (question-name (second assess-folder-and-question-names)))
-    (dolist (solution solution-files)
-      (push (list (pathname-name (file-namestring solution))
-                  (if (member question-name sol-fnames :test #'string=)
-                      (let* ((solution (get-solution question-name solution-files))
-                             (evaluation (evaluate-solution solution "hidden" assess-folder-and-question-names)))
-                        (if (string= (second evaluation) "load-error")
-                            (list 0 "load-error" "Your program contains unbalanced parentheses and cannot be compiled. Please check for missing or extra parentheses in the source file." nil)
-                            evaluation))
-                      (list 0 "missing-question-file" (concatenate 'string (file-namestring test-case) " file not found" nil))))
-            results))
+        (asmnt-folder-name (first asmnt-folder-name-and-question-names))
+        (question-names (second asmnt-folder-name-and-question-names)))
+    (dolist (question-name question-names)
+      (let ((qfname (format nil "~a.lisp" question-name)))
+        (push (list question-name
+                    (if (member qfname sol-fnames :test #'string=)
+                        (let* ((solution (get-solution qfname solution-files))
+                               (evaluation (evaluate-solution solution "hidden" (list asmnt-folder-name question-name))))
+                          (if (string= (second evaluation) "load-error")
+                              (list 0 "load-error" "Your program contains unbalanced parentheses and cannot be compiled. Please check for missing or extra parentheses in the source file." nil)
+                              evaluation))
+                        (list 0 "missing-question-file" (format nil "~a file not found" qfname))))
+              results)))
     (reverse results)))
 #|
 (defun grade-solutions (solution-files test-cases-files)
@@ -312,6 +330,7 @@ Please check your logic and consider adding a termination condition.")
   (let ((current *package*))
     (in-package :sandbox)
     (dolist (fname flist)
+      (unintern fname :sandbox)
       (export (intern (symbol-name fname) :sandbox)))
     (setf *package* current)))
 
