@@ -97,11 +97,6 @@ Each SXM file should be a valid Lisp-style expression.
     - =(eb ...)=- example blocks containing test assertions; they are translated to code that students can use to test their solutions during the test.
     - =(tcs ...)= - test case blocks containing assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
 
-** Notes
-
-- Strings can include newlines and must be properly quoted when spanning multiple lines.
-- The SXM format is fully parsable Lisp syntax, so it must be syntactically valid.
-
 * Generating the Assessment Support Files
 
 Use CodeGrader's *(GEN-EXAM-FILES* /<SXM assessment file>/ *)*
