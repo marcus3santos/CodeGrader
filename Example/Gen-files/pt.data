@@ -1,4 +1,4 @@
-(("questions" ("q1" "q2" "q3"))
+(("assessment" "pt") ("questions" ("q1" "q2" "q3"))
  ("fnames" (COUNT-OCCURRENCES CONTAINS-ALL REVERSE-LIST PALINDROME?))
  ("q1"
   ("whats-asked"

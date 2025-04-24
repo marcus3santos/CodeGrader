@@ -7,6 +7,8 @@
 
 (defparameter *orgmode-markers* '("#+BEGIN_SRC lisp" "#+BEGIN_SRC shell" "#+END_SRC" "#+BEGIN_EXAMPLE" "#+END_EXAMPLE"))
 
+(defvar *assessment-name*)
+
 ;; Structure to store information about questions
 
 (defstruct question
@@ -103,6 +105,8 @@
                                (error "Missing folder location for student solutions in ~s" node)))
                       (num  (getf proplist :num))
                       (children (nthcdr 2 node)))
+                 (format t ">>>> ~a ~a" folder (pathname-name folder))
+                 (setf *assessment-name* (third (pathname-directory folder)))
                  (cons (format nil "#+TITLE: ~a~%" title)
                        (cons (format nil "#+Options: toc:~[nil~;t~] num:~[nil~;t~] date:nil author:nil~%" (if toc 1 0) (if num 1 0))
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
@@ -291,5 +295,7 @@
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
-      (format out "~s" (cons (list "questions" (reverse questions)) (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver)))))
+      (format out "~s" (cons (list "assessment" *assessment-name*)
+                             (cons (list "questions" (reverse questions))
+                                   (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
