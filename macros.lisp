@@ -4,11 +4,9 @@
 
 (defparameter *system-name* :codegrader)
 
-(defparameter *assessment-data-folder* "~/Codegrader/")
 
 ;; Unit test macros
 
-(defparameter *question* nil)
 
 (defparameter *results* nil)
 
@@ -17,10 +15,6 @@
 (defvar *load-error* nil)
 
 (defvar *cr-warning* nil)
-
-(defparameter *forbidden-symbols* nil) ;; List containing the names of the symbols students are not allowed to use
-
-(defparameter *penalty-forbidden* 0.5) ;; Penalty (to be multiplied by total lab mark) for using forbidden symbols
 
 (defparameter *test-name* nil)
 
@@ -83,13 +77,7 @@
      (setf *test-name* ',name)
      ,@body))
 
-(defun whats-asked (question)
-  (setf *question* question))
 
-(defun forbidden-symbols (&key (penalty .5) symbols)
-  (progn 
-    (setf *penalty-forbidden* penalty)
-    (setf *forbidden-symbols* symbols)))
 
 (defun safely-load-std-solution (file)
   "Changes the current environment to the question's sandboxed environment  then loads
@@ -163,15 +151,16 @@
 (defun load-macros ()
   (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
 
-(defun load-test-cases (kind assessmt-question)
-  (let* ((assessment (car assessmt-question))
-         (question (cadr assessmt-question))
-         (assessment-data-file (format nil "~a~a.data" *assessment-data-folder* assessment))
-         (assessment-data
-           (handler-case (with-open-file (in assessment-data-file :direction :input)
-                           (read in))
-             (file-error (e) "Assessment data file error: ~a" e)))
-         (question-data (cdr (assoc question assessment-data :test #'string=)))
-         (testcase-code (cdr (assoc kind question-data :test #'string=))))
-    (dolist (code testcase-code)
-      (eval code))))
+
+(defun subst-package-symbols (form package-designator)
+  (if (consp form)
+      (mapcar #'(lambda (x) (subst-package-symbols x package-designator)) form)
+      (if (symbolp form)
+          (intern (symbol-name form) (find-package package-designator))
+          form)))
+
+(defun load-test-cases (testcase-code)
+  (dolist (code (subst-package-symbols testcase-code :test-runtime))
+    (eval code)))
+
+

@@ -195,39 +195,42 @@ the mark is calculated as the # of passes divided by the total # of cases.
             do (format content "~A~%" line)) ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
-(defun grade-code (student-solution kind assessmt-question &optional ws)
+(defun grade-code (student-solution kind question assessment-data &optional ws)
   "Loads the student-solution file, loads and runs the code for the test cases
    of that assessment and question, and returns the percentage of correct results over total results"
-  (let ((description ""))
+  (let* ((description "")
+         (question-data (cdr (assoc question assessment-data :test #'string=)))
+         (testcase-code (cdr (assoc kind question-data :test #'string=)))
+         (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
+         (forbidden-symbols (nth 3 forb-data))
+         (penalty-forbidden (nth 1 forb-data))
+         (whats-asked (second (assoc "whats-asked" question-data :test #'string=))))
     (setf *load-error* nil)
     (handle-solution-loading student-solution)
     (in-package :test-runtime)
-    (setf *questions* nil)
     (setf *results* nil)
     (setf *runtime-error* nil)
     (setf *cr-warning* nil)
-    (setf *forbidden-symbols* nil)
     (load-macros)
-    (load-test-cases kind assessmt-question)
+    (load-test-cases testcase-code)
     (in-package :grader)
-    (let ((score (calc-mark *results* ws))
-          (forbid-symb (contains-forbidden-symbol? student-solution *forbidden-symbols*))
-          (error-types nil))
+    (let* ((score (calc-mark *results* ws))
+           (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols)))
       (list
        (if forbid-symb
-           (* score (- 1 *penalty-forbidden*))
+           (* score (- 1 (/ penalty-forbidden 100)))
            score)
        (cond (*runtime-error* "runtime-error")
 	     (*load-error* "load-error")
              (*cr-warning* "cr-warning")
-             (forbid-symb (list "used forbidden symbol" forbid-symb *penalty-forbidden*))
+             (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
 	     (t "No RT-error"))
        (progn
          (when *runtime-error*
            (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
-                                       (mapcar #'(lambda (ce)
-                                                   (format nil "~s~%~a" (second ce) (first ce)))
-                                               (reverse *runtime-error*)))))
+                                     (mapcar #'(lambda (ce)
+                                                 (format nil "~s~%~a" (second ce) (first ce)))
+                                             (reverse *runtime-error*)))))
          (if  *load-error*
               (setf description  (concatenate 'string  description "Load/Compiling error."))
               (setf description "No runtime errors."))    
@@ -238,17 +241,17 @@ the mark is calculated as the # of passes divided by the total # of cases.
          description)
        (change-results-readable *results*)
        (read-file-as-string student-solution)
-       *question*))))
+       whats-asked))))
 
 
-(defun evaluate-solution (student-solution  kind assessmt-question &optional ddate sdate)
+(defun evaluate-solution (student-solution  kind question assessmt-data &optional ddate sdate)
   (cond ((null student-solution)
          (list 0 "no-submitted-file" "No submitted file" nil))
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
         ((and ddate sdate (>date sdate ddate))
          (list 0 "late-submission"  (format nil "Late submission. Assignment due on: ~a Submitted on: ~a~%" ddate sdate) nil))
-        (t (grade-code student-solution kind assessmt-question))))
+        (t (grade-code student-solution kind question assessmt-data))))
 
 #|
 (defun mark-std-solution (student-solution test-cases-dir &optional (ws nil))

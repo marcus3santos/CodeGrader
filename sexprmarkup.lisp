@@ -105,7 +105,6 @@
                                (error "Missing folder location for student solutions in ~s" node)))
                       (num  (getf proplist :num))
                       (children (nthcdr 2 node)))
-                 (format t ">>>> ~a ~a" folder (pathname-name folder))
                  (setf *assessment-name* (third (pathname-directory folder)))
                  (cons (format nil "#+TITLE: ~a~%" title)
                        (cons (format nil "#+Options: toc:~[nil~;t~] num:~[nil~;t~] date:nil author:nil~%" (if toc 1 0) (if num 1 0))
@@ -225,9 +224,13 @@
               (a ;; Assertion in a testcase or example block
                (unless (= (length (cdr node)) 2)
                  (error "Incorrect use of Assertion: ~a" node))
-               (let ((expected (second node))
-                     (result (third node)))
-                 (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) result))))
+               (let* ((expected (second node))
+                      (result (third node))
+                      (res-without-quote (if (and (listp result)
+                                                 (equalp (car result) 'quote))
+                                            (second result)
+                                            result)))
+                 (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) res-without-quote))))
               (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :lang))
@@ -267,9 +270,9 @@
 
 (defun gen-tcs (qnumber description forbidden penalty examples testcases)
   (let ((qlabel (format nil "q~a" qnumber)))
-    `(,qlabel ("whats-asked" (quote ,description))
+    `(,qlabel ("whats-asked" (,@description))
               ,(if forbidden
-                   `("forbidden-symbols" :penalty ,penalty :symbols (quote ,forbidden)))
+                   `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
               ("given" ,@(gen-tc-code qlabel examples) (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))
               ("hidden" ,@(gen-tc-code qlabel testcases) (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
 

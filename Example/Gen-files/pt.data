@@ -2,7 +2,7 @@
  ("fnames" (COUNT-OCCURRENCES CONTAINS-ALL REVERSE-LIST PALINDROME?))
  ("q1"
   ("whats-asked"
-   '("
+   ("
 
 ** WHAT YOU ARE ASKED
 
@@ -28,7 +28,7 @@ CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
 CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 0
 "))
-  ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT MEMBER))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (COUNT MEMBER))
   ("given"
    (DEFTEST TEST-COUNT-OCCURRENCES NIL
     (CHECK (EQUALP (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4)) 3)
@@ -45,7 +45,7 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
    (TEST-Q1)))
  ("q2"
   ("whats-asked"
-   '("
+   ("
 
 ** WHAT YOU ARE ASKED
 
@@ -71,7 +71,7 @@ NIL
 CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
 T
 "))
-  ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT NUMBER))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (COUNT NUMBER))
   ("given"
    (DEFTEST TEST-CONTAINS-ALL NIL
     (CHECK (EQUALP (CONTAINS-ALL? '(1 2) '(1 2 3 4)) T)
@@ -87,7 +87,7 @@ T
    (DEFUN TEST-Q2 () (TEST-CONTAINS) (FMAKUNBOUND 'CONTAINS)) (TEST-Q2)))
  ("q3"
   ("whats-asked"
-   '("
+   ("
 
 ** WHAT YOU ARE ASKED
 
@@ -95,7 +95,7 @@ T
 
  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
  - You may create helper functions in your program file. 
- - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
  
  (chk-my-solution \"~/pt/q3.lisp\")
@@ -114,7 +114,7 @@ NIL
 CL-USER> (PALINDROME? 'NIL)
 T
 "
-     "
+    "
 
 ** WHAT YOU ARE ASKED
 
@@ -122,7 +122,7 @@ T
 
  - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
  - You may create helper functions in your program file. 
- - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+ - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
  
  (chk-my-solution \"~/pt/q3.lisp\")
@@ -134,18 +134,18 @@ list.
 
 
 CL-USER> (REVERSE-LIST '(1 2 3 4))
-'(4 3 2 1)
+(4 3 2 1)
 CL-USER> (REVERSE-LIST '(A B C))
-'(C B A)
+(C B A)
 CL-USER> (REVERSE-LIST 'NIL)
-'NIL
+NIL
 "))
-  ("forbidden-symbols" :PENALTY 80 :SYMBOLS '(COUNT MEMBER))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (REVERSE))
   ("given"
    (DEFTEST TEST-REVERSE-LIST NIL
     (CHECK (EQUALP (REVERSE-LIST '(1 2 3 4)) '(4 3 2 1))
      (EQUALP (REVERSE-LIST '(A B C)) '(C B A))
-     (EQUALP (REVERSE-LIST 'NIL) 'NIL)))
+     (EQUALP (REVERSE-LIST 'NIL) NIL)))
    (DEFTEST TEST-PALINDROME? NIL
     (CHECK (EQUALP (PALINDROME? '(1 2 3 2 1)) T)
      (EQUALP (PALINDROME? '(A B C D)) NIL) (EQUALP (PALINDROME? 'NIL) T)))
@@ -158,7 +158,7 @@ CL-USER> (REVERSE-LIST 'NIL)
   ("hidden"
    (DEFTEST TEST-REVERSE-LIST NIL
     (CHECK (EQUALP (REVERSE-LIST '(1 2 3 4 5)) '(5 4 3 2 1))
-     (EQUALP (REVERSE-LIST 'NIL) 'NIL)
+     (EQUALP (REVERSE-LIST 'NIL) NIL)
      (EQUALP (REVERSE-LIST '(A B C)) '(C B A))))
    (DEFTEST TEST-PALINDROME? NIL
     (CHECK (EQUALP (PALINDROME? '(X Y X)) T)

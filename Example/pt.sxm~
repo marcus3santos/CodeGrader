@@ -37,7 +37,7 @@ contained in the second list, and =NIL= otherwise.")
                (contains-all? '(a z) '(a b c d)) nil)
               (a
                (contains-all? '() '()) t))))
-     (q (:title "Question" :number 3 :penalty 80 :forbidden (reverse))
+     (q (:title "Question" :number 3 :penalty 80 :forbidden (count member))
         (s (:level 2 :title "Part 1")
            (wa
             (p "Write a function =reverse-list= that takes a list as an
@@ -49,12 +49,12 @@ list. ")
                 (a
                  (reverse-list '(a b c)) '(c b a))
                 (a
-                 (reverse-list '()) ()))
+                 (reverse-list '()) '()))
             (tcb (:function reverse-list)
                  (a
                   (reverse-list '(1 2 3 4 5)) '(5 4 3 2 1))
                  (a
-                  (reverse-list '()) ())
+                  (reverse-list '()) '())
                  (a
                   (reverse-list '(a b c)) '(c b a)))))
         (s (:level 2 :title "Part 2")

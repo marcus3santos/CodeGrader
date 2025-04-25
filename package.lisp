@@ -31,7 +31,7 @@
               open-stream-p make-socket usocket:socket-connect usocket:socket-listen
               usocket:socket-accept usocket:socket-close
               |#
-              intern eval compile compile-file load
+               eval compile compile-file load
               #|
               inspect disassemble describe room gc sb-ext:gc
               trace untrace sb-int:with-fasl-lock
@@ -42,7 +42,6 @@
               catch throw restart-case restart-bind handler-bind handler-case
               ignore-errors))
   (eval `(define-dangerous-function ,fn)))
-
 |#
 
 (dolist (fn '(open with-open-file load delete-file rename-file probe-file directory
@@ -55,14 +54,10 @@
 (defpackage #:test-runtime
   (:documentation "Creates the code testing runtime")
   (:use cl :sandbox)
-  (:export *question*)
   (:export *results*)
   (:export *runtime-error*)
   (:export *load-error*)
   (:export *cr-warning*)
-  (:export *forbidden-symbols*)
-  (:export *penalty-forbidden*)
-  (:export *assessment-data-folder*)
   (:export :handle-solution-loading :load-macros :load-test-cases))
 
 (defpackage #:grader
@@ -85,5 +80,4 @@
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader)
   (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution))
-
 

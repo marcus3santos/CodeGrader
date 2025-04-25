@@ -1,6 +1,7 @@
 
 (in-package #:codegrader)
 
+
 (defstruct submission
   std-id
   std-fname
@@ -8,22 +9,18 @@
   room-pc
   std-name
   date
-  evaluation ; percentage marks per question and explanations
+  evaluation          ; percentage marks per question and explanations
   total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
 
 ;; Folder in student's home directory storing their solutions
 
 (defparameter *std-sub-folder* "pt/")
 
+(defparameter *assessment-data-folder* "~/Codegrader/")
 
 ;; Root folder where the examples' test case files  and the names of the
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
-
-
-(defparameter *examples-folder* "~/Codegrader/Examples/")
-
-(defparameter *assessment-funcs-folder* "~/Codegrader/Assessment-functions/")
 
 
 ;; List of assessments and labs
@@ -79,7 +76,7 @@ Please check your logic and consider adding a termination condition.")
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
       (format out "~%---------------------------------------------------------------------------~%* ~a: ~a points (out of 100).~%" q mark)
-      (format out "---- Description, as provided in the assessment ----~%~{~a~%~}---- End of description ----" question-text)
+      (format out "---- Question description, as provided in the assessment ----~%~{~a~%~}---- End of description ----" question-text)
       (unless (or (equalp error-type "load-error")
                   (equalp error-type "missing-question-file")
                   (equalp error-type "no-submitted-file")
@@ -94,7 +91,7 @@ Please check your logic and consider adding a termination condition.")
              (format out "~%Your mark for all parts of this question is zero. ~A !!!" descr))
             ((and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format out "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
-             (format out "~%Your mark for all parts of this question was reduced by ~a% for using forbidden symbol.~%" (* (caddr error-type) 100))
+             (format out "~%Your mark for all parts of this question was reduced by ~a% for using forbidden symbol.~%" (caddr error-type))
              (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
 	    ((equal error-type "No RT-error") 
              (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
@@ -258,28 +255,33 @@ Please check your logic and consider adding a termination condition.")
 (defun tester ()
   (let* ((data (with-open-file (in "~/Codegrader/pt.data" :direction :input)
                  (read in)))
-         (fnames (assoc "fnames" data :test #'string=))
-         (questions (assoc "questions" data :test #'string=)))
-    (export-functions (second fnames))
-    (generate-messages t (list 0 (grade-solutions '(#P"/home/marcus/pt/q1.lisp" #P"/home/marcus/pt/q3.lisp") `("pt" ,(second questions)))))))
+         (fnames (second (assoc "fnames" data :test #'string=)))
+         (questions (second (assoc "questions" data :test #'string=)))
+         (cur *package*))
+    (unwind-protect
+         (progn
+           (in-package :codegrader)
+           (export-functions fnames)
+           (generate-messages t (list 0 (grade-solutions '(#P"/home/marcus/pt/q1.lisp" #P"/home/marcus/pt/q3.lisp") questions data)))
+           )
+      (setf *package* cur))))
+
 ;;;
 
 
-(defun grade-solutions (solution-files asmnt-folder-name-and-question-names)
+(defun grade-solutions (solution-files question-names assessment-data)
   "From a list of solution files' paths and a list containing the folder name and
    the list of question names, e.g., q1, q2, ..., returns a list containing the results
    of the solutions evaluatios"
   (let (results
-        (sol-fnames (mapcar #'file-namestring solution-files))
-        (asmnt-folder-name (first asmnt-folder-name-and-question-names))
-        (question-names (second asmnt-folder-name-and-question-names)))
+        (sol-fnames (mapcar #'file-namestring solution-files)))
     (dolist (question-name question-names)
       (let ((qfname (format nil "~a.lisp" question-name)))
         (push (list question-name
                     (if (member qfname sol-fnames :test #'string=)
                         (let* ((solution (get-solution qfname solution-files))
-                               (evaluation (evaluate-solution solution "hidden" (list asmnt-folder-name question-name))))
-                          (if (string= (second evaluation) "load-error")
+                               (evaluation (evaluate-solution solution "hidden" question-name assessment-data)))
+                          (if (and (stringp (second evaluation)) (string= (second evaluation) "load-error"))
                               (list 0 "load-error" "Your program contains unbalanced parentheses and cannot be compiled. Please check for missing or extra parentheses in the source file." nil)
                               evaluation))
                         (list 0 "missing-question-file" (format nil "~a file not found" qfname))))
@@ -341,9 +343,8 @@ Please check your logic and consider adding a termination condition.")
    and with the required file name, i.e., (concatenate 'string q# \".lisp\"),
    and runs the solution against the given examples for that question.
    ASSUMPTIONS:
-   - THE EXAMPLES TEST CASES ARE STORED IN *examples-folder*/q#.lisp
-   - THE LIST CONTAINING THE NAMES OF THE ASSESSMENT FUNCTIONS ARE IN 
-     *ASSESSMENT-FUNCS-FOLDER*/assessment-functions.lisp"
+   - THE ASSESSMENT DATA FILE IS STORED AT
+     *ASSESSMENT-DATA-FOLDER*/"
   (let* ((assessment-folder-name  (car (last (pathname-directory a#))))
          (question-name (pathname-name a#))
          (folder-file a#)
@@ -360,12 +361,11 @@ Please check your logic and consider adding a termination condition.")
     (export-functions sandbox-functions)
     ;;(load sandbox-pkg-file)
     (unwind-protect 
-         (let* ((eval (evaluate-solution folder-file "given" (list assessment-folder-name question-name)))
+         (let* ((eval (evaluate-solution folder-file "given" question-name assessment-data))
                 (error-type (second eval)))
-           (format t "---- ~s~%" eval)
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
-             (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (* (caddr error-type) 100)))
+             (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (caddr error-type)))
            (cond ((and (stringp error-type) (string= error-type "runtime-error"))
                   (format t "~a" (nth 2 eval)))
                  ((and (stringp error-type) (string= error-type "load-error"))
@@ -458,8 +458,7 @@ Please check your logic and consider adding a termination condition.")
          (xport-funcs (if (stringp assessment-name)
                           (second (assoc "fnames" assessment-data :test #'string=))
                           (error "Could not read assessment name from ~a" assessment-tooling-file)))
-         (assmnt-and-questions (list assessment-name
-                                     (second (assoc "questions" assessment-data :test #'string=))))
+         (assessment-questions (second (assoc "questions" assessment-data :test #'string=)))
          (feedback-folder (merge-pathnames "student-feedback/" results-folder))
                                         ;(feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
 	 (subs-folder (merge-pathnames "submissions/" results-folder))
@@ -486,8 +485,8 @@ Please check your logic and consider adding a termination condition.")
             (when std
               (format t "Running program of student ~a~%" std)
               (let* ((student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
-                     (solutions-evaluations (grade-solutions student-files assmnt-and-questions))
-                     (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length (second assmnt-and-questions)))
+                     (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
+                     (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
                                   solutions-evaluations))
                      (item (make-submission :std-id (first std)
                                             :std-fname (second std)

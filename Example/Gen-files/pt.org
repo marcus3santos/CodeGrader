@@ -70,7 +70,7 @@ T
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q3.lisp")
@@ -82,11 +82,11 @@ list.
 
 #+BEGIN_SRC lisp
 CL-USER> (REVERSE-LIST '(1 2 3 4))
-'(4 3 2 1)
+(4 3 2 1)
 CL-USER> (REVERSE-LIST '(A B C))
-'(C B A)
+(C B A)
 CL-USER> (REVERSE-LIST 'NIL)
-'NIL
+NIL
 #+END_SRC
 
 ** Part 2
@@ -98,7 +98,7 @@ CL-USER> (REVERSE-LIST 'NIL)
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q3.lisp")
