@@ -196,7 +196,7 @@ We make the following assumptions regarding the physical environment where stude
    who took a given test version. Each row in that
    spreadsheet should contain the following information: Student ID
    number, Student First Name, Student Last Name, and Room-PC ID
-3. *Generate the tooling (.data) file* as explained in section *Generating THE Assessment Support Files* above.
+3. *Generate the tooling (.data) file* as explained in section *Generating the Assessment Support Files* above.
 4. Create a folder where CodeGrader will store the results. You can give any name to that folder.
 5. [ /This is step is not necessary if you are assessing an "ungraded" examination (i.e., an assessment
    whose weight is zero)/ ] On D2L, export the students' *assignment grades* *to a CSV
