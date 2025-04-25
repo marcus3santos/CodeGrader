@@ -99,7 +99,10 @@ Each SXM file should be a valid Lisp-style expression.
 
 * Generating the Assessment Support Files
 
-Use CodeGrader’s GEN-EXAM-FILES function (with your /<SXM assessment file>/) to rewrite the assessment description SXM file and generate a tooling file in the *Gen-files/* folder, located in the root directory of your assessment file.
+Use CodeGrader’s GEN-EXAM-FILES function (with your /<SXM assessment
+file>/) to rewrite the assessment description SXM file and generate a
+tooling file in the *Gen-files/* folder, located in the root directory
+of your assessment file.
 
 For example: When executed in the REPL, the form (GEN-EXAM-FILES "[[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.sxm][pt.sxm]]") will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files]] in the *./Gen-files*
 folder.
@@ -142,7 +145,6 @@ This function will:
 
 By using =CHK-MY-SOLUTION=, students can identify and address
 potential issues early, ensuring their submissions align with the assessment's specifications.
-
 
 * Grading students' solutions
 
@@ -194,10 +196,7 @@ We make the following assumptions regarding the physical environment where stude
    who took a given test version. Each row in that
    spreadsheet should contain the following information: Student ID
    number, Student First Name, Student Last Name, and Room-PC ID
-3. *Prepate the test cases*: Prepare a folder containing the *test
-   cases lisp files* for the assignment you want to mark. You can find
-   folders with test case files for CPS305 Practice Lab Exercises in
-   the Test-Cases directory of this repository.
+3. *Generate the tooling (.data) file* as explained in section *Generating THE Assessment Support Files* above.
 4. Create a folder where CodeGrader will store the results. You can give any name to that folder.
 5. [ /This is step is not necessary if you are assessing an "ungraded" examination (i.e., an assessment
    whose weight is zero)/ ] On D2L, export the students' *assignment grades* *to a CSV
@@ -238,14 +237,14 @@ We make the following assumptions regarding the physical environment where stude
    marking when you see the message =Exam grading complete!= displayed
    on the REPL window buffer.)
    #+begin_src lisp
-      (cg:grade-exam submissions map tests-folder results-folder exam-grades-export-file)
+     (cg:grade-exam submissions map tooling-file results-folder exam-grades-export-file)
    #+end_src
    where:
    - ~submissions~ is a string representing the full path and name of
      the zipped file containing the students' solutions, e.g.,
      ~/Users/johndoe/Zipped-solutions/std-sol.zip~
    - ~map~  is a string representing the full path and name of of the csv file storing the student-to-pc mapping.
-   - ~test-folder~ is a string representing the full path for the test cases folder.
+   - ~tooling-file~ is a string representing the full path for the tooling (.data) file.
    - ~results-folder~ is a string representing the full path for a folder
     where you want codegrader to store the results (the students'
     marks and log files). For example, if you provide the path
@@ -257,39 +256,6 @@ We make the following assumptions regarding the physical environment where stude
    - (optional) ~exam-grades-export-file~ is a string representing the full path for
      the D2L exam grades exported by D2L
 
-** If a student's solution causes a Stack Overflow and crashes CodeGrader
-While CodeGrader is running each student's solution on the test cases it displays, among other things, a message providing information about the student:
-#+begin_example
-...
-Running program of student (50123456 John Doe eng205-08)
-...
-#+end_example
-If a student's solution crashes CodeGrader because of a stack overflow, do the following to enable CodeGrader to continue marking the solutions:
-1. If CodeGrader has crashed, scroll up and look for the last printed 'Running program ...etc' message and take note of the student's number and name.
-2. Remove that student from the mapping (csv) file, save the file,  and put them in a "problematic.csv" file
-3. Run codegrader again.
-4. If code grader crashed,  goto step 1.
-5. If codegrader completed the grading without crashing, manually evaluate the solutions in the problematic.csv file using  the function call below *on each pair* of solution and test case files *pt/qi.lisp* , *Test-cases/qi.lisp*.
-
-#+begin_src lisp
-(grader:evaluate-solution <solution-file> <test-case-file>)
-#+end_src 
-Where:
-- =<solution-file>= is a string containing the full path to the student solution *pt/qi.lisp*
-- =<test-case-file>= is a string containing the full path to the respective test case *Test-case/qi.lisp*
-
-The function above returns a list containing the result of the evaluation. The first item in the list is the number of points CodeGrader assessed for that solution, the last item is the feedback. If a solution caused a stack overflow and crashed CodeGrader, you will take note that that you need to assign zero points to that student's solution and the respective feedbac is "CAUSED A STACK OVERFLOW DUE TO ENDLESS RECURSION."
-
-The student's mark is the sum of the points of the evaluations of all solution files divided by the number of solution files. For example, if a solution for a question consists of files *q1.lisp*, *q2.lisp*, and *q3.lisp* and the sum of the points assessed by CodeGrader is 70. Then the student's mark should be 70/3. 
-
-Create a feedback file by copy-pasting the above information as appropriate to a file and name that file by hashing the student ID using that function below:
-#+begin_src lisp
-(defun my-feedback-file (stdid)
-  (format nil "~A.txt" (sxhash (format nil "~A" stdid))))
-#+end_src
-
-Add that file to the *Feedback* folder created by CodeGarder, and enter the student's mark in the *grades.csv* file (see Section Output below).
-    
 * Output
 
 CodeGrader generates the following files in the =results= folder (see above):
