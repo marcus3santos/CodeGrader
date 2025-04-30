@@ -253,15 +253,19 @@ Please check your logic and consider adding a termination condition.")
 
 
 (defun tester ()
-  (let* ((data (with-open-file (in "~/Codegrader/pt.data" :direction :input)
+  (let* ((data-orig (with-open-file (in "~/Codegrader/pt.data" :direction :input)
                  (read in)))
-         (fnames (second (assoc "fnames" data :test #'string=)))
-         (questions (second (assoc "questions" data :test #'string=)))
+         (fnames (second (assoc "fnames" data-orig :test #'string=)))
+         (questions (second (assoc "questions" data-orig :test #'string=)))
+         (data (progn
+                 ;; Exposes the assessment functions to the :TEST-RUNTIME package which
+                 ;; is the only package that uses :SANDBOX
+                 (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) fnames) :sandbox)
+                 ;; Adds the appropriate PACKAGE-DESIGNATOR to the name of all symbols in the testcases
+                 (subst-package-symbols data-orig :test-runtime fnames :sandbox)))
          (cur *package*))
     (unwind-protect
          (progn
-           (in-package :codegrader)
-           (export-functions fnames)
            (generate-messages t (list 0 (grade-solutions '(#P"/home/marcus/pt/q1.lisp" #P"/home/marcus/pt/q3.lisp") questions data)))
            )
       (setf *package* cur))))
@@ -328,13 +332,18 @@ Please check your logic and consider adding a termination condition.")
               (get-insert-std line htable)))
     htable))
 
-(defun export-functions (flist)
-  (let ((current *package*))
-    (in-package :sandbox)
-    (dolist (fname flist)
-      (unintern fname :sandbox)
-      (export (intern (symbol-name fname) :sandbox)))
-    (setf *package* current)))
+
+(defun subst-package-symbols (form package-designator symbs alt-package)
+  "Adds the PACKAGE-DESIGNATOR to the name of all symbols in FORM that are not in the list SYMBS.
+   If the symbol is in the list SYMBS then adds the ALT-PACKAGE designator to the name of the 
+   symbol."
+  (cond ((consp form)
+         (mapcar #'(lambda (x) (subst-package-symbols x package-designator symbs alt-package)) form))
+        ((symbolp form)
+         (if (member form symbs)
+             (intern (symbol-name form) (find-package alt-package))
+             (intern (symbol-name form) (find-package package-designator))))
+        (t form)))
 
 ;; -------- Not integrated to the CodeGrader yet
 (defun chk-my-solution (a#)
@@ -349,17 +358,20 @@ Please check your logic and consider adding a termination condition.")
          (question-name (pathname-name a#))
          (folder-file a#)
          (assessment-data-file (format nil "~a~a.data" *assessment-data-folder* assessment-folder-name))
-         (assessment-data
+         (assessment-data-orig
            (handler-case (with-open-file (in assessment-data-file :direction :input)
                            (read in))
              (file-error (e) "Assessment data file error: ~a" e)))
-         (sandbox-functions (second (assoc "fnames" assessment-data :test #'string=)))
+         (sandbox-functions (second (assoc "fnames" assessment-data-orig :test #'string=)))
+         (assessment-data (progn
+                            ;; Exposes the assessment functions to the :TEST-RUNTIME package which
+                            ;; is the only package that uses :SANDBOX
+                            (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) sandbox-functions) :sandbox)
+                            ;; Adds the appropriate PACKAGE-DESIGNATOR to the name of all symbols in the testcases
+                            (subst-package-symbols assessment-data-orig :test-runtime sandbox-functions :sandbox)))
          (current-pckg *package*))
     (unless (probe-file folder-file)
       (error "~%!!! File does not exist in folder ~S !!!" folder-file))
-    ;; Should instead intern and export the assessment's function names to the sandbox package
-    (export-functions sandbox-functions)
-    ;;(load sandbox-pkg-file)
     (unwind-protect 
          (let* ((eval (evaluate-solution folder-file "given" question-name assessment-data))
                 (error-type (second eval)))
