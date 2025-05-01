@@ -7,7 +7,7 @@
 
 (defparameter *orgmode-markers* '("#+BEGIN_SRC lisp" "#+BEGIN_SRC shell" "#+END_SRC" "#+BEGIN_EXAMPLE" "#+END_EXAMPLE"))
 
-(defvar *assessment-name*)
+(defvar *folder-name*)
 
 ;; Structure to store information about questions
 
@@ -105,7 +105,7 @@
                                (error "Missing folder location for student solutions in ~s" node)))
                       (num  (getf proplist :num))
                       (children (nthcdr 2 node)))
-                 (setf *assessment-name* (third (pathname-directory folder)))
+                 (setf *folder-name* folder)
                  (cons (format nil "#+TITLE: ~a~%" title)
                        (cons (format nil "#+Options: toc:~[nil~;t~] num:~[nil~;t~] date:nil author:nil~%" (if toc 1 0) (if num 1 0))
                              (mapcar (lambda (item) (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
@@ -278,16 +278,19 @@
 
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
-  (let ((assessment-sexpr (with-open-file (in from)
-                            (read in)))
-        (questions-info (make-hash-table))
-        (questions)
-        (orgmode-version (ensure-directories-exist
-		          (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.org" (pathname-name (file-namestring from))))))
-        (exam-data (ensure-directories-exist
+  (let* ((fn-ext (pathname-type from))
+         (assessment-sexpr (if (and fn-ext (string= fn-ext "sxm"))
+                               (with-open-file (in from)
+                                 (read in))
+                               (error "File name does not have the extension '.sxm': ~a" from)))
+         (questions-info (make-hash-table))
+         (questions)
+         (orgmode-version (ensure-directories-exist
+		           (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.org" (pathname-name (file-namestring from))))))
+         (exam-data (ensure-directories-exist
 		    (concatenate 'string (directory-namestring from) *parent-folder* (format nil "~a.data" (pathname-name (file-namestring from))))))
-        all-fnames
-        tcs-driver)
+         all-fnames
+         tcs-driver)
     (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
@@ -298,7 +301,7 @@
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
-      (format out "~s" (cons (list "assessment" *assessment-name*)
+      (format out "~s" (cons (list "folder" *folder-name*)
                              (cons (list "questions" (reverse questions))
                                    (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
