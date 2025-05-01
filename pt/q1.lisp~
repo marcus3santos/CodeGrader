@@ -1,4 +1,0 @@
-(defun count-occurrences (n list)
-  (cond ((null list))
-        ((= (car list) n) (+ 1 (count-occurrences n (cdr list))))
-        (t (count-occurrences n (cdr list)))))
