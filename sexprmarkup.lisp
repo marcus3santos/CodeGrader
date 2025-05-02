@@ -1,4 +1,3 @@
-
 (in-package :sexprmark-to-org)
 
 ;; Global variables
@@ -7,7 +6,7 @@
 
 (defparameter *orgmode-markers* '("#+BEGIN_SRC lisp" "#+BEGIN_SRC shell" "#+END_SRC" "#+BEGIN_EXAMPLE" "#+END_EXAMPLE"))
 
-(defvar *folder-name*)
+(defvar *folder-name* nil)
 
 ;; Structure to store information about questions
 
@@ -37,9 +36,10 @@
 
 (defun check-foldername (p)
   "Adds a / to the end of the folder name if it is not there already"
-  (if (char= (aref p (1- (length p))) #\/)
-      p
-      (concatenate 'string p "/")))
+  (when p
+    (if (char= (aref p (1- (length p))) #\/)
+        p
+        (concatenate 'string p "/"))))
 
 (defun char-whitespace-p (ch)
   "Returns T if CH is a common whitespace character."
@@ -85,6 +85,18 @@
                (t (write-char ch out)
                   (setf prev-space nil))))))
 
+(defun subst-package-symbols (form package-designator &optional symbs alt-package)
+  "Adds the PACKAGE-DESIGNATOR to the name of all symbols in FORM that are not in the list SYMBS.
+   If the symbol is in the list SYMBS then adds the ALT-PACKAGE designator to the name of the 
+   symbol."
+  (cond ((consp form)
+         (mapcar #'(lambda (x) (subst-package-symbols x package-designator symbs alt-package)) form))
+        ((symbolp form)
+         (if (member form symbs)
+             (intern (symbol-name form) (find-package alt-package))
+             (intern (symbol-name form) (find-package package-designator))))
+        (t form)))
+
 ;; Serializer
 
 (defun sexprmark->org (sexpr questions-info)
@@ -96,7 +108,7 @@
          (cond
            ((consp node)
             (case (car node)
-              (doc
+              (sexprmark-to-org::doc
                (let* ((proplist (second node))
                       (title (getf proplist :title))
                       (folder (if title (check-foldername (getf proplist :folder))
@@ -148,8 +160,8 @@
                                                            (li "You " are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
                                                            (li "You " may create helper functions in your program file.)
                                                            ,(if forbidden
-                                                                `(li "You " must not use or refer to the following Lisp built-in "function(s)" and "symbol(s): " ,(format nil "~{*~a*~^, ~}" forbidden) ".  The " penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                                                `(li "There " are no restrictions in the use of Lisp built-in functions or symbols in the parts of this question.))
+                                                                `(li "You " must not use or refer to the following "Lisp" built-in "function(s)" and "symbol(s): " ,(format nil "~{*~a*~^, ~}" forbidden) ".  The " penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
+                                                                `(li "There " are no restrictions in the use of "Lisp" built-in functions or symbols in the parts of this question.))
                                                            (li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
@@ -219,17 +231,17 @@
                            (question-testcases (gethash qnumber questions-info))))
                  (when (equalp (car node) 'eb)
                    (cons (format nil "~%~a#+BEGIN_SRC lisp" (indent depth))
-                         (append (mapcar (lambda (item) (emit item :depth depth)) (cddr node))
-                                 (list (format nil "~%~a#+END_SRC" (indent depth))))))))
+                         (append (mapcar (lambda (item) (emit item :depth (1+ depth))) (cddr node))
+                                 (list (format nil "~%~a#+END_SRC~%" (indent depth))))))))
               (a ;; Assertion in a testcase or example block
                (unless (= (length (cdr node)) 2)
                  (error "Incorrect use of Assertion: ~a" node))
                (let* ((expected (second node))
                       (result (third node))
                       (res-without-quote (if (and (listp result)
-                                                 (equalp (car result) 'quote))
-                                            (second result)
-                                            result)))
+                                                  (equalp (car result) 'quote))
+                                             (second result)
+                                             result)))
                  (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) res-without-quote))))
               (cb ;; Code block
                (let* ((proplist (second node))
@@ -305,3 +317,4 @@
                              (cons (list "questions" (reverse questions))
                                    (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
+

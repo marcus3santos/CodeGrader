@@ -333,17 +333,6 @@ Please check your logic and consider adding a termination condition.")
     htable))
 
 
-(defun subst-package-symbols (form package-designator symbs alt-package)
-  "Adds the PACKAGE-DESIGNATOR to the name of all symbols in FORM that are not in the list SYMBS.
-   If the symbol is in the list SYMBS then adds the ALT-PACKAGE designator to the name of the 
-   symbol."
-  (cond ((consp form)
-         (mapcar #'(lambda (x) (subst-package-symbols x package-designator symbs alt-package)) form))
-        ((symbolp form)
-         (if (member form symbs)
-             (intern (symbol-name form) (find-package alt-package))
-             (intern (symbol-name form) (find-package package-designator))))
-        (t form)))
 
 ;; -------- Not integrated to the CodeGrader yet
 (defun chk-my-solution (a#)

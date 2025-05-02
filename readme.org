@@ -34,7 +34,9 @@ The next sections explain each of these workflow steps.
 
 * Writing a Lisp Programming Assessment Using SXM
 
-Instructors write their Lisp assessments using the S-expression Markup format (SXM). This structured format simplifies parsing and enables better automation and tooling.
+Instructors write their Lisp assessments using the S-expresbsion Markup
+format (SXM). This structured format simplifies parsing and enables
+better automation and tooling.
 
 Each SXM file should be a valid Lisp-style expression.
 
@@ -88,12 +90,22 @@ Each SXM file should be a valid Lisp-style expression.
 
 * Generating the Assessment Support Files
 
-Use CodeGrader’s GEN-EXAM-FILES function (with your /<SXM assessment file>/) to generate the following files files at *./Gen-files/*:
-- an orgmode file containing de assessment description -- you can then use emacs to export this file to any format you want (htmo, pdf, etc.)
-- a *tooling (.data) file* containing assessment data CodeGrader needs to autograde students' solutions. 
+Assuming the SXM description for your assessment is located in the file `~/tm/assessment1.sxm`.
 
-For example: When executed in the REPL, the form (GEN-EXAM-FILES "[[https://raw.githubusercontent.com/marcus3santos/CodeGrader/refs/heads/main/Example/pt.sxm][pt.sxm]]") will generate [[https://github.com/marcus3santos/CodeGrader/tree/main/Example/Gen-files][these files]] in the *./Gen-files*
-folder.
+#+begin_src lisp
+  CL-USER> (in-package :SXM)
+  ...
+  SXM> (gen-exam-files "~/tm/assessment1.sxm")
+  Generated assessment orgmode description file at: ~/tmp/assessment1.org
+  Generated assessment testing code at: ~/tmp/assessment1.data
+  SXM>
+#+end_src
+
+CodeGrader's `GEN-EXAM-FILES` function generates the following files within the `./Gen-files/` directory:
+
+- An Org mode file (`~/tmp/assessment1.org`) containing the assessment description. This file can be further processed using Emacs to export it to various formats such as HTML or PDF.
+- A tooling data file (`~/tmp/assessment1.data`) that CodeGrader utilizes for the automated grading of student solutions.
+
 
 * Student Interaction with the Assessment  
 

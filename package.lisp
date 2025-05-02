@@ -69,7 +69,8 @@
 (defpackage :sexprmark-to-org
   (:nicknames :sxm)
   (:use :cl)
-  (:export :str->list :normalize-whitespace :remove-substrings))
+  (:export :str->list :normalize-whitespace :remove-substrings
+           :subst-package-symbols))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
@@ -78,6 +79,7 @@
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
-  (:use :common-lisp :cl-user :codegrader :grader)
-  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution))
+  (:use :common-lisp :cl-user :codegrader :grader :sexprmark-to-org)
+  (:export :start :quit :eval-solutions :grade-it  :grade-exam :evaluate-solution :eval-student-solutions :chk-my-solution
+           :gen-exam-files))
 
