@@ -90,12 +90,12 @@ Each SXM file should be a valid Lisp-style expression.
 
 * Generating the Assessment Support Files
 
-Assuming the SXM description for your assessment is located in the file `~/tm/assessment1.sxm`.
+Assuming the SXM description for your assessment is located in the file `~/tmp/assessment1.sxm`.
 
 #+begin_src lisp
   CL-USER> (in-package :SXM)
   ...
-  SXM> (gen-exam-files "~/tm/assessment1.sxm")
+  SXM> (gen-exam-files "~/tmp/assessment1.sxm")
   Generated assessment orgmode description file at: ~/tmp/assessment1.org
   Generated assessment testing code at: ~/tmp/assessment1.data
   SXM>
