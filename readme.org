@@ -55,14 +55,13 @@ Each SXM file should be a valid Lisp-style expression.
     (wa  ;; What students are asked; must appear within a question expression
       (p "Part 1:)
       (p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
-        (eb ;; an example block
-          (:function count-occurrences)
+        (tc (:function count-occurrences)
+         (gvn ;; Given test cases           
           (a ;; an assertion specifying a function call and its expected result
             (count-occurrences 3 '(1 2 3 3 3 4)) 3)
           (a (count-occurrences 'a '(a b a c a)) 3)
           (a (count-occurrences 5 '(1 2 3 4)) 0))
-        (tcb ;; a test case block to be used for grading a student's solution
-          (:function count-ocurrences)
+         (hdn ;; Hidden test cases used for grading a student's solution
           (a (count-occurrences 1 '(1 1 1 1 1)) 5)
           (a (count-occurrences 0 '(1 2 3 4)) 0)
           (a (count-occurrences 'z '(a b c z z)) 2))
@@ -85,8 +84,8 @@ Each SXM file should be a valid Lisp-style expression.
   - =p= — a paragraph of text.
   - =wa= — A section describing what the student is being asked. It can contain:
     - =(p ...)= - paragraphs
-    - =(eb ...)=- example blocks containing test assertions; they are translated to code that students can use to test their solutions during the test.
-    - =(tcs ...)= - test case blocks containing assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
+    - =(gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
+    - =(hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
 
 * Generating the Assessment Support Files
 
