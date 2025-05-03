@@ -84,6 +84,7 @@ Each SXM file should be a valid Lisp-style expression.
   - =p= — a paragraph of text.
   - =wa= — A section describing what the student is being asked. It can contain:
     - =(p ...)= - paragraphs
+    - =(tc ...)= - test cases
     - =(gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
     - =(hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
 
