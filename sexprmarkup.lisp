@@ -229,13 +229,13 @@
                           (nthcdr 2 node))))
               ((gvn hdn) ;; Given test cases , Hidden test cases
                (if (equalp (car node) 'gvn)
-                   (push (append (list 'deftest function-name) (cddr node))
+                   (push (append (list 'deftest function-name) (cdr node))
                          (question-examples (gethash qnumber questions-info)))
-                   (push (append (list 'deftest function-name) (cddr node))
+                   (push (append (list 'deftest function-name) (cdr node))
                          (question-testcases (gethash qnumber questions-info))))
                (when (equalp (car node) 'gvn)
                  (cons (format nil "~%~a#+BEGIN_SRC lisp" (indent depth))
-                       (append (mapcar (lambda (item) (emit item :depth (1+ depth) :function-name function-name :qnumber qnumber)) (cddr node))
+                       (append (mapcar (lambda (item) (emit item :depth (1+ depth) :function-name function-name :qnumber qnumber)) (cdr node))
                                (list (format nil "~%~a#+END_SRC~%" (indent depth)))))))
               (a ;; Assertion in a testcase or example block
                (unless (= (length (cdr node)) 2)

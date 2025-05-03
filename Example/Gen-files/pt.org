@@ -11,7 +11,7 @@
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q1.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following Lispbuilt-in function(s)and symbol(s): *COUNT*, *MEMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q1.lisp")
@@ -22,13 +22,14 @@ and a list as arguments and returns the number of times the element
 appears in the list. For example:
 
 #+BEGIN_SRC lisp
-CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
-3
-CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
-3
-CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
-0
+  CL-USER> (COUNT-OCCURRENCES 3 '(1 2 3 3 3 4))
+  3
+  CL-USER> (COUNT-OCCURRENCES 'A '(A B A C A))
+  3
+  CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
+  0
 #+END_SRC
+
 
 * Question 2
 
@@ -39,7 +40,7 @@ CL-USER> (COUNT-OCCURRENCES 5 '(1 2 3 4))
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q2.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *COUNT*, *NUMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following Lispbuilt-in function(s)and symbol(s): *COUNT*, *NUMBER*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q2.lisp")
@@ -50,13 +51,14 @@ arguments and returns =T= if all elements of the first list are
 contained in the second list, and =NIL= otherwise.
 
 #+BEGIN_SRC lisp
-CL-USER> (CONTAINS-ALL? '(1 2) '(1 2 3 4))
-T
-CL-USER> (CONTAINS-ALL? '(1 5) '(1 2 3 4))
-NIL
-CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
-T
+  CL-USER> (CONTAINS-ALL? '(1 2) '(1 2 3 4))
+  T
+  CL-USER> (CONTAINS-ALL? '(1 5) '(1 2 3 4))
+  NIL
+  CL-USER> (CONTAINS-ALL? 'NIL '(1 2 3))
+  T
 #+END_SRC
+
 
 * Question 3
 
@@ -70,7 +72,7 @@ T
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following Lispbuilt-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q3.lisp")
@@ -81,13 +83,14 @@ argument and returns a new list that is the reverse of the original
 list. 
 
 #+BEGIN_SRC lisp
-CL-USER> (REVERSE-LIST '(1 2 3 4))
-(4 3 2 1)
-CL-USER> (REVERSE-LIST '(A B C))
-(C B A)
-CL-USER> (REVERSE-LIST 'NIL)
-NIL
+  CL-USER> (REVERSE-LIST '(1 2 3 4))
+  (4 3 2 1)
+  CL-USER> (REVERSE-LIST '(A B C))
+  (C B A)
+  CL-USER> (REVERSE-LIST 'NIL)
+  NIL
 #+END_SRC
+
 
 ** Part 2
 
@@ -98,7 +101,7 @@ NIL
 
   - You are required to write the solutions for the parts of this question in the lisp program file *~/pt/q3.lisp* .
   - You may create helper functions in your program file. 
-  - You must not use or refer to the following lisp built-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
+  - You must not use or refer to the following Lispbuilt-in function(s)and symbol(s): *REVERSE*.  The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question. 
   - To ensure your solution is in the correct folder and passes the test cases shown in the examples below,type the following expression on the REPL:
   #+BEGIN_SRC lisp
   (chk-my-solution "~/pt/q3.lisp")
@@ -110,10 +113,10 @@ forwards and backwards), and =NIL= otherwise. You may not use
 =REVERSE= or =NREVERSE=.
 
 #+BEGIN_SRC lisp
-CL-USER> (PALINDROME? '(1 2 3 2 1))
-T
-CL-USER> (PALINDROME? '(A B C D))
-NIL
-CL-USER> (PALINDROME? 'NIL)
-T
+  CL-USER> (PALINDROME? '(1 2 3 2 1))
+  T
+  CL-USER> (PALINDROME? '(A B C D))
+  NIL
+  CL-USER> (PALINDROME? 'NIL)
+  T
 #+END_SRC
