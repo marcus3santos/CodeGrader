@@ -22,7 +22,7 @@ Type the commands below an a linux or Mac terminal:
 
 The workflow involves the following steps:
 
-1. The instructor writes the assessment in s-expression markdown (SXM).
+1. The instructor writes the assessment in s-expression markup (SXM).
 2. The instructor uses CodeGrader to generate from the SXM file the necessary support
    files, including the formatted questions translated to orgmode and assessment-specific test
    cases to be later used by CodeGrader to grade the students' solutions.
