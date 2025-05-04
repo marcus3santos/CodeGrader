@@ -37,8 +37,6 @@ The next sections explain each of these workflow steps.
 Instructors write their Lisp assessments in SXM. This structured format simplifies parsing and enables
 better automation and tooling.
 
-Each SXM file should be a valid Lisp-style expression.
-
 ** SXM Structure Overview
 
 #+begin_example
