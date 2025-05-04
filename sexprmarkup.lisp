@@ -244,11 +244,13 @@
                    (error "Assertion not inside a test case ~s" node))  
                (let* ((expected (second node))
                       (result (third node))
-                      (res-without-quote (if (and (listp result)
-                                                  (equalp (car result) 'quote))
-                                             (second result)
-                                             result)))
-                 (list (format nil "~%~aCL-USER> ~a~%~a~a" (indent depth) expected (indent depth) res-without-quote))))
+                      (res-without-quote-or-list
+                        (cond ((and (listp result) (equalp (car result) 'quote))
+                               (second result))
+                              ((and (listp result) (equalp (car result) 'list))
+                               (cdr result))
+                              (t result))))
+                 (list (format nil "~%~aCL-USER> ~s~%~a~s" (indent depth) expected (indent depth) res-without-quote-or-list))))
               (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :lang))
