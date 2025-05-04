@@ -87,7 +87,7 @@ better automation and tooling.
 
 * Generating the Assessment Support Files
 
-Assuming the SXM description for your assessment is located in the file `~/tmp/assessment1.sxm`.
+Assuming the SXM description for your assessment is located in the file =~/tmp/assessment1.sxm=.
 
 #+begin_src lisp
   CL-USER> (in-package :SXM)
