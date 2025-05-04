@@ -48,9 +48,7 @@
                                                (format nil "~a ~a" error-str "The program is taking too long to complete, possibly due to infinite recursion or an endless loop. 
 Please check your logic and consider adding a termination condition.")
                                                error-str)))
-                       (cond ((string= error-name "DANGEROUS-FUNCTION")
-                              (format nil "USE-OF-~a ~a"error-name (sandbox::dangerous-function-name (second r))))
-                             (t (format nil "~%  ~a:~%~a" error-name (indent-error-msg error-message)))))))         
+                       (format nil "~%  ~a:~%~a" error-name (indent-error-msg error-message)))))         
          (test (nth 3 r))
          (fcall (second test))
          (ret (third test)))

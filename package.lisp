@@ -15,7 +15,7 @@
   ((function-name :initarg :function-name :reader dangerous-function-name))
   (:report (lambda (condition stream)
              (format stream "Use of forbidden function: ~A"
-                     (function-name condition)))))
+                     (dangerous-function-name condition)))))
 
 (defmacro define-dangerous-function (name)
   `(defun ,name (&rest args)
