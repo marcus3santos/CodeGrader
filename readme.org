@@ -103,8 +103,8 @@ Assuming the SXM description for your assessment is located in the file `~/tmp/a
 
 CodeGrader's `GEN-EXAM-FILES` function generates the following files within the `./Gen-files/` directory:
 
-- An Org mode file (`~/tmp/assessment1.org`) containing the assessment description. This file can be further processed using Emacs to export it to various formats such as HTML or PDF.
-- A tooling data file (`~/tmp/assessment1.data`) that CodeGrader utilizes for the automated grading of student solutions.
+- An Org mode file (=~/tmp/assessment1.org=) containing the assessment description. This file can be further processed using Emacs to export it to various formats such as HTML or PDF.
+- A tooling data file (=~/tmp/assessment1.data=) that CodeGrader utilizes for the automated grading of student solutions.
 
 
 * Student Interaction with the Assessment  
