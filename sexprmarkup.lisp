@@ -162,7 +162,7 @@
                                                            ,(if forbidden
                                                                 `(li "You " must not use or refer to the following "Lisp" built-in "function(s)" and "symbol(s): " ,(format nil "~{*~a*~^, ~}" forbidden) ".  The " penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
                                                                 `(li "There " are no restrictions in the use of "Lisp" built-in functions or symbols in the parts of this question.))
-                                                           (li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below," type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
+                                                           (li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below, " type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
