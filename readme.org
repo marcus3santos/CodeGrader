@@ -153,7 +153,7 @@ We make the following assumptions regarding the physical environment where stude
 - In the Linux test environment, the home folder's name is the computer ID.
 - In the assessment description, students were asked to store their solutions in the *~/pt/* folder.
 - After students completed the assessment, the IT staff has transfered the contents of the *~/pt/* folders of all machines to the */tmp/cps305PracticumTest/cps305XX* folder, where *cps305XX* represents different folders (e.g., cps30501, cps30502, etc.) storing students' solutions from different assesssment versions.
-- The IT staff has created a zip archive file containing the students' solutions originally stored in specific the *~/pt/~ folders of the Linux machines. Here is the command the IT staff used to create that zip file:
+- The IT staff has created a zip archive file containing the students' solutions stored on the Linux machines. Here is the command the IT staff used to create that zip file:
   #+begin_src shell
   zip -r cps305PracticumTest.zip /tmp/cps305PracticumTest/cps305*/<computer ID>*/ -x '*/.*' '*/quicklisp/*' '*/Cheatsheet-emacs.pdf' '*/paredit.pdf' '*/test.pdf'
   #+end_src
