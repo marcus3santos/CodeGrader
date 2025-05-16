@@ -50,7 +50,7 @@ better automation and tooling.
      :forbidden (count member)) ;; the list of forbidden functions
     (p "This question contains two parts.") ;; a paragraph.
     (wa  ;; What students are asked; must appear within a question expression
-      (p "Part 1:)
+      (p "Part 1:")
       (p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
         (tc (:function count-occurrences)
          (gvn ;; Given test cases           
