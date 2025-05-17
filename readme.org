@@ -372,31 +372,6 @@ as shown above)
   CL-USER> 
 #+end_src
 
-* Sandboxing - Package Structure for Exporting Functions to test-runtime
-
-The security mechanism that isolates the student's code so preventing its execution environment to
-prevent from affecting the CodeGrader is defined in the =sandbox= package. 
-
-Depending on the content of the assessment description file, function
-GEN-EXAM-FILES modifies the =sandbox= package based on the information
-provided in the assessment description file.
-
-This sandboxing mechanism is structured as follows:
-1. =sandbox= package:
-   - Restricts system-level access when running the student's code.
-   - Exports only specific functions to be accessed by the =test-runtime= package,
-     which executes those functions against predefined test cases.
-2. =test-runtime= package:
-   - Utilizes the =sandbox= package to access its exported functions.
-   - Exports objects and functions for use by other packages that
-     manage additional aspects of grading.
-
-** Benefits
-- **Encapsulation**: Only necessary functions are exported, hiding internal details.
-- **Reusability**: `=test-runtime= focuses on testing with a consistent interface.
-- **Flexibility**: Function GEN-EXAM-FILEs facilitates the
-  reconfiguration of the sandbox mechanism depending on the
-  characteristics of the assessment description.
   
 * License and Credits
 
