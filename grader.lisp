@@ -195,7 +195,67 @@ the mark is calculated as the # of passes divided by the total # of cases.
             do (format content "~A~%" line)) ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
-(defun grade-code (student-solution kind question assessment-data &optional ws)
+#|
+(defun run-testcases (question)
+  (let ((cur *packate*))
+    (in-package :test-runtime)
+    (setf *results* nil)
+    (setf *runtime-error* nil)
+    (setf *cr-warning* nil)
+    (eval `(,(intern (format nil "TEST-~a" (string-upcase question)))))
+    (setf *package* cur)))
+
+(defun load-student-solution (student-solution)
+    (setf *load-error* nil)
+    (handle-solution-loading student-solution))
+
+(defun score-result (student-solution question assessment-data ws)
+    (let* ((description "")
+           (question-data (cdr (assoc question assessment-data :test #'string=)))
+           (testcase-code (cdr (assoc kind question-data :test #'string=)))
+           (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
+           (forbidden-symbols (nth 3 forb-data))
+           (penalty-forbidden (nth 1 forb-data))
+           (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
+           (score (calc-mark *results* ws))
+           (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols)))
+      (list
+       (if forbid-symb
+           (* score (- 1 (/ penalty-forbidden 100)))
+           score)
+       (cond (*runtime-error* "runtime-error")
+	     (*load-error* "load-error")
+             (*cr-warning* "cr-warning")
+             (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
+	     (t "No RT-error"))
+       (progn
+         (when *runtime-error*
+           (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
+                                     (mapcar #'(lambda (ce)
+                                                 (format nil "~s~%~a" (second ce) (first ce)))
+                                             (reverse *runtime-error*)))))
+         (if  *load-error*
+              (setf description  (concatenate 'string  description "Load/Compiling error."))
+              (setf description "No runtime errors."))    
+         (when *cr-warning*
+           (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
+         (when forbid-symb
+           (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
+         description)
+       (change-results-readable *results*)
+       (read-file-as-string student-solution)
+       whats-asked)))
+
+(defun grade-code (student-solution question assessment-data &optional kind ws)
+  "Loads the student-solution file, initializes the test-runtime environment, and invokes
+   the testcases for that question, and assesses the results.  Returns the percentage of 
+   correct results over total results"
+  (load-student-solution student-solution)
+  (run-testcases question)
+  (score-result student-solution question assessment-data ws))
+|#
+
+(defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, loads and runs the code for the test cases
    of that assessment and question, and returns the percentage of correct results over total results"
   (let* ((description "")
@@ -212,7 +272,10 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (setf *runtime-error* nil)
     (setf *cr-warning* nil)
     (load-macros)
+    ;; Remove the function call bellow. Instead call a function that launches
+    ;; the test cases for the question.
     (load-test-cases testcase-code)
+    ;;
     (in-package :grader)
     (let* ((score (calc-mark *results* ws))
            (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols)))
@@ -243,15 +306,12 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (read-file-as-string student-solution)
        whats-asked))))
 
-
-(defun evaluate-solution (student-solution  kind question assessmt-data &optional ddate sdate)
+(defun evaluate-solution (student-solution question assessmt-data &optional kind)
   (cond ((null student-solution)
          (list 0 "no-submitted-file" "No submitted file" nil))
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
-        ((and ddate sdate (>date sdate ddate))
-         (list 0 "late-submission"  (format nil "Late submission. Assignment due on: ~a Submitted on: ~a~%" ddate sdate) nil))
-        (t (grade-code student-solution kind question assessmt-data))))
+        (t (grade-code student-solution question assessmt-data kind))))
 
 #|
 (defun mark-std-solution (student-solution test-cases-dir &optional (ws nil))
