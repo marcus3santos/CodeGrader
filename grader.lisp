@@ -195,9 +195,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
             do (format content "~A~%" line)) ;; Append each line to content with a newline
       (get-output-stream-string content))))
 
-#|
 (defun run-testcases (question)
-  (let ((cur *packate*))
+  (let ((cur *package*))
     (in-package :test-runtime)
     (setf *results* nil)
     (setf *runtime-error* nil)
@@ -212,7 +211,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
 (defun score-result (student-solution question assessment-data ws)
     (let* ((description "")
            (question-data (cdr (assoc question assessment-data :test #'string=)))
-           (testcase-code (cdr (assoc kind question-data :test #'string=)))
            (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
            (forbidden-symbols (nth 3 forb-data))
            (penalty-forbidden (nth 1 forb-data))
@@ -253,8 +251,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
   (load-student-solution student-solution)
   (run-testcases question)
   (score-result student-solution question assessment-data ws))
-|#
 
+#|
 (defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, loads and runs the code for the test cases
    of that assessment and question, and returns the percentage of correct results over total results"
@@ -305,6 +303,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (change-results-readable *results*)
        (read-file-as-string student-solution)
        whats-asked))))
+|#
 
 (defun evaluate-solution (student-solution question assessmt-data &optional kind)
   (cond ((null student-solution)

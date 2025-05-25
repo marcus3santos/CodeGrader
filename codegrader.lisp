@@ -33,6 +33,13 @@
 	(check-input-files (cdr lf))
 	(error "Folder/file ~S does not exist." (car lf)))))
 
+(defun keyword-symbol-p (obj)
+  "Returns T if OBJ is a keyword symbol (a symbol starting with a colon),
+   otherwise returns NIL."
+  (and (symbolp obj)            ; Check if it's a symbol
+       (eq (symbol-package obj) ; Check if it belongs to the KEYWORD package
+           (find-package :keyword))))
+
 (defun clean-symbol-names (e)
   (cond ((keyword-symbol-p e) e)
         ((symbolp e) (intern (symbol-name e)) )
@@ -59,8 +66,8 @@ Please check your logic and consider adding a termination condition.")
                                                error-str)))
                        (format nil "~%  ~a:~%~a" error-name (indent-error-msg error-message)))))         
          (test (nth 3 r))
-         (fcall (second test))
-         (ret (eval (third test))))
+         (fcall (clean-symbol-names (second test)))
+         (ret (clean-symbol-names (eval (third test)))))
     (cond ((string= res "Pass")
            (format nil "Passed: ~s returned ~s" fcall ret))
           ((and (string= res "Fail") rt-error) (format nil "Failed when evaluating ~s.~a" fcall rt-error))
@@ -346,8 +353,9 @@ Please check your logic and consider adding a termination condition.")
     (unless (probe-file folder-file)
       (error "~%!!! File does not exist in folder ~S !!!" folder-file))
     (unwind-protect
-         ;; (load-questions-testcases assessment-data (list question-name) "given")
-         (let* ((eval (evaluate-solution folder-file question-name assessment-data "given"))
+         (let* ((eval (progn
+                        (load-questions-testcases assessment-data (list question-name) "given")
+                        (evaluate-solution folder-file question-name assessment-data "given")))
                 (error-type (second eval)))
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
              (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
