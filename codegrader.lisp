@@ -345,7 +345,8 @@ Please check your logic and consider adding a termination condition.")
          (current-pckg *package*))
     (unless (probe-file folder-file)
       (error "~%!!! File does not exist in folder ~S !!!" folder-file))
-    (unwind-protect 
+    (unwind-protect
+         ;; (load-questions-testcases assessment-data (list question-name) "given")
          (let* ((eval (evaluate-solution folder-file question-name assessment-data "given"))
                 (error-type (second eval)))
            (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
@@ -359,12 +360,12 @@ Please check your logic and consider adding a termination condition.")
       (setf *package* current-pckg))
     t))
 
-(defun load-all-test-cases (assessment-data)
+(defun load-questions-testcases (assessment-data questions test-cases-kind)
   (let ((current *package*))
     (in-package :test-runtime)
-    (dolist (question (second (assoc "questions" assessment-data :test #'string=) ))
+    (dolist (question questions)
       (let* ((question-data (cdr (assoc question assessment-data :test #'string=)))
-             (testcase-code (cdr (assoc "hidden" question-data :test #'string=))))
+             (testcase-code (cdr (assoc test-cases-kind question-data :test #'string=))))
         (load-test-cases testcase-code)))
     (setf *package* current)))
   
@@ -398,7 +399,7 @@ Please check your logic and consider adding a termination condition.")
            (map (create-mapping-table std-pc-map)))
       ;; The function below should be uncommented once you address how
       ;; to launch the test cases in grade.lisp
-      ;; (load-all-test-cases assessment-data)
+      ;; (load-questions-testcases assessment-data questions "hidden")
       (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
                                        :direction :output
                                        :if-exists :append
