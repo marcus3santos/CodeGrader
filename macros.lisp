@@ -151,16 +151,8 @@
 (defun load-macros ()
   (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))
 
-
-(defun subst-package-symbols (form package-designator)
-  (if (consp form)
-      (mapcar #'(lambda (x) (subst-package-symbols x package-designator)) form)
-      (if (symbolp form)
-          (intern (symbol-name form) (find-package package-designator))
-          form)))
-
 (defun load-test-cases (testcase-code)
-  (dolist (code (subst-package-symbols testcase-code :test-runtime))
+  (dolist (code testcase-code)
     (eval code)))
 
 

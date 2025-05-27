@@ -85,17 +85,34 @@
                (t (write-char ch out)
                   (setf prev-space nil))))))
 
+(defun keyword-symbol-p (obj)
+  "Returns T if OBJ is a keyword symbol (a symbol starting with a colon),
+   otherwise returns NIL."
+  (and (symbolp obj)            ; Check if it's a symbol
+       (eq (symbol-package obj) ; Check if it belongs to the KEYWORD package
+           (find-package :keyword))))
+
 (defun subst-package-symbols (form package-designator &optional symbs alt-package)
   "Adds the PACKAGE-DESIGNATOR to the name of all symbols in FORM that are not in the list SYMBS.
    If the symbol is in the list SYMBS then adds the ALT-PACKAGE designator to the name of the 
    symbol."
   (cond ((consp form)
          (mapcar #'(lambda (x) (subst-package-symbols x package-designator symbs alt-package)) form))
+        ((keyword-symbol-p form) form)
         ((symbolp form)
          (if (member form symbs)
              (intern (symbol-name form) (find-package alt-package))
              (intern (symbol-name form) (find-package package-designator))))
         (t form)))
+
+
+
+(defun pretty-print-to-string (form)
+  "Pretty-prints a Lisp form to a string."
+  (with-output-to-string (s)
+    (let ((*standard-output* s) ; Bind *standard-output* to the string stream
+          (*print-pretty* t))   ; Ensure pretty printing is enabled
+      (pprint form))))
 
 ;; Serializer
 
@@ -224,9 +241,9 @@
                    (error "Missing function name key in test cases ~s" node))
                  (unless qnumber
                    (error "Test cases not inside a question ~s" node))
-                  (mapcar (lambda (item)
-                            (emit item :depth depth :function-name function-name :qnumber qnumber))
-                          (nthcdr 2 node))))
+                 (mapcar (lambda (item)
+                           (emit item :depth depth :function-name function-name :qnumber qnumber))
+                         (nthcdr 2 node))))
               ((gvn hdn) ;; Given test cases , Hidden test cases
                (if (equalp (car node) 'gvn)
                    (push (append (list 'deftest function-name) (cdr node))
@@ -241,16 +258,10 @@
                (unless (= (length (cdr node)) 2)
                  (error "Incorrect use of Assertion: ~a" node))
                (unless function-name
-                   (error "Assertion not inside a test case ~s" node))  
+                 (error "Assertion not inside a test case ~s" node))  
                (let* ((expected (second node))
-                      (result (third node))
-                      (res-without-quote-or-list
-                        (cond ((and (listp result) (equalp (car result) 'quote))
-                               (second result))
-                              ((and (listp result) (equalp (car result) 'list))
-                               (cdr result))
-                              (t result))))
-                 (list (format nil "~%~aCL-USER> ~s~%~a~s" (indent depth) expected (indent depth) res-without-quote-or-list))))
+                      (result (eval (third node))))
+                 (list (format nil "~%The expression below~% ~a~%~%should evaluate to~%~a~%" (pretty-print-to-string expected)  (pretty-print-to-string result)))))
               (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :lang))

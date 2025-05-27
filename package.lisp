@@ -7,7 +7,7 @@
            :dangerous-function-name)
   (:shadow open with-open-file load delete-file rename-file probe-file directory
            ensure-directories-exist file-author file-write-date file-length
-           ql:quickload require))
+           require))
 
 (in-package :sandbox)
 
@@ -46,7 +46,7 @@
 
 (dolist (fn '(open with-open-file load delete-file rename-file probe-file directory
               ensure-directories-exist file-author file-write-date file-length
-              ql:quickload require))
+              require))
   (eval `(define-dangerous-function ,fn)))
 
 (in-package :cl-user)
@@ -70,7 +70,7 @@
   (:nicknames :sxm)
   (:use :cl)
   (:export :str->list :normalize-whitespace :remove-substrings
-           :subst-package-symbols))
+           :subst-package-symbols :keyword-symbol-p))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")

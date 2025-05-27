@@ -33,13 +33,6 @@
 	(check-input-files (cdr lf))
 	(error "Folder/file ~S does not exist." (car lf)))))
 
-(defun keyword-symbol-p (obj)
-  "Returns T if OBJ is a keyword symbol (a symbol starting with a colon),
-   otherwise returns NIL."
-  (and (symbolp obj)            ; Check if it's a symbol
-       (eq (symbol-package obj) ; Check if it belongs to the KEYWORD package
-           (find-package :keyword))))
-
 (defun clean-symbol-names (e)
   (cond ((keyword-symbol-p e) e)
         ((symbolp e) (intern (symbol-name e)) )
@@ -377,7 +370,7 @@ Please check your logic and consider adding a termination condition.")
         (load-test-cases testcase-code)))
     (setf *package* current)))
   
-  (defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
+(defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
     "submissions-zipped-file is the zipped file containing the student solutions
    pc-std-map is a csv file containing the student ID, name, and room-machine ID
    assessment-tooling-file is the tooling file for the assessment
@@ -405,9 +398,7 @@ Please check your logic and consider adding a termination condition.")
 	                         subs-folder))
 	   (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
            (map (create-mapping-table std-pc-map)))
-      ;; The function below should be uncommented once you address how
-      ;; to launch the test cases in grade.lisp
-      ;; (load-questions-testcases assessment-data questions "hidden")
+      (load-questions-testcases assessment-data assessment-questions "hidden")
       (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
                                        :direction :output
                                        :if-exists :append
