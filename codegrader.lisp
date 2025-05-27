@@ -1,5 +1,3 @@
-;; Issues that need to be addressed:
-
 
 (in-package #:codegrader)
 
@@ -448,66 +446,6 @@ Please check your logic and consider adding a termination condition.")
           (in-package :cl-user)
           "(^_^)"))))
 
-#|
-
-(defun grade-it (submissions-zipped-file tests-folder results-folder &optional exam-grades-export-file)
-  (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file tests-folder)))
-  (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
-         (test-cases-folder (check-foldername  (namestring (ensure-directories-exist tests-folder :verbose T))))
-         (feedback-folder (merge-pathnames "student-feedback/" results-folder))
-	 (feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
-	 (subs-folder (merge-pathnames "submissions/" results-folder))
-	 (subs-folder-wfiles (progn
-                               (cleanup-folder feedback-folder)
-                               (cleanup-folder subs-folder)
-	                       (zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
-	                       subs-folder))
-	 (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
-	 (h-table (make-hash-table :test 'equal)))
-    (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
-                                     :direction :output
-                                     :if-exists :append
-                                     :if-does-not-exist :create)
-      (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
-        (format broadcast-stream "~a: Started marking~%" (get-date-time))
-        (dolist (folder sfolders)
-          (multiple-value-bind (key date) (get-key-and-date folder)
-            (let* ((pref (consume-until (consume-until key #\-) #\-)) ;(splice-at-char key #\-))
-                   (std-name (subseq pref 1 (1- (length pref))))
-                   (sdate (check-dt (form-date-time (replace-char date #\, #\ ))))
-                   (student-files (directory (merge-pathnames folder "*.*")))
-                   (test-cases-files (directory (merge-pathnames test-cases-folder "*.lisp")))
-                   (solutions-evaluations (grade-solutions student-files test-cases-files))
-                   (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length test-cases-files))
-                                solutions-evaluations))
-                   (item (make-submission :std-name std-name
-                                          :date sdate
-                                          :evaluation seval
-                                          :total-marks (car seval))))
-              (format log-file-stream "Student *~a*,  result:~%~a~%" std-name seval)
-              (setf (gethash std-name h-table) item)
-              (generate-d2l-feedback key seval feedback-folder)
-              )))
-        (in-package :codegrader)
-        (format *standard-output* "~%============================================================================~%")
-        (format *standard-output* "Slime produced the above messages when loading the students' solutions~%")
-        (format *standard-output* "============================================================================~%")
-        (format broadcast-stream "Done marking students solutions.~%")
-        (format broadcast-stream "Generating the zipped feedback folder...~%")
-        (zip:zip feedback-zipped feedback-folder :if-exists :supersede)
-        (format broadcast-stream "Done.~%")
-        (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
-        (generate-marks-spreadsheet log-file-stream exam-grades-export-file results-folder h-table #'(lambda (x) (submission-total-marks x)) "grades.csv")
-        (when exam-grades-export-file (format broadcast-stream "Done.~%"))
-        (format broadcast-stream "Exam grading complete!~%" )
-        (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
-        (when exam-grades-export-file
-          (format *standard-output* "- grade.csv : contains the test marks~%"))
-        (format *standard-output* "- student-feedback.zip : contains the feedback txt files for each student.")
-        (in-package :cl-user)
-        "(^_^)"))))
-        
-|#
 
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
@@ -524,35 +462,6 @@ Please check your logic and consider adding a termination condition.")
       (eval-solutions solutions-folder :exam test-cases-folder out))
      (format t "Feedback saved in ~a~%" folder)))
 
-#|
-(defun eval-solutions (solutions-folder lab &optional  test-cases-folder (out t))
-  (unless (probe-file solutions-folder)
-    (error "Folder does not exist: ~S~%" solutions-folder))
-  (if test-cases-folder
-      (unless (probe-file test-cases-folder)
-        (error "Folder does not exist: ~S~%" test-cases-folder)))
-  (let* ((solution-files (directory (merge-pathnames solutions-folder "*.*")))
-         (test-cases-files
-           (if test-cases-folder
-               (directory (concatenate 'string test-cases-folder "*.lisp"))
-               (case lab
-                 (:lab01 (get-lab-files "Lab01"))
-                 (:lab02 (get-lab-files "Lab02"))
-                 (:lab03 (get-lab-files "Lab03"))
-                 (:lab04 (get-lab-files "Lab04"))
-                 (:lab05 (get-lab-files "Lab05"))
-                 (:lab06 (get-lab-files "Lab06"))
-                 (:lab07 (get-lab-files "Lab07"))
-                 (:lab08 (get-lab-files "Lab08"))
-                 (:lab09 (get-lab-files "Lab09"))
-                 (:exam (directory test-cases-folder))
-                 (otherwise (error "Invalid lab identifier ~a.~%Lab identifiers are in the form :labXX, where XX is the lab number, e.g., :lab03." lab)))))
-         (solution-evaluations (grade-solutions solution-files test-cases-files)))
-    (generate-messages out (list (/ (reduce #'+ solution-evaluations :key #'caadr)
-                                    (length test-cases-files))
-                                 solution-evaluations)))
-  (in-package :cl-user))
-|#
 
 (in-package :cg)
 
