@@ -57,6 +57,7 @@
   (:export *results*)
   (:export *runtime-error*)
   (:export *load-error*)
+  (:export *load-error-message*)
   (:export *cr-warning*)
   (:export :handle-solution-loading :load-macros :load-test-cases))
 

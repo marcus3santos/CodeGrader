@@ -205,8 +205,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (setf *package* cur)))
 
 (defun load-student-solution (student-solution)
-    (setf *load-error* nil)
-    (handle-solution-loading student-solution))
+  (setf *load-error* nil)
+  (setf *load-error-message* (handle-solution-loading student-solution)))
 
 (defun score-result (student-solution question assessment-data ws)
     (let* ((description "")
@@ -233,10 +233,12 @@ the mark is calculated as the # of passes divided by the total # of cases.
                                                  (format nil "~s~%~a" (second ce) (first ce)))
                                              (reverse *runtime-error*)))))
          (if  *load-error*
-              (setf description  (concatenate 'string  description "Load/Compiling error."))
-              (setf description "No runtime errors."))    
+              (setf description  (concatenate 'string  description *load-error-message*))
+              (setf description "No Compile time errors."))    
+         #|
          (when *cr-warning*
            (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
+         |#
          (when forbid-symb
            (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
          description)
