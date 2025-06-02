@@ -26,9 +26,12 @@ The workflow involves the following steps:
 2. The instructor uses CodeGrader to generate from the SXM file the necessary support
    files, including the formatted questions translated to orgmode and assessment-specific test
    cases to be later used by CodeGrader to grade the students' solutions.
-3. Students complete the assessment created by the instructor,
+3. Instructor/IT staff saves the assessment-specific data in the
+   appropriate folder (see section *Generating the Assessment Support
+   Files*) in the lab computers.
+4. Students complete the assessment created by the instructor,
    providing their solutions to the given programming questions.
-4. The instructor uses CodeGrader to evaluate and grade the students'
+5. The instructor uses CodeGrader to evaluate and grade the students'
    solutions.
 The next sections explain each of these workflow steps.
 
@@ -101,10 +104,19 @@ Assuming the SXM description for your assessment is located in the file =~/tmp/a
 CodeGrader's `GEN-EXAM-FILES` function generates the following files within the `./Gen-files/` directory:
 
 - An Org mode file (=~/tmp/assessment1.org=) containing the assessment description. This file can be further processed using Emacs to export it to various formats such as HTML or PDF.
-- A tooling data file (=~/tmp/assessment1.data=) that CodeGrader utilizes for the automated grading of student solutions.
+- A data file (=~/tmp/assessment1.data=) that CodeGrader utilizes for the automated grading of student solutions.
 
+** Moving the assessment data file to its appropriate location
 
-* Student Interaction with the Assessment  
+Before the assessment, the instructor must ask IT staff to save the
+assessment data (.data) file in the
+*~/Codegrader/<assessment-folder>* directory. The
+*<assessment-folder>* should match the name students were instructed
+to use for saving their solutions (e.g., if students used *~/pt1/*, the
+data file goes into *~/Codegrader/pt1/*).
+
+* Student Interaction with the Assessment
+
 
 As it is typically the case, during a programming practicum assessment students are tasked with
 solving programming questions provided in the assessment description. This stage

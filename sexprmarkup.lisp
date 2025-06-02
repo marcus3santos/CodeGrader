@@ -304,8 +304,8 @@
     `(,qlabel ("whats-asked" (,@description))
               ,(if forbidden
                    `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
-              ("given" ,@(gen-tc-code qlabel examples) (,(intern (format nil "TEST-~a" (string-upcase qlabel)))))
-              ("hidden" ,@(gen-tc-code qlabel testcases) (,(intern (format nil "TEST-~a" (string-upcase qlabel))))))))
+              ("given" ,@(gen-tc-code qlabel examples))
+              ("hidden" ,@(gen-tc-code qlabel testcases)))))
 
 (defun gen-exam-files (from)
   "From is the file containing the assessment's sexprmarkup description"
