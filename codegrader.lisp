@@ -325,7 +325,7 @@ Please check your logic and consider adding a termination condition.")
     htable))
 
 
-
+#|
 ;; -------- Not integrated to the CodeGrader yet
 (defun chk-my-solution (a#)
   "A# is a string identifying the solution file, e.g., \"~/lab01/q1.lisp\".
@@ -375,7 +375,7 @@ Please check your logic and consider adding a termination condition.")
                   (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))
       (setf *package* current-pckg))
     t))
-
+|#
 (defun load-questions-testcases (assessment-data questions test-cases-kind)
   (let ((current *package*))
     (in-package :test-runtime)
@@ -384,79 +384,80 @@ Please check your logic and consider adding a termination condition.")
              (testcase-code (cdr (assoc test-cases-kind question-data :test #'string=))))
         (load-test-cases testcase-code)))
     (setf *package* current)))
-  
+
+#|
 (defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
-    "submissions-zipped-file is the zipped file containing the student solutions
+  "submissions-zipped-file is the zipped file containing the student solutions
    pc-std-map is a csv file containing the student ID, name, and room-machine ID
    assessment-tooling-file is the tooling file for the assessment
     results-folder is where CodeGrader will save the results"
-    (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file std-pc-map assessment-tooling-file)))
-    (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
-           (assessment-data-orig (with-open-file (in assessment-tooling-file :direction :input)
-                                   (read in)))
-           (xport-funcs (second (assoc "fnames" assessment-data-orig :test #'string=)))
-           (assessment-questions (second (assoc "questions" assessment-data-orig :test #'string=)))
-           (assessment-data (progn
-                              ;; Exposes the assessment functions to the :TEST-RUNTIME package which
-                              ;; is the only package that uses :SANDBOX
-                              (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) xport-funcs) :sandbox)
-                              ;; Adds the appropriate PACKAGE-DESIGNATOR to the name of all symbols in the testcases
-                              (subst-package-symbols assessment-data-orig :test-runtime xport-funcs :sandbox)))
-           (feedback-folder (merge-pathnames "student-feedback/" results-folder))
+  (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file)) (list submissions-zipped-file std-pc-map assessment-tooling-file)))
+  (let* ((results-folder (check-foldername  (namestring (ensure-directories-exist results-folder :verbose T))))
+         (assessment-data-orig (with-open-file (in assessment-tooling-file :direction :input)
+                                 (read in)))
+         (xport-funcs (second (assoc "fnames" assessment-data-orig :test #'string=)))
+         (assessment-questions (second (assoc "questions" assessment-data-orig :test #'string=)))
+         (assessment-data (progn
+                            ;; Exposes the assessment functions to the :TEST-RUNTIME package which
+                            ;; is the only package that uses :SANDBOX
+                            (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) xport-funcs) :sandbox)
+                            ;; Adds the appropriate PACKAGE-DESIGNATOR to the name of all symbols in the testcases
+                            (subst-package-symbols assessment-data-orig :test-runtime xport-funcs :sandbox)))
+         (feedback-folder (merge-pathnames "student-feedback/" results-folder))
                                         ;(feedback-zipped (merge-pathnames results-folder "student-feedback.zip"))
-	   (subs-folder (merge-pathnames "submissions/" results-folder))
-	   (subs-folder-wfiles (progn
-                                 (cleanup-folder feedback-folder)
-                                 (cleanup-folder subs-folder)
-                                 (uiop:run-program (concatenate 'string "unzip " (namestring submissions-zipped-file) " -d " (namestring subs-folder)))
+	 (subs-folder (merge-pathnames "submissions/" results-folder))
+	 (subs-folder-wfiles (progn
+                               (cleanup-folder feedback-folder)
+                               (cleanup-folder subs-folder)
+                               (uiop:run-program (concatenate 'string "unzip " (namestring submissions-zipped-file) " -d " (namestring subs-folder)))
                                         ;(zip:unzip submissions-zipped-file subs-folder :if-exists :supersede)
-	                         subs-folder))
-	   (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
-           (map (create-mapping-table std-pc-map)))
-      (load-questions-testcases assessment-data assessment-questions "hidden")
-      (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
-                                       :direction :output
-                                       :if-exists :append
-                                       :if-does-not-exist :create)
-        (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
-          (format broadcast-stream "~a: Started marking~%" (get-date-time))
-          (dolist (folder sfolders)
-            (let* ((str (namestring folder))
-                   (temp (subseq str (1+ (position #\/ (subseq str 0 (1- (length str))) :from-end t))))
-                   (room-pc (subseq temp 0 (1- (length temp))))
-                   (std (gethash room-pc map)))
-              (when std
-                (format t "~%~a~VT~C -- Graded" (cdr std) 40 #\tab)
-                (let* ((student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
-                       (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
-                       (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
-                                    solutions-evaluations))
-                       (item (make-submission :std-id (first std)
-                                              :std-fname (second std)
-                                              :std-lname (third std)
-                                              :room-pc (fourth std)
-                                              :evaluation seval
-                                              :total-marks (car seval)))
-                       (anony-id (format nil "~A" (sxhash (submission-std-id item)))) ;; hashes the student ID#
+	                       subs-folder))
+	 (sfolders (directory (concatenate 'string (namestring subs-folder-wfiles) "*/")))
+         (map (create-mapping-table std-pc-map)))
+    (load-questions-testcases assessment-data assessment-questions "hidden")
+    (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
+                                     :direction :output
+                                     :if-exists :append
+                                     :if-does-not-exist :create)
+      (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
+        (format broadcast-stream "~a: Started marking~%" (get-date-time))
+        (dolist (folder sfolders)
+          (let* ((str (namestring folder))
+                 (temp (subseq str (1+ (position #\/ (subseq str 0 (1- (length str))) :from-end t))))
+                 (room-pc (subseq temp 0 (1- (length temp))))
+                 (std (gethash room-pc map)))
+            (when std
+              (format t "~%~a~VT~C -- Graded" (cdr std) 40 #\tab)
+              (let* ((student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
+                     (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
+                     (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+                                  solutions-evaluations))
+                     (item (make-submission :std-id (first std)
+                                            :std-fname (second std)
+                                            :std-lname (third std)
+                                            :room-pc (fourth std)
+                                            :evaluation seval
+                                            :total-marks (car seval)))
+                     (anony-id (format nil "~A" (sxhash (submission-std-id item)))) ;; hashes the student ID#
                                         ;(anony-id (subseq (submission-std-id item) 5))
-                       )
-                  (format log-file-stream "Student ~a (~a ~a),  result:~%~s~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
-                  (setf (gethash (submission-std-id item) map) item)
-                  (generate-feedback anony-id seval feedback-folder)))))
-          (in-package :codegrader)
-          (format broadcast-stream "~%~%Done marking students solutions.~%")
-          (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
-          (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
-          (when exam-grades-export-file (format broadcast-stream "Done.~%"))
-          (sb-ext:delete-directory (namestring subs-folder) :recursive t)
-          (format broadcast-stream "Exam grading complete!~%" )
-          (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
-          (when exam-grades-export-file
-            (format *standard-output* "- grade.csv : contains the test marks~%"))
-          (format *standard-output* "- student-feedback/ : contains the feedback txt files for each student.")
-          (in-package :cl-user)
-          "(^_^)"))))
-
+                     )
+                (format log-file-stream "Student ~a (~a ~a),  result:~%~s~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
+                (setf (gethash (submission-std-id item) map) item)
+                (generate-feedback anony-id seval feedback-folder)))))
+        (in-package :codegrader)
+        (format broadcast-stream "~%~%Done marking students solutions.~%")
+        (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
+        (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
+        (when exam-grades-export-file (format broadcast-stream "Done.~%"))
+        (sb-ext:delete-directory (namestring subs-folder) :recursive t)
+        (format broadcast-stream "Exam grading complete!~%" )
+        (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
+        (when exam-grades-export-file
+          (format *standard-output* "- grade.csv : contains the test marks~%"))
+        (format *standard-output* "- student-feedback/ : contains the feedback txt files for each student.")
+        (in-package :cl-user)
+        "(^_^)"))))
+|#
 
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
@@ -474,7 +475,7 @@ Please check your logic and consider adding a termination condition.")
      (format t "Feedback saved in ~a~%" folder)))
 
 
-(in-package :cg)
+;;(in-package :cg)
 
 (defun start ()
   
@@ -496,3 +497,159 @@ Please check your logic and consider adding a termination condition.")
 (defun quit ()
   (in-package :cl-user))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
+  "Main function to grade an exam.
+   submissions-zipped-file: Zipped file containing student solutions.
+   std-pc-map: CSV file with student ID, name, and room-machine ID.
+   assessment-tooling-file: Tooling file for the assessment.
+   results-folder: Folder where CodeGrader will save results.
+   exam-grades-export-file: Optional file to export exam grades."
+  (check-input-files (append (when exam-grades-export-file (list exam-grades-export-file))
+                             (list submissions-zipped-file std-pc-map assessment-tooling-file)))
+
+  (let* ((results-folder (setup-results-folder results-folder))
+         (assessment-data (load-and-process-assessment-data assessment-tooling-file))
+         (xport-funcs (second (assoc "fnames" (car assessment-data) :test #'string=)))
+         (assessment-questions (second (assoc "questions" (car assessment-data) :test #'string=)))
+         (feedback-folder (merge-pathnames "student-feedback/" results-folder))
+         (subs-folder (merge-pathnames "submissions/" results-folder))
+         (map (create-mapping-table std-pc-map)))
+
+    (prepare-submission-environment subs-folder submissions-zipped-file feedback-folder)
+    (load-questions-testcases (cdr assessment-data) assessment-questions "hidden")
+
+    (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
+                                     :direction :output
+                                     :if-exists :append
+                                     :if-does-not-exist :create)
+      (let ((broadcast-stream (make-broadcast-stream *standard-output* log-file-stream)))
+        (format broadcast-stream "~a: Started marking~%" (get-date-time))
+        (process-student-submissions (directory (concatenate 'string (namestring subs-folder) "*/"))
+                                     map
+                                     assessment-questions
+                                     (cdr assessment-data)
+                                     feedback-folder
+                                     log-file-stream) ; Passed here
+        (finalize-grading broadcast-stream subs-folder exam-grades-export-file results-folder map log-file-stream) ; Added log-file-stream here
+        "(^_^)"))))
+
+
+(defun setup-results-folder (folder-path)
+  "Ensures the results folder exists and returns its namestring."
+  (check-foldername (namestring (ensure-directories-exist folder-path :verbose T))))
+
+(defun load-and-process-assessment-data (assessment-tooling-file)
+  "Loads assessment data, exposes functions, and subst-packages symbols.
+   Returns a cons cell: (original-data . processed-data)"
+  (let* ((assessment-data-orig (with-open-file (in assessment-tooling-file :direction :input)
+                                 (read in)))
+         (xport-funcs (second (assoc "fnames" assessment-data-orig :test #'string=)))
+         (assessment-data-processed (progn
+                                      (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) xport-funcs) :sandbox)
+                                      (subst-package-symbols assessment-data-orig :test-runtime xport-funcs :sandbox))))
+    (cons assessment-data-orig assessment-data-processed)))
+
+(defun prepare-submission-environment (subs-folder submissions-zipped-file feedback-folder)
+  "Cleans up folders and unzips submissions."
+  (cleanup-folder feedback-folder)
+  (cleanup-folder subs-folder)
+  (uiop:run-program (concatenate 'string "unzip " (namestring submissions-zipped-file) " -d " (namestring subs-folder))))
+
+(defun process-student-submissions (sfolders map assessment-questions assessment-data feedback-folder log-file-stream)
+  "Iterates through student submission folders and grades each student's work."
+  (dolist (folder sfolders)
+    (let* ((str (namestring folder))
+           (temp (subseq str (1+ (position #\/ (subseq str 0 (1- (length str))) :from-end t))))
+           (room-pc (subseq temp 0 (1- (length temp))))
+           (std (gethash room-pc map)))
+      (when std
+        (format t "~%~a~VT~C -- Graded" (cdr std) 40 #\tab)
+        (grade-single-student folder std assessment-questions assessment-data feedback-folder map log-file-stream)))))
+
+(defun grade-single-student (folder std assessment-questions assessment-data feedback-folder map log-file-stream)
+  "Grades a single student's submission."
+  (let* ((student-files (directory (concatenate 'string (namestring  folder) *std-sub-folder* "*.*")))
+         (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
+         (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+                      solutions-evaluations))
+         (item (make-submission :std-id (first std)
+                                :std-fname (second std)
+                                :std-lname (third std)
+                                :room-pc (fourth std)
+                                :evaluation seval
+                                :total-marks (car seval)))
+         (anony-id (format nil "~A" (sxhash (submission-std-id item)))))
+    (format log-file-stream "Student ~a (~a ~a),  result:~%~s~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
+    (setf (gethash (submission-std-id item) map) item)
+    (generate-feedback anony-id seval feedback-folder)))
+
+(defun finalize-grading (broadcast-stream subs-folder exam-grades-export-file results-folder map log-file-stream)
+  "Performs final actions after all students are graded."
+  (in-package :codegrader)
+  (format broadcast-stream "~%~%Done marking students solutions.~%")
+  (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
+  (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
+  (when exam-grades-export-file (format broadcast-stream "Done.~%"))
+  (sb-ext:delete-directory (namestring subs-folder) :recursive t)
+  (format broadcast-stream "Exam grading complete!~%" )
+  (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
+  (when exam-grades-export-file
+    (format *standard-output* "- grade.csv : contains the test marks~%"))
+  (format *standard-output* "- student-feedback/ : contains the feedback txt files for each student.")
+  (in-package :cl-user))
+
+
+(defun chk-my-solution (a#)
+  "Checks a student's solution file against examples.
+   a#: String identifying the solution file, e.g., '~/lab01/q1.lisp'."
+  (unless (probe-file a#)
+    (error "~%!!! File does not exist in folder ~S !!!" a#))
+  (let* ((assessment-data-file (derive-assessment-data-file a#))
+         (assessment-data (load-and-process-assessment-data-for-chk-my-solution assessment-data-file))
+         (question-name (pathname-name a#))
+         (current-pckg *package*))
+    (unwind-protect
+         (let* ((eval (load-and-evaluate-solution a# question-name assessment-data))
+                (error-type (second eval)))
+           (handle-evaluation-output error-type eval question-name))
+      (setf *package* current-pckg)))
+  t)
+
+(defun derive-assessment-data-file (solution-file-path)
+  "Derives the assessment data file path from the solution file path."
+  (let* ((assessment-folder-name (car (last (pathname-directory solution-file-path))))
+         (assessment-data-file (format nil "~a~a.data" *assessment-data-folder* assessment-folder-name)))
+    assessment-data-file))
+
+(defun load-and-process-assessment-data-for-chk-my-solution (assessment-data-file)
+  "Loads and processes assessment data for chk-my-solution."
+  (let* ((assessment-data-orig (handler-case (with-open-file (in assessment-data-file :direction :input)
+                                               (read in))
+                                 (file-error (e) (error "Assessment data file error: ~a" e))))
+         (sandbox-functions (second (assoc "fnames" assessment-data-orig :test #'string=))))
+    (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) sandbox-functions) :sandbox)
+    (subst-package-symbols assessment-data-orig :test-runtime sandbox-functions :sandbox)))
+
+(defun load-and-evaluate-solution (folder-file question-name assessment-data)
+  "Loads questions and evaluates the solution."
+  (load-questions-testcases assessment-data (list question-name) "given")
+  (evaluate-solution folder-file question-name assessment-data "given"))
+
+(defun handle-evaluation-output (error-type eval question-name)
+  "Handles and formats the output of the solution evaluation."
+  (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
+    (format t "~%!!! You have used a forbidden symbol, ~A, in your Lisp file !!!~%" (cadr error-type))
+    (format t "~%Your mark for all parts of this question will be reduced by ~a% for using a forbidden symbol.~%" (caddr error-type)))
+  (cond ((and (stringp error-type) (string= error-type "runtime-error"))
+         (format t "~a" (nth 2 eval)))
+        ((and (stringp error-type) (string= error-type "load-error"))
+         (format t "~%~a" *load-error-message*))
+        (t
+         (when (and  *load-error-message* (not (string= *load-error-message* "")))
+           (format t "~%---------------------------------------------------------------------------")
+           (format t "~%Compile time messages:~%~a" *load-error-message*))
+         (format t "~%---------------------------------------------------------------------------")
+         (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))

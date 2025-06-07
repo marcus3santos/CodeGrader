@@ -125,7 +125,7 @@
          (cond
            ((consp node)
             (case (car node)
-              (sexprmark-to-org::doc
+              (doc
                (let* ((proplist (second node))
                       (title (getf proplist :title))
                       (folder (if title (check-foldername (getf proplist :folder))
