@@ -118,7 +118,7 @@
 
 (defun sexprmark->org (sexpr questions-info)
   (labels
-      ((emit (node &key folder qnumber penalty function-name  forbidden (depth 0) nitem)
+      ((emit (node &key folder qnumber penalty function-name  forbidden (depth 0) nitem mcq)
          "folder is the where students are required to store their solutions; qnumber is the question number; 
           penalty is the percentage deduction on a solution; forbidden is a list of forbidden functions;
           and depth is space indentation in items"
@@ -159,6 +159,7 @@
                       (penalty (if number (getf proplist :penalty)
                                    (error "Missing question number in ~s" node)))
                       (forbidden (getf proplist :forbidden))
+                      (mcq (getf proplist :mcq))
                       (children (cond ((and forbidden (or (not penalty) (= penalty 0)))
                                        (error "You forgot to provide the penalty in ~s" node))
                                       ((and penalty (not (= penalty 0)) (not forbidden))
@@ -168,18 +169,22 @@
                  (cons (emit '(p))
                        (cons (format nil "~a ~a ~a~%" (stars 1) title number)
                              (mapcar (lambda (item)
-                                       (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth))
+                                       (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth :mcq mcq))
                                      children)))))
               (wa ;; Whats asked
                (let ((description (append (list (emit `(s (:level 2 :title "WHAT YOU ARE ASKED")
                                                           (p (b "NOTE:"))
                                                           (ul
                                                            (li "You " are required to write the solutions for the parts of this question in the Lisp program file ,(format nil "*~aq~a.lisp* ." folder qnumber))
-                                                           (li "You " may create helper functions in your program file.)
+                                                           ,(if (not  mcq)                                                                
+                                                                `(li "You " may create helper functions in your program file.)
+                                                                "")
                                                            ,(if forbidden
                                                                 `(li "You " must not use or refer to the following "Lisp" built-in "function(s)" and "symbol(s): " ,(format nil "~{*~a*~^, ~}" forbidden) ".  The " penalty for doing so is a deduction of (b ,penalty percent) on the score of your solutions for this question.)
-                                                                `(li "There " are no restrictions in the use of "Lisp" built-in functions or symbols in the parts of this question.))
-                                                           (li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below, " type the following expression on the "REPL:" (cb (:lang "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))))))
+                                                                "")
+                                                           ,(if (not mcq)
+                                                                `(li "To " ensure your solution is in the correct folder and passes the test cases shown in the examples "below, " type the following expression on the "REPL:" (cb (:language "lisp") ,(format nil "(chk-my-solution \"~aq~a.lisp\")" folder qnumber)))
+                                                                "")))))
                                           (mapcar (lambda (item)
                                                     (emit item :folder folder :qnumber qnumber :penalty penalty :forbidden forbidden :depth depth))
                                                   (cdr node)))))
