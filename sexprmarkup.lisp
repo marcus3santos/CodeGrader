@@ -171,7 +171,7 @@
                              (mapcar (lambda (item)
                                        (emit item :folder folder :qnumber number :penalty penalty :forbidden forbidden :depth depth :mcq mcq))
                                      children)))))
-              (wa ;; Whats asked
+              (wa ;; Whats asked 
                (let ((description (append (list (emit `(s (:level 2 :title "WHAT YOU ARE ASKED")
                                                           (p (b "NOTE:"))
                                                           (ul
@@ -286,7 +286,7 @@
   (let (fm-names
         deftests)
     (append
-     (dolist (g-cases  cases (cons `(declaim (notinline ,@(mapcar #'car fm-names))) deftests))
+     (dolist (g-cases  cases deftests)
        (let ((fm-name-cases (list (second g-cases) (intern (format nil "TEST-~a" (second g-cases))) (cr-pairs (cddr g-cases)))))
          (push fm-name-cases fm-names)
          (push `(deftest ,(second fm-name-cases) ()
