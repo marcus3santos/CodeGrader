@@ -286,7 +286,7 @@
   (let (fm-names
         deftests)
     (append
-     (dolist (g-cases  cases deftests)
+     (dolist (g-cases  cases (cons `(declaim (notinline ,@(mapcar #'car fm-names))) deftests))
        (let ((fm-name-cases (list (second g-cases) (intern (format nil "TEST-~a" (second g-cases))) (cr-pairs (cddr g-cases)))))
          (push fm-name-cases fm-names)
          (push `(deftest ,(second fm-name-cases) ()
