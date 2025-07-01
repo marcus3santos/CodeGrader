@@ -264,9 +264,9 @@
                  (list (format nil "~%The expression below~% ~a~%~%should evaluate to~%~a~%" (pretty-print-to-string expected)  (pretty-print-to-string result)))))
               (cb ;; Code block
                (let* ((proplist (second node))
-                      (lang (getf proplist :lang))
+                      (lang (getf proplist :language))
                       (code (if lang (third node)
-                                (error ":LANG attribute missing from Code Block: ~a" node))))
+                                (error ":LANGUAGE attribute missing from Code Block: ~a" node))))
                  (cons (format nil "~%~a#+BEGIN_SRC ~a" (indent depth) lang)
                        (append (mapcar (lambda (line)
                                          (format nil "~%~a~a" (indent (* 1 depth)) line)) (str->list code))
