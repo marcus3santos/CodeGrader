@@ -1,0 +1,160 @@
+(("folder" "~/lab06/") ("questions" ("q1"))
+ ("fnames"
+  (MAKE-EMPTY-STACK STACK-EMPTY-P STACK-FULL-P STACK-PUSH STACK-POP
+   STACK-PEEK))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab06/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab06/q1.lisp\")
+ 
+
+*Part 1: Stack Structure and Basic Operations*
+
+You **must** define a constant named ~+STACK-MAX-SIZE+~ to represent the fixed maximum size of the stack's backing array. This constant will be used in our autograder test cases.
+
+*Hint*: You can define global constants in Lisp using DEFCONSTANT. For example, ~(defconstant +pi+ 3.14159)~ defines a constant named ~+PI+~ with the value 3.14159. By convention, constant names are written with plus signs at the beginning and end to distinguish them from global variables which are typically written using the \"earmuffs\" ~*...*~.
+
+Write a function called MAKE-EMPTY-STACK that initializes an empty stack. It should return a representation of an empty stack (e.g., a list containing the array and the top index, or an object if you prefer a more advanced approach).
+
+Write a function called STACK-EMPTY-P that takes a stack and returns T if the stack is empty, NIL otherwise.
+
+Write a function called STACK-FULL-P that takes a stack and returns T if the stack is full, NIL otherwise (based on your fixed size).
+
+Examples:
+
+Testing MAKE-EMPTY-STACK
+
+
+The expression below
+ 
+(STACK-EMPTY-P (MAKE-EMPTY-STACK))
+
+should evaluate to
+
+T
+
+The expression below
+ 
+(STACK-FULL-P (MAKE-EMPTY-STACK))
+
+should evaluate to
+
+NIL
+
+
+
+Testing STACK-EMPTY-P
+
+
+The expression below
+ 
+(STACK-EMPTY-P (MAKE-EMPTY-STACK))
+
+should evaluate to
+
+T
+
+
+
+Testing STACK-FULL-P
+
+
+The expression below
+ 
+(LET ((S (MAKE-EMPTY-STACK)))
+ (SETF +STACK-MAX-SIZE+ 10)
+ (DOTIMES (I +STACK-MAX-SIZE+) (STACK-PUSH I S))
+ (STACK-FULL-P S))
+
+should evaluate to
+
+T
+
+
+"))
+  NIL
+  ("given"
+   (DECLAIM
+    (NOTINLINE MAKE-EMPTY-STACK STACK-EMPTY-P STACK-FULL-P STACK-PUSH STACK-POP
+     STACK-PEEK))
+   (DEFTEST TEST-MAKE-EMPTY-STACK NIL
+    (CHECK (EQUALP (STACK-EMPTY-P (MAKE-EMPTY-STACK)) T)
+     (EQUALP (STACK-FULL-P (MAKE-EMPTY-STACK)) NIL)))
+   (DEFTEST TEST-STACK-EMPTY-P NIL
+    (CHECK (EQUALP (STACK-EMPTY-P (MAKE-EMPTY-STACK)) T)))
+   (DEFTEST TEST-STACK-FULL-P NIL
+    (CHECK
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (SETF +STACK-MAX-SIZE+ 10)
+        (DOTIMES (I +STACK-MAX-SIZE+) (STACK-PUSH I S))
+        (STACK-FULL-P S))
+      T)))
+   (DEFTEST TEST-STACK-PUSH NIL
+    (CHECK
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (STACK-PUSH 10 S)
+        (STACK-PUSH 20 S)
+        (STACK-PEEK S))
+      20)
+     (EQUALP
+      (HANDLER-CASE
+       (LET ((S (MAKE-EMPTY-STACK)))
+         (SETF +STACK-MAX-SIZE+ 10)
+         (DOTIMES (I +STACK-MAX-SIZE+) (STACK-PUSH I S))
+         (STACK-PUSH 99 S)
+         NIL)
+       (ERROR NIL T))
+      T)))
+   (DEFTEST TEST-STACK-POP NIL
+    (CHECK
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (STACK-PUSH 10 S)
+        (STACK-PUSH 20 S)
+        (STACK-POP S))
+      20)
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (STACK-PUSH 10 S)
+        (STACK-POP S)
+        (STACK-EMPTY-P S))
+      T)))
+   (DEFTEST TEST-STACK-PEEK NIL
+    (CHECK
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (STACK-PUSH 10 S)
+        (STACK-PUSH 20 S)
+        (STACK-PEEK S))
+      20)
+     (EQUALP
+      (LET ((S (MAKE-EMPTY-STACK)))
+        (STACK-PUSH 10 S)
+        (STACK-PEEK S))
+      10)))
+   (DEFUN TEST-Q1 ()
+     (TEST-STACK-PEEK)
+     (TEST-STACK-POP)
+     (TEST-STACK-PUSH)
+     (TEST-STACK-FULL-P)
+     (TEST-STACK-EMPTY-P)
+     (TEST-MAKE-EMPTY-STACK)
+     (FMAKUNBOUND 'STACK-PEEK)
+     (FMAKUNBOUND 'STACK-POP)
+     (FMAKUNBOUND 'STACK-PUSH)
+     (FMAKUNBOUND 'STACK-FULL-P)
+     (FMAKUNBOUND 'STACK-EMPTY-P)
+     (FMAKUNBOUND 'MAKE-EMPTY-STACK)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ()))))

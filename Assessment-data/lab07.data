@@ -1,0 +1,213 @@
+(("folder" "~/lab07/") ("questions" ("q1"))
+ ("fnames" (HT-ADD HT-GET HT-DELETE))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab07/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab07/q1.lisp\")
+ 
+
+ 1. [@1] Copy-paste or type the code below in your **q1.lisp** buffer. This program is a slightly different version of the program provided on page 126 of the textbook; it implements an open addressing hash-table.
+ 
+ ;; Functions
+ (defun make-ht (&key array (count 0) (comp #'eql))
+ (list array count comp))
+ 
+ (defun ht-array (ht)
+ (first ht))
+ 
+ (defun (setf ht-array) (new-array ht)
+ (setf (first ht) new-array))
+ 
+ (defun ht-count (ht)
+ (second ht))
+ 
+ (defun (setf ht-count) (new-count ht)
+ (setf (second ht) new-count))
+ 
+ (defun ht-comp (ht)
+ (third ht))
+ 
+ (defun ht-create (kvs &key (test #'eql))
+ (let ((rez (make-ht :array (make-array 16 :initial-element (list))
+ 		 :comp test)))
+ (loop :for (k v) :in kvs :do
+ (ht-add k v rez))
+ rez))
+ 
+ ;; Do not change the functions given above
+ 
+ (defun ht-get (key ht)
+ (let* ((size (length (ht-array ht))) 
+ (start (rem (sxhash key) size))) 
+ (do* ((count 0 (1+ count))
+ (i start (rem (1+ i) size)) ; linear probing
+ (item (aref (ht-array ht) start) (aref (ht-array ht) i)))
+ ((or (null item) (= count size)))
+ (when (funcall (ht-comp ht) key (car item))
+ (return (values (cdr item) i))))))
+ 
+ (defun ht-add (key val ht)
+ (let* ((temp (ht-array ht))
+ (size (length temp)))
+ (flet ((add-item (k v) ; FLET defines function ADD-ITEM locally
+ (do ((i (rem (sxhash k) size) (rem (1+ i) size)))
+ ((null (aref (ht-array ht) i)) 
+ (setf (aref (ht-array ht) i) (cons k v)))))) ; result form
+ (when (= (ht-count ht) size)
+ ;; when the backing array is full
+ ;; expand it to have the length equal to the next power of 2
+ (setf size (expt 2 (ceiling (log (1+ (ht-count ht)) 2))) 
+ (ht-array ht) (make-array size :initial-element nil))
+ ;; and re-add its contents
+ (rtl:dovec (item temp) ; similar to DOLIST but for arrays
+ (add-item (car item) (cdr item)))) 
+ ;; Adds the new item
+ (incf (ht-count ht)) 
+ (add-item key val))))
+ 
+
+ 2. [@2] Note: you should not change the functions noted in the code above.
+ 3. [@3] Type ~(load \"~/Lab07/solution.lisp\")~ on the REPL to compile the program (you may be required to provide the full path of the file). You may ignore the STYLE-WARNING about function HT-ADD. It was issued because a call to function HT-ADD appears in the program before that function is defined in the program. That is ok. The definition of HT-ADD appears later in the program and will be ultimately loaded.
+ 4. [@4] Experiment using HT-ADD and HT-GET to respectively add and get elements from the hash-table.
+ 5. [@5] Type the code below on the REPL to test how to add a key-value pair (a 1) in a hash-table:
+ #+BEGIN_SRC LISP
+ (let ((htable (ht-create nil)))
+ (ht-add 'a 1 htable)
+ (multiple-value-bind (k v) (ht-get 'a htable)
+ (format t \"Table: ~a~%Key: ~a~%Value: ~a (i.e., the key-value pair's index in the backing array)\" htable k v)))
+ 
+
+ 6. [@6] Implement the following changes to HT-ADD and HT-GET:
+ - HT-ADD:
+ - HT-ADD should return NIL if the key to be added is already in the hash-table.
+ - Deleted items: If HT-ADD is provided a key-value item that hashes to the location of a previously deleted item, then it should insert the item in that location (see Step 7 below).
+ For example: 
+
+ 
+The expression below
+ 
+(LET ((HT (HT-CREATE NIL)))
+ (HT-ADD 'A 1 HT)
+ (HT-ADD 'A 2 HT))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(LET ((HT (HT-CREATE '((A 1) (B 2)))))
+ (HT-DELETE 'A HT)
+ (HT-ADD 'C 3 HT)
+ (LIST (HT-GET 'C HT) (HT-COUNT HT)))
+
+should evaluate to
+
+(3 2)
+
+ 
+
+ - HT-GET:
+ - HT-GET should return NIL if the provided key hashes to a location of previously deleted item (see Step 7 below). For example: 
+ 
+The expression below
+ 
+(LET ((HT (HT-CREATE '((A 1)))))
+ (HT-DELETE 'A HT)
+ (HT-GET 'A HT))
+
+should evaluate to
+
+NIL
+
+ 
+
+ 7. [@7] Considering that the program you are developing defines operations for a hash table using **open addressing**, it is necessary to write the HT-DELETE function. This function, given a key and a hash-table, \"deletes\" the respective item from the hash-table. I encourage you to review the lecture notes to refresh your understanding of how item deletion is implemented in hash tables using open addressing. You can also ask ChatGPT for further assistance. Below are some examples on how HT-DELETE works:
+ 
+The expression below
+ 
+(LET ((HT (HT-CREATE '((A 1) (B 2)))))
+ (HT-DELETE 'A HT)
+ (HT-GET 'A HT))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(LET ((HT (HT-CREATE '((A 1)))))
+ (HT-DELETE 'B HT)
+ (HT-GET 'A HT))
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(LET ((HT (HT-CREATE NIL)))
+ (HT-DELETE 'A HT))
+
+should evaluate to
+
+NIL
+
+ 
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE HT-ADD HT-GET HT-DELETE))
+   (DEFTEST TEST-HT-ADD NIL
+    (CHECK
+     (EQUALP
+      (LET ((HT (HT-CREATE NIL)))
+        (HT-ADD 'A 1 HT)
+        (HT-ADD 'A 2 HT))
+      NIL)
+     (EQUALP
+      (LET ((HT (HT-CREATE '((A 1) (B 2)))))
+        (HT-DELETE 'A HT)
+        (HT-ADD 'C 3 HT)
+        (LIST (HT-GET 'C HT) (HT-COUNT HT)))
+      '(3 2))))
+   (DEFTEST TEST-HT-GET NIL
+    (CHECK
+     (EQUALP
+      (LET ((HT (HT-CREATE '((A 1)))))
+        (HT-DELETE 'A HT)
+        (HT-GET 'A HT))
+      NIL)))
+   (DEFTEST TEST-HT-DELETE NIL
+    (CHECK
+     (EQUALP
+      (LET ((HT (HT-CREATE '((A 1) (B 2)))))
+        (HT-DELETE 'A HT)
+        (HT-GET 'A HT))
+      NIL)
+     (EQUALP
+      (LET ((HT (HT-CREATE '((A 1)))))
+        (HT-DELETE 'B HT)
+        (HT-GET 'A HT))
+      1)
+     (EQUALP
+      (LET ((HT (HT-CREATE NIL)))
+        (HT-DELETE 'A HT))
+      NIL)))
+   (DEFUN TEST-Q1 ()
+     (TEST-HT-DELETE)
+     (TEST-HT-GET)
+     (TEST-HT-ADD)
+     (FMAKUNBOUND 'HT-DELETE)
+     (FMAKUNBOUND 'HT-GET)
+     (FMAKUNBOUND 'HT-ADD)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ()))))

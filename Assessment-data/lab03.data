@@ -1,0 +1,233 @@
+(("folder" "~/lab03/") ("questions" ("q1" "q2" "q3" "q4"))
+ ("fnames" (GENERATE-SQUARES FIBONACCI-ITERATIVE POWER-SERIES FIND-FIRST))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab03/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab03/q1.lisp\")
+ 
+
+Write a function called GENERATE-SQUARES that takes a non-negative integer $n$ as an argument. The function should use DOTIMES to generate a list containing the squares of numbers from 1 up to $n$. For example, if $n$ is 3, the function should return ~(1 4 9)~. If $n$ is 0, it should return an empty list ~()~.
+
+
+The expression below
+ 
+(GENERATE-SQUARES 3)
+
+should evaluate to
+
+(1 4 9)
+
+The expression below
+ 
+(GENERATE-SQUARES 0)
+
+should evaluate to
+
+NIL
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE GENERATE-SQUARES))
+   (DEFTEST TEST-GENERATE-SQUARES NIL
+    (CHECK (EQUALP (GENERATE-SQUARES 3) '(1 4 9))
+     (EQUALP (GENERATE-SQUARES 0) 'NIL)))
+   (DEFUN TEST-Q1 () (TEST-GENERATE-SQUARES) (FMAKUNBOUND 'GENERATE-SQUARES)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab03/q2.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab03/q2.lisp\")
+ 
+
+Write a function called FIBONACCI-ITERATIVE that takes a non-negative integer $n$ as an argument and returns the n-th Fibonacci number. Use a DO loop for this implementation. Recall that the Fibonacci sequence starts with $F_0 = 0$, $F_1 = 1$, and $F_k = F_{k-1} + F_{k-2}$ for $k \\geq 2$.
+
+
+The expression below
+ 
+(FIBONACCI-ITERATIVE 0)
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(FIBONACCI-ITERATIVE 1)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(FIBONACCI-ITERATIVE 6)
+
+should evaluate to
+
+8
+
+The expression below
+ 
+(FIBONACCI-ITERATIVE 10)
+
+should evaluate to
+
+55
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE FIBONACCI-ITERATIVE))
+   (DEFTEST TEST-FIBONACCI-ITERATIVE NIL
+    (CHECK (EQUALP (FIBONACCI-ITERATIVE 0) 0)
+     (EQUALP (FIBONACCI-ITERATIVE 1) 1) (EQUALP (FIBONACCI-ITERATIVE 6) 8)
+     (EQUALP (FIBONACCI-ITERATIVE 10) 55)))
+   (DEFUN TEST-Q2 ()
+     (TEST-FIBONACCI-ITERATIVE)
+     (FMAKUNBOUND 'FIBONACCI-ITERATIVE)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab03/q3.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *EXPT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab03/q3.lisp\")
+ 
+
+Write a function called POWER-SERIES that takes two arguments: a base b (a number) and an exponent e (a non-negative integer). The function should use a DO or DO* loop to calculate $b^e$ iteratively, without using the built-in EXPT function. You should also return the number of multiplications performed.
+
+
+The expression below
+ 
+(POWER-SERIES 2 3)
+
+should evaluate to
+
+8
+
+The expression below
+ 
+(POWER-SERIES 5 0)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(POWER-SERIES 10 2)
+
+should evaluate to
+
+100
+
+
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (EXPT))
+  ("given" (DECLAIM (NOTINLINE POWER-SERIES))
+   (DEFTEST TEST-POWER-SERIES NIL
+    (CHECK (EQUALP (POWER-SERIES 2 3) (VALUES 8 3))
+     (EQUALP (POWER-SERIES 5 0) (VALUES 1 0))
+     (EQUALP (POWER-SERIES 10 2) (VALUES 100 2))))
+   (DEFUN TEST-Q3 () (TEST-POWER-SERIES) (FMAKUNBOUND 'POWER-SERIES)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ())))
+ ("q4"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab03/q4.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *FIND*, *FIND-IF*, *FIND-IF-NOT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab03/q4.lisp\")
+ 
+
+Write a function called FIND-FIRST that takes as arguments a list of integers numbers, an integer $y$ , and a comparison function on integers (i.e., ~=~, ~/=~, ~<~, ~>~, ~<=~, or ~>=~) . FIND-FIRST should use a DOLIST loop to find and return the first number $x$ in the list that satifies the comparison ~(f x y)~, where $f$ is a comparison function. If no such number is found, return NIL.
+
+
+The expression below
+ 
+(FIND-FIRST '(10 7 21 4 35) 7 #'=)
+
+should evaluate to
+
+7
+
+The expression below
+ 
+(FIND-FIRST '(10 7 21 4 35) 7 #'<)
+
+should evaluate to
+
+4
+
+The expression below
+ 
+(FIND-FIRST '(1 2 3 4 5) 6 #'>)
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(FIND-FIRST 'NIL 5 #'<=)
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(FIND-FIRST '(15 30 45) 15 #'>=)
+
+should evaluate to
+
+15
+
+
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (FIND FIND-IF FIND-IF-NOT))
+  ("given" (DECLAIM (NOTINLINE FIND-FIRST))
+   (DEFTEST TEST-FIND-FIRST NIL
+    (CHECK (EQUALP (FIND-FIRST '(10 7 21 4 35) 7 #'=) 7)
+     (EQUALP (FIND-FIRST '(10 7 21 4 35) 7 #'<) 4)
+     (EQUALP (FIND-FIRST '(1 2 3 4 5) 6 #'>) NIL)
+     (EQUALP (FIND-FIRST 'NIL 5 #'<=) NIL)
+     (EQUALP (FIND-FIRST '(15 30 45) 15 #'>=) 15)))
+   (DEFUN TEST-Q4 () (TEST-FIND-FIRST) (FMAKUNBOUND 'FIND-FIRST)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q4 ()))))

@@ -1,0 +1,404 @@
+(("folder" "~/lab04/") ("questions" ("q1" "q2" "q3" "q4" "q5"))
+ ("fnames"
+  (MAKE-POINT-LIST GET-POINT-LIST-X GET-POINT-LIST-Y DISTANCE-BETWEEN-POINTS
+   CREATE-INITIALIZED-ARRAY BUILD-DYNAMIC-ARRAY COUNT-POSITIVE-NUMBERS))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab04/q1.lisp\")
+ 
+
+*Part 1*:
+
+Write a function called MAKE-POINT-LIST that takes two numbers, x-coord and y-coord, and returns a new list representing a point (x-coord y-coord). Additionally, write a function called GET-POINT-LIST-X that takes a point list (e.g., (10 20)) and returns its X coordinate (the first element), and GET-POINT-LIST-Y that returns its Y coordinate (the second element).
+
+
+The expression below
+ 
+(GET-POINT-LIST-X (MAKE-POINT-LIST 10 20))
+
+should evaluate to
+
+10
+
+The expression below
+ 
+(GET-POINT-LIST-Y (MAKE-POINT-LIST 10 20))
+
+should evaluate to
+
+20
+
+The expression below
+ 
+(MAKE-POINT-LIST 0 0)
+
+should evaluate to
+
+(0 0)
+
+
+
+
+The expression below
+ 
+(GET-POINT-LIST-X '(5 8))
+
+should evaluate to
+
+5
+
+The expression below
+ 
+(GET-POINT-LIST-X '(-3 12))
+
+should evaluate to
+
+-3
+
+
+
+
+The expression below
+ 
+(GET-POINT-LIST-Y '(5 8))
+
+should evaluate to
+
+8
+
+The expression below
+ 
+(GET-POINT-LIST-Y '(-3 12))
+
+should evaluate to
+
+12
+
+
+
+*Part 2:*
+
+As an addition, write a function called DISTANCE-BETWEEN-POINTS that takes two point lists, $point1$ and $point2$, and calculates the Euclidean distance between them. The Euclidean distance between two points $(x_1, y_1)$ and $(x_2, y_2)$ is given by the formula: $\\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$. Your function should return a floating-point number.
+
+
+The expression below
+ 
+(DISTANCE-BETWEEN-POINTS '(0 0) '(3 4))
+
+should evaluate to
+
+5.0
+
+The expression below
+ 
+(DISTANCE-BETWEEN-POINTS '(1 1) '(-2 -3))
+
+should evaluate to
+
+5.0
+
+The expression below
+ 
+(DISTANCE-BETWEEN-POINTS '(5 5) '(5 5))
+
+should evaluate to
+
+0.0
+
+The expression below
+ 
+(DISTANCE-BETWEEN-POINTS '(0 0) '(1 0))
+
+should evaluate to
+
+1.0
+
+
+"))
+  NIL
+  ("given"
+   (DECLAIM
+    (NOTINLINE MAKE-POINT-LIST GET-POINT-LIST-X GET-POINT-LIST-Y
+     DISTANCE-BETWEEN-POINTS))
+   (DEFTEST TEST-MAKE-POINT-LIST NIL
+    (CHECK (EQUALP (GET-POINT-LIST-X (MAKE-POINT-LIST 10 20)) 10)
+     (EQUALP (GET-POINT-LIST-Y (MAKE-POINT-LIST 10 20)) 20)
+     (EQUALP (MAKE-POINT-LIST 0 0) '(0 0))))
+   (DEFTEST TEST-GET-POINT-LIST-X NIL
+    (CHECK (EQUALP (GET-POINT-LIST-X '(5 8)) 5)
+     (EQUALP (GET-POINT-LIST-X '(-3 12)) -3)))
+   (DEFTEST TEST-GET-POINT-LIST-Y NIL
+    (CHECK (EQUALP (GET-POINT-LIST-Y '(5 8)) 8)
+     (EQUALP (GET-POINT-LIST-Y '(-3 12)) 12)))
+   (DEFTEST TEST-DISTANCE-BETWEEN-POINTS NIL
+    (CHECK (EQUALP (DISTANCE-BETWEEN-POINTS '(0 0) '(3 4)) 5.0)
+     (EQUALP (DISTANCE-BETWEEN-POINTS '(1 1) '(-2 -3)) 5.0)
+     (EQUALP (DISTANCE-BETWEEN-POINTS '(5 5) '(5 5)) 0.0)
+     (EQUALP (DISTANCE-BETWEEN-POINTS '(0 0) '(1 0)) 1.0)))
+   (DEFUN TEST-Q1 ()
+     (TEST-DISTANCE-BETWEEN-POINTS)
+     (TEST-GET-POINT-LIST-Y)
+     (TEST-GET-POINT-LIST-X)
+     (TEST-MAKE-POINT-LIST)
+     (FMAKUNBOUND 'DISTANCE-BETWEEN-POINTS)
+     (FMAKUNBOUND 'GET-POINT-LIST-Y)
+     (FMAKUNBOUND 'GET-POINT-LIST-X)
+     (FMAKUNBOUND 'MAKE-POINT-LIST)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q2.lisp* .
+
+
+
+Define a Common Lisp function named MY-COMPLEXITY-ANSWER that, when evaluated, returns the symbol corresponding to your chosen answer (e.g., if you believe the answer is B, your function should return ='B=).
+
+
+;; Example of how your function should look (replace 'X with your actual answer)
+(defun my-complexity-answer ()
+ 'X)
+
+"))
+  NIL ("given" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ()))
+  ("hidden" (DECLAIM (NOTINLINE MY-COMPLEXITY-ANSWER))
+   (DEFTEST TEST-MY-COMPLEXITY-ANSWER NIL
+    (CHECK (EQUALP (MY-COMPLEXITY-ANSWER) 'A)))
+   (DEFUN TEST-Q2 ()
+     (TEST-MY-COMPLEXITY-ANSWER)
+     (FMAKUNBOUND 'MY-COMPLEXITY-ANSWER))))
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q3.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab04/q3.lisp\")
+ 
+
+Write a function called CREATE-INITIALIZED-ARRAY that takes a positive integer size as an argument. The function should create a static one-dimensional array of that size and initialize each element with its index (starting from 0). The function should return the created array.
+
+
+The expression below
+ 
+(AREF (CREATE-INITIALIZED-ARRAY 3) 0)
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(AREF (CREATE-INITIALIZED-ARRAY 3) 1)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(AREF (CREATE-INITIALIZED-ARRAY 3) 2)
+
+should evaluate to
+
+2
+
+The expression below
+ 
+(ARRAY-TOTAL-SIZE (CREATE-INITIALIZED-ARRAY 5))
+
+should evaluate to
+
+5
+
+The expression below
+ 
+(AREF (CREATE-INITIALIZED-ARRAY 1) 0)
+
+should evaluate to
+
+0
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE CREATE-INITIALIZED-ARRAY))
+   (DEFTEST TEST-CREATE-INITIALIZED-ARRAY NIL
+    (CHECK (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 3) 0) 0)
+     (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 3) 1) 1)
+     (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 3) 2) 2)
+     (EQUALP (ARRAY-TOTAL-SIZE (CREATE-INITIALIZED-ARRAY 5)) 5)
+     (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 1) 0) 0)))
+   (DEFUN TEST-Q3 ()
+     (TEST-CREATE-INITIALIZED-ARRAY)
+     (FMAKUNBOUND 'CREATE-INITIALIZED-ARRAY)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ())))
+ ("q4"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q4.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab04/q4.lisp\")
+ 
+
+Write a function called BUILD-DYNAMIC-ARRAY that takes a list of numbers as an argument. The function should create an empty adjustable one-dimensional array and then use VECTOR-PUSH-EXTEND to add each number from the elements list into the array. The function should return the final dynamic array.
+
+
+The expression below
+ 
+(AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 0)
+
+should evaluate to
+
+10
+
+The expression below
+ 
+(AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 1)
+
+should evaluate to
+
+20
+
+The expression below
+ 
+(AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 2)
+
+should evaluate to
+
+30
+
+The expression below
+ 
+(ARRAY-TOTAL-SIZE (BUILD-DYNAMIC-ARRAY '(1 2)))
+
+should evaluate to
+
+2
+
+The expression below
+ 
+(BUILD-DYNAMIC-ARRAY 'NIL)
+
+should evaluate to
+
+#()
+
+The expression below
+ 
+(AREF (BUILD-DYNAMIC-ARRAY '(5)) 0)
+
+should evaluate to
+
+5
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE BUILD-DYNAMIC-ARRAY))
+   (DEFTEST TEST-BUILD-DYNAMIC-ARRAY NIL
+    (CHECK (EQUALP (AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 0) 10)
+     (EQUALP (AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 1) 20)
+     (EQUALP (AREF (BUILD-DYNAMIC-ARRAY '(10 20 30)) 2) 30)
+     (EQUALP (ARRAY-TOTAL-SIZE (BUILD-DYNAMIC-ARRAY '(1 2))) 2)
+     (EQUALP (BUILD-DYNAMIC-ARRAY 'NIL) #())
+     (EQUALP (AREF (BUILD-DYNAMIC-ARRAY '(5)) 0) 5)))
+   (DEFUN TEST-Q4 ()
+     (TEST-BUILD-DYNAMIC-ARRAY)
+     (FMAKUNBOUND 'BUILD-DYNAMIC-ARRAY)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q4 ())))
+ ("q5"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q5.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *COUNT-IF*, *COUNT-IF-NOT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab04/q5.lisp\")
+ 
+
+Write a function called COUNT-POSITIVE-NUMBERS that takes a one-dimensional array of numbers as an argument. The function should iterate through the array and count how many numbers are strictly greater than 0. The function should return this count.
+
+
+The expression below
+ 
+(COUNT-POSITIVE-NUMBERS (VECTOR 1 -2 3 0 5))
+
+should evaluate to
+
+3
+
+The expression below
+ 
+(COUNT-POSITIVE-NUMBERS (VECTOR -1 -5 0))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(COUNT-POSITIVE-NUMBERS (VECTOR))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(COUNT-POSITIVE-NUMBERS (VECTOR 7))
+
+should evaluate to
+
+1
+
+
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS (COUNT COUNT-IF COUNT-IF-NOT))
+  ("given" (DECLAIM (NOTINLINE COUNT-POSITIVE-NUMBERS))
+   (DEFTEST TEST-COUNT-POSITIVE-NUMBERS NIL
+    (CHECK (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR 1 -2 3 0 5)) 3)
+     (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR -1 -5 0)) 0)
+     (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR)) 0)
+     (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR 7)) 1)))
+   (DEFUN TEST-Q5 ()
+     (TEST-COUNT-POSITIVE-NUMBERS)
+     (FMAKUNBOUND 'COUNT-POSITIVE-NUMBERS)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q5 ()))))

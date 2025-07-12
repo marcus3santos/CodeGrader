@@ -1,0 +1,173 @@
+(("folder" "~/lab02/") ("questions" ("q1" "q2" "q3"))
+ ("fnames" (LIST-SUM COUNT-ODD-NUMBERS FILTER-EVEN-NUMBERS))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab02/q1.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *LOOP*, *DOTIMES*, *DO*, *DO**, *DOLIST*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab02/q1.lisp\")
+ 
+
+Write a **recursive** function called LIST-SUM that takes a list of numbers as its argument and returns the sum of all numbers in the list. Your function should adhere to the three laws of recursion. Consider an empty list as your base case.
+
+
+The expression below
+ 
+(LIST-SUM '(1 2 3 4 5))
+
+should evaluate to
+
+15
+
+The expression below
+ 
+(LIST-SUM '(10))
+
+should evaluate to
+
+10
+
+The expression below
+ 
+(LIST-SUM 'NIL)
+
+should evaluate to
+
+0
+
+
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS
+   (LOOP DOTIMES
+         DO DO* DOLIST))
+  ("given" (DECLAIM (NOTINLINE LIST-SUM))
+   (DEFTEST TEST-LIST-SUM NIL
+    (CHECK (EQUALP (LIST-SUM '(1 2 3 4 5)) 15) (EQUALP (LIST-SUM '(10)) 10)
+     (EQUALP (LIST-SUM 'NIL) 0)))
+   (DEFUN TEST-Q1 () (TEST-LIST-SUM) (FMAKUNBOUND 'LIST-SUM)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab02/q2.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *LOOP*, *DOTIMES*, *DO*, *DO**, *DOLIST*, *COUNT*, *COUNT-IF*, *COUNT-IF-NOT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab02/q2.lisp\")
+ 
+
+Write a **tail-recursive** function called COUNT-ODD-NUMBERS that takes a list of numbers as its argument and returns the count of odd numbers in the list. You should use an accumulator parameter to make the function tail-recursive.
+
+
+The expression below
+ 
+(COUNT-ODD-NUMBERS '(1 2 3 4 5))
+
+should evaluate to
+
+3
+
+The expression below
+ 
+(COUNT-ODD-NUMBERS '(2 4 6 8))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(COUNT-ODD-NUMBERS 'NIL)
+
+should evaluate to
+
+0
+
+
+
+Reflect on this: What is the difference between the LIST-SUM function (from Exercise 1) and your COUNT-ODD-NUMBERS function (from Exercise 2) in terms of tail-recursion vs. non-tail-recursion. Specifically, why one is tail-recursive and the other is not.
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS
+   (LOOP DOTIMES
+         DO DO* DOLIST
+         COUNT COUNT-IF COUNT-IF-NOT))
+  ("given" (DECLAIM (NOTINLINE COUNT-ODD-NUMBERS))
+   (DEFTEST TEST-COUNT-ODD-NUMBERS NIL
+    (CHECK (EQUALP (COUNT-ODD-NUMBERS '(1 2 3 4 5)) 3)
+     (EQUALP (COUNT-ODD-NUMBERS '(2 4 6 8)) 0)
+     (EQUALP (COUNT-ODD-NUMBERS 'NIL) 0)))
+   (DEFUN TEST-Q2 ()
+     (TEST-COUNT-ODD-NUMBERS)
+     (FMAKUNBOUND 'COUNT-ODD-NUMBERS)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab02/q3.lisp* .
+ - You may create helper functions in your program file. 
+ - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *LOOP*, *DOTIMES*, *DO*, *DO**, *DOLIST*, *REMOVE*, *REMOVE-IF*, *REMOVE-IF-NOT*, *DELETE*, *DELETE-IF*, *DELETE-IF-NOT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab02/q3.lisp\")
+ 
+
+Write a **recursive** function called FILTER-EVEN-NUMBERS that takes a list of numbers as its argument and returns a new list containing only the even numbers from the original list, maintaining their relative order. This function should *not* be tail-recursive. Consider an empty list as your base case.
+
+
+The expression below
+ 
+(FILTER-EVEN-NUMBERS '(1 2 3 4 5 6))
+
+should evaluate to
+
+(2 4 6)
+
+The expression below
+ 
+(FILTER-EVEN-NUMBERS '(1 3 5))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(FILTER-EVEN-NUMBERS 'NIL)
+
+should evaluate to
+
+NIL
+
+
+"))
+  ("forbidden-symbols" :PENALTY 80 :SYMBOLS
+   (LOOP DOTIMES
+         DO DO* DOLIST REMOVE REMOVE-IF REMOVE-IF-NOT DELETE DELETE-IF DELETE-IF-NOT))
+  ("given" (DECLAIM (NOTINLINE FILTER-EVEN-NUMBERS))
+   (DEFTEST TEST-FILTER-EVEN-NUMBERS NIL
+    (CHECK (EQUALP (FILTER-EVEN-NUMBERS '(1 2 3 4 5 6)) '(2 4 6))
+     (EQUALP (FILTER-EVEN-NUMBERS '(1 3 5)) 'NIL)
+     (EQUALP (FILTER-EVEN-NUMBERS 'NIL) 'NIL)))
+   (DEFUN TEST-Q3 ()
+     (TEST-FILTER-EVEN-NUMBERS)
+     (FMAKUNBOUND 'FILTER-EVEN-NUMBERS)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ()))))

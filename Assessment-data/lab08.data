@@ -1,0 +1,228 @@
+(("folder" "~/lab08/") ("questions" ("q1")) ("fnames" (EVALUATE))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab08/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab08/q1.lisp\")
+ 
+
+ 1. [@1] Copy-paste the code below to your **q1.lisp** buffer and save it. We studied the operation of function EVALUATE in class. This program defines an expression evaluator for /μLisp/ .
+ 
+ (defun evaluate (e env)
+ (if (atom e)
+ (cond
+ ((constant? e) e)
+ ((symbol? e) (lookup e env))
+ ((or (procedure? e) (numberp e)) e)
+ (t (wrong \"Could not evaluate expression: ~S~%\" e)))
+ (case (car e)
+ ((progn) (eprogn (cdr e) env))
+ ((setf) (update! (cadr e) env (evaluate (caddr e) env)))
+ (t (invoke (evaluate (car e) env) (evlist (cdr e) env))))))
+ 
+ (defun lookup (e env)
+ (let ((v (assoc e env)))
+ (if v (cdr v)
+ (wrong \"Unbound-variable: ~S~%\" e))))
+ 
+ (defun update! (var env value)
+ (let ((kv (assoc var env)))
+ (setf (cdr kv) value)))
+ 
+ (defun eprogn (el env)
+ (let ((result (evaluate (car el) env)))
+ (dolist (e (cdr el) result)
+ (setf result (evaluate e env)))))
+ 
+ (defun procedure? (fn)
+ (or (eql fn '+)
+ (eql fn '-)
+ (eql fn '*)
+ (eql fn '/)))
+ 
+ (defun wrong (m &optional v)
+ (format t m v))
+ 
+ (defun invoke (fn args)
+ (if (procedure? fn)
+ (apply fn args)
+ (wrong \"Could not evaluate function: ~S\" fn)))
+ 
+ (defun evlist (lis env)
+ (when lis
+ (let ((a (evaluate (car lis) env)))
+ (cons a (evlist (cdr lis) env)))))
+ 
+ (defun constant? (s)
+ (or (eql s 'nil)
+ (eql s 't)
+ (stringp s)))
+ 
+ (defun symbol? (s)
+ (and (symbolp s) (not (procedure? s)) (not (constant? s))))
+ 
+ 2. [@2] Add to function EVALUATE the capacity to evaluate ~IF~, ~WHEN~ and ~UNLESS~ expressions. The syntax of these expressions is provided in the grammar above; we reproduce the relevant grammar rules here, for your easy reference:
+ #+BEGIN_SRC example
+ <if-when-unless-expr> ::= \"(\" \"IF\" <test-expr> <expr> <expr>\")\" |\"(\" \"WHEN\" <test-expr> <expr-seq> \")\" | \"(\" \"UNLESS\" <test-expr> <expr-seq> \")\"
+ <test-expr> :: = <expr>
+ <expr-seq> ::= <expr> <expr-seq> | <expr>
+ 
+
+ For example, here are some test cases for your reference:
+
+ 
+The expression below
+ 
+(EVALUATE
+ '(IF 1
+ \"positive\"
+ \"zero or negative\")
+ NIL)
+
+should evaluate to
+
+\"positive\"
+
+The expression below
+ 
+(EVALUATE
+ '(IF NIL
+ (IF T
+ \"a\"
+ \"b\")
+ \"else-branch\")
+ NIL)
+
+should evaluate to
+
+\"else-branch\"
+
+The expression below
+ 
+(EVALUATE
+ '(IF \"a string\"
+ (IF T
+ \"a\"
+ \"b\")
+ \"else-branch\")
+ NIL)
+
+should evaluate to
+
+\"a\"
+
+The expression below
+ 
+(EVALUATE '(WHEN T 1) NIL)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(EVALUATE '(WHEN NIL 1) NIL)
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(EVALUATE '(WHEN T (+ 1 2)) NIL)
+
+should evaluate to
+
+3
+
+The expression below
+ 
+(EVALUATE '(UNLESS T 1) NIL)
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(EVALUATE '(UNLESS NIL 1) NIL)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(EVALUATE '(UNLESS NIL (+ 1 2)) NIL)
+
+should evaluate to
+
+3
+
+The expression below
+ 
+(EVALUATE '(WHEN T (SETF X 1) (+ X 1)) (LIST (CONS 'X 0)))
+
+should evaluate to
+
+2
+
+The expression below
+ 
+(EVALUATE '(UNLESS NIL (SETF Y 1) (+ Y 1)) (LIST (CONS 'Y 0)))
+
+should evaluate to
+
+2
+
+ 
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE EVALUATE))
+   (DEFTEST TEST-EVALUATE NIL
+    (CHECK
+     (EQUALP
+      (EVALUATE
+       '(IF 1
+            "positive"
+            "zero or negative")
+       NIL)
+      "positive")
+     (EQUALP
+      (EVALUATE
+       '(IF NIL
+            (IF T
+                "a"
+                "b")
+            "else-branch")
+       NIL)
+      "else-branch")
+     (EQUALP
+      (EVALUATE
+       '(IF "a string"
+            (IF T
+                "a"
+                "b")
+            "else-branch")
+       NIL)
+      "a")
+     (EQUALP (EVALUATE '(WHEN T 1) NIL) 1)
+     (EQUALP (EVALUATE '(WHEN NIL 1) NIL) NIL)
+     (EQUALP (EVALUATE '(WHEN T (+ 1 2)) NIL) 3)
+     (EQUALP (EVALUATE '(UNLESS T 1) NIL) NIL)
+     (EQUALP (EVALUATE '(UNLESS NIL 1) NIL) 1)
+     (EQUALP (EVALUATE '(UNLESS NIL (+ 1 2)) NIL) 3)
+     (EQUALP (EVALUATE '(WHEN T (SETF X 1) (+ X 1)) (LIST (CONS 'X 0))) 2)
+     (EQUALP (EVALUATE '(UNLESS NIL (SETF Y 1) (+ Y 1)) (LIST (CONS 'Y 0)))
+             2)))
+   (DEFUN TEST-Q1 () (TEST-EVALUATE) (FMAKUNBOUND 'EVALUATE)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ()))))

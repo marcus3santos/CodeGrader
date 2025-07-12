@@ -1,0 +1,227 @@
+(("folder" "~/lab05/") ("questions" ("q1" "q2"))
+ ("fnames"
+  (SEARCH-FOR-POINT MAKE-NODE GET-NODE-DATA GET-NODE-NEXT LIST-TO-LINKED-LIST
+   SUM-LINKED-LIST LINKED-LIST-TO-LIST))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab05/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab05/q1.lisp\")
+ 
+
+Write a function called SEARCH-FOR-POINT that takes a list of point lists (e.g., '((1 2) (3 4) (5 6))) and a target point list (e.g., '(3 4)) as arguments. The function should return the 0-based index of the *first* occurrence of the target point in the list of points. If the target point is not found, the function should return NIL.
+
+You should consider two points to be equal if their x-coordinates and y-coordinates are both equal. You may find it helpful to reuse or adapt concepts from Lab 4 regarding point manipulation.
+
+
+The expression below
+ 
+(SEARCH-FOR-POINT '((10 20) (30 40) (50 60)) '(30 40))
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(SEARCH-FOR-POINT '((1 1) (2 2) (3 3)) '(4 4))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(SEARCH-FOR-POINT '((0 0) (1 1) (0 0)) '(0 0))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(SEARCH-FOR-POINT 'NIL '(1 2))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(SEARCH-FOR-POINT '((7 8)) '(7 8))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(SEARCH-FOR-POINT '((1 2) (3 4) (1 2)) '(1 2))
+
+should evaluate to
+
+0
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE SEARCH-FOR-POINT))
+   (DEFTEST TEST-SEARCH-FOR-POINT NIL
+    (CHECK (EQUALP (SEARCH-FOR-POINT '((10 20) (30 40) (50 60)) '(30 40)) 1)
+     (EQUALP (SEARCH-FOR-POINT '((1 1) (2 2) (3 3)) '(4 4)) NIL)
+     (EQUALP (SEARCH-FOR-POINT '((0 0) (1 1) (0 0)) '(0 0)) 0)
+     (EQUALP (SEARCH-FOR-POINT 'NIL '(1 2)) NIL)
+     (EQUALP (SEARCH-FOR-POINT '((7 8)) '(7 8)) 0)
+     (EQUALP (SEARCH-FOR-POINT '((1 2) (3 4) (1 2)) '(1 2)) 0)))
+   (DEFUN TEST-Q1 () (TEST-SEARCH-FOR-POINT) (FMAKUNBOUND 'SEARCH-FOR-POINT)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab05/q2.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab05/q2.lisp\")
+ 
+
+*Part 1:*
+
+Write a function called MAKE-NODE that takes a number (data) and a next-node (which can be NIL or another node array) and returns a two-element array with data in index 0 and next-node in index 1.
+
+Additionally, write two accessor functions: GET-NODE-DATA that takes a node and returns its data (index 0), and GET-NODE-NEXT that returns the next node (index 1).
+
+
+The expression below
+ 
+(MAKE-NODE 10 NIL)
+
+should evaluate to
+
+#(10 NIL)
+
+The expression below
+ 
+(GET-NODE-DATA (MAKE-NODE 10 NIL))
+
+should evaluate to
+
+10
+
+The expression below
+ 
+(GET-NODE-NEXT (MAKE-NODE 10 NIL))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(GET-NODE-DATA (GET-NODE-NEXT (MAKE-NODE 20 (MAKE-NODE 30 NIL))))
+
+should evaluate to
+
+30
+
+
+
+
+The expression below
+ 
+(GET-NODE-DATA (MAKE-NODE 5 NIL))
+
+should evaluate to
+
+5
+
+The expression below
+ 
+(GET-NODE-DATA (MAKE-NODE 10 (MAKE-NODE 20 NIL)))
+
+should evaluate to
+
+10
+
+
+
+
+The expression below
+ 
+(GET-NODE-NEXT (MAKE-NODE 5 NIL))
+
+should evaluate to
+
+NIL
+
+The expression below
+ 
+(GET-NODE-NEXT (MAKE-NODE 10 (MAKE-NODE 20 NIL)))
+
+should evaluate to
+
+#(20 NIL)
+
+
+"))
+  NIL
+  ("given"
+   (DECLAIM
+    (NOTINLINE MAKE-NODE GET-NODE-DATA GET-NODE-NEXT LIST-TO-LINKED-LIST
+     SUM-LINKED-LIST LINKED-LIST-TO-LIST))
+   (DEFTEST TEST-MAKE-NODE NIL
+    (CHECK (EQUALP (MAKE-NODE 10 NIL) #(10 NIL))
+     (EQUALP (GET-NODE-DATA (MAKE-NODE 10 NIL)) 10)
+     (EQUALP (GET-NODE-NEXT (MAKE-NODE 10 NIL)) NIL)
+     (EQUALP (GET-NODE-DATA (GET-NODE-NEXT (MAKE-NODE 20 (MAKE-NODE 30 NIL))))
+             30)))
+   (DEFTEST TEST-GET-NODE-DATA NIL
+    (CHECK (EQUALP (GET-NODE-DATA (MAKE-NODE 5 NIL)) 5)
+     (EQUALP (GET-NODE-DATA (MAKE-NODE 10 (MAKE-NODE 20 NIL))) 10)))
+   (DEFTEST TEST-GET-NODE-NEXT NIL
+    (CHECK (EQUALP (GET-NODE-NEXT (MAKE-NODE 5 NIL)) NIL)
+     (EQUALP (GET-NODE-NEXT (MAKE-NODE 10 (MAKE-NODE 20 NIL))) #(20 NIL))))
+   (DEFTEST TEST-LIST-TO-LINKED-LIST NIL
+    (CHECK (EQUALP (GET-NODE-DATA (LIST-TO-LINKED-LIST '(1 2 3))) 1)
+     (EQUALP (GET-NODE-DATA (GET-NODE-NEXT (LIST-TO-LINKED-LIST '(1 2 3)))) 2)
+     (EQUALP (LIST-TO-LINKED-LIST 'NIL) NIL)
+     (EQUALP (GET-NODE-DATA (LIST-TO-LINKED-LIST '(5))) 5)))
+   (DEFTEST TEST-SUM-LINKED-LIST NIL
+    (CHECK (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(1 2 3))) 6)
+     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(10))) 10)
+     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST 'NIL)) 0)
+     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(-1 0 1))) 0)))
+   (DEFTEST TEST-LINKED-LIST-TO-LIST NIL
+    (CHECK
+     (EQUALP (LINKED-LIST-TO-LIST (LIST-TO-LINKED-LIST '(1 2 3))) '(1 2 3))
+     (EQUALP (LINKED-LIST-TO-LIST NIL) NIL)
+     (EQUALP (LINKED-LIST-TO-LIST (LIST-TO-LINKED-LIST '(5))) '(5))))
+   (DEFUN TEST-Q2 ()
+     (TEST-LINKED-LIST-TO-LIST)
+     (TEST-SUM-LINKED-LIST)
+     (TEST-LIST-TO-LINKED-LIST)
+     (TEST-GET-NODE-NEXT)
+     (TEST-GET-NODE-DATA)
+     (TEST-MAKE-NODE)
+     (FMAKUNBOUND 'LINKED-LIST-TO-LIST)
+     (FMAKUNBOUND 'SUM-LINKED-LIST)
+     (FMAKUNBOUND 'LIST-TO-LINKED-LIST)
+     (FMAKUNBOUND 'GET-NODE-NEXT)
+     (FMAKUNBOUND 'GET-NODE-DATA)
+     (FMAKUNBOUND 'MAKE-NODE)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ()))))

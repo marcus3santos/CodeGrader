@@ -1,0 +1,208 @@
+(("folder" "~/lab01/") ("questions" ("q1" "q2" "q3"))
+ ("fnames" (SQUARE FACT CALCULATE-DISCOUNT))
+ ("q1"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab01/q1.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab01/q1.lisp\")
+ 
+
+If you typed the definition for the SQUARE function exactly as printed above, you should encounter an error at this point. The system will offer you a chance to enter the debugger. For now, type *q* to quit the evaluation (we'll cover how to use the debugger later). Go back to the *q1.lisp* buffer and edit the definition to insert a space between *** and *x*. Then re-evaluate (or re-compile) the definition and return to the REPL to check if your SQUARE function returns the correct values as shown in the examples below:
+
+
+The expression below
+ 
+(SQUARE 2)
+
+should evaluate to
+
+4
+
+The expression below
+ 
+(SQUARE 0)
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(SQUARE -1)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(SQUARE 10)
+
+should evaluate to
+
+100
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE SQUARE))
+   (DEFTEST TEST-SQUARE NIL
+    (CHECK (EQUALP (SQUARE 2) 4) (EQUALP (SQUARE 0) 0) (EQUALP (SQUARE -1) 1)
+     (EQUALP (SQUARE 10) 100)))
+   (DEFUN TEST-Q1 () (TEST-SQUARE) (FMAKUNBOUND 'SQUARE)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab01/q2.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab01/q2.lisp\")
+ 
+
+Type and save the function definition below in the *~/lab01/q2.lisp* buffer:
+
+
+(defun fact (n)
+ (if (= n 0)
+ (* n (fact (- n 1)))))
+
+
+This code contains a buggy definition of a function meant to compute the factorials of positive integers: $n!=n\\cdot(n-1)\\cdot(n-2)\\cdots3\\cdot2\\cdot1$. Evaluate the expression =(fact 5)= (which is supposed to return 120). Use the debugger to find the bug and correct the definition. Once you have fixed this function definition, it should return the factorial of a number. For example:
+
+
+The expression below
+ 
+(FACT 0)
+
+should evaluate to
+
+1
+
+The expression below
+ 
+(FACT 4)
+
+should evaluate to
+
+24
+
+The expression below
+ 
+(FACT 10)
+
+should evaluate to
+
+3628800
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE FACT))
+   (DEFTEST TEST-FACT NIL
+    (CHECK (EQUALP (FACT 0) 1) (EQUALP (FACT 4) 24)
+     (EQUALP (FACT 10) 3628800)))
+   (DEFUN TEST-Q2 () (TEST-FACT) (FMAKUNBOUND 'FACT)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab01/q3.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab01/q3.lisp\")
+ 
+
+Write a function called CALCULATE-DISCOUNT that takes a single argument, purchase-amount (a non-negative number). This function should apply a discount based on the following rules:
+
+ - If purchase-amount is less than 50, no discount is applied. The function returns the purchase-amount.
+ - If purchase-amount is 50 or more, but less than 100, a 5% discount is applied. The function returns the discounted amount.
+ - If purchase-amount is 100 or more, a 10% discount is applied. The function returns the discounted amount.
+Ensure your function returns the final amount after any applicable discount. Do not use any global variables or composite data structures (like lists or arrays) to store intermediate state.
+
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 30)
+
+should evaluate to
+
+30
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 50)
+
+should evaluate to
+
+47.5
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 75)
+
+should evaluate to
+
+71.25
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 100)
+
+should evaluate to
+
+90
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 150)
+
+should evaluate to
+
+135
+
+The expression below
+ 
+(CALCULATE-DISCOUNT 0)
+
+should evaluate to
+
+0
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE CALCULATE-DISCOUNT))
+   (DEFTEST TEST-CALCULATE-DISCOUNT NIL
+    (CHECK (EQUALP (CALCULATE-DISCOUNT 30) 30)
+     (EQUALP (CALCULATE-DISCOUNT 50) 47.5)
+     (EQUALP (CALCULATE-DISCOUNT 75) 71.25)
+     (EQUALP (CALCULATE-DISCOUNT 100) 90) (EQUALP (CALCULATE-DISCOUNT 150) 135)
+     (EQUALP (CALCULATE-DISCOUNT 0) 0)))
+   (DEFUN TEST-Q3 ()
+     (TEST-CALCULATE-DISCOUNT)
+     (FMAKUNBOUND 'CALCULATE-DISCOUNT)))
+  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ()))))
