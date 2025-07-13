@@ -43,7 +43,7 @@ NIL
     (CHECK (EQUALP (GENERATE-SQUARES 3) '(1 4 9))
      (EQUALP (GENERATE-SQUARES 0) 'NIL)))
    (DEFUN TEST-Q1 () (TEST-GENERATE-SQUARES) (FMAKUNBOUND 'GENERATE-SQUARES)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+  NIL)
  ("q2"
   ("whats-asked"
    ("
@@ -106,7 +106,7 @@ should evaluate to
    (DEFUN TEST-Q2 ()
      (TEST-FIBONACCI-ITERATIVE)
      (FMAKUNBOUND 'FIBONACCI-ITERATIVE)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+  NIL)
  ("q3"
   ("whats-asked"
    ("
@@ -159,7 +159,7 @@ should evaluate to
      (EQUALP (POWER-SERIES 5 0) (VALUES 1 0))
      (EQUALP (POWER-SERIES 10 2) (VALUES 100 2))))
    (DEFUN TEST-Q3 () (TEST-POWER-SERIES) (FMAKUNBOUND 'POWER-SERIES)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ())))
+  NIL)
  ("q4"
   ("whats-asked"
    ("
@@ -230,4 +230,4 @@ should evaluate to
      (EQUALP (FIND-FIRST 'NIL 5 #'<=) NIL)
      (EQUALP (FIND-FIRST '(15 30 45) 15 #'>=) 15)))
    (DEFUN TEST-Q4 () (TEST-FIND-FIRST) (FMAKUNBOUND 'FIND-FIRST)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q4 ()))))
+  NIL))

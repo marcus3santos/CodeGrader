@@ -83,7 +83,7 @@ should evaluate to
      (EQUALP (SEARCH-FOR-POINT '((7 8)) '(7 8)) 0)
      (EQUALP (SEARCH-FOR-POINT '((1 2) (3 4) (1 2)) '(1 2)) 0)))
    (DEFUN TEST-Q1 () (TEST-SEARCH-FOR-POINT) (FMAKUNBOUND 'SEARCH-FOR-POINT)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+  NIL)
  ("q2"
   ("whats-asked"
    ("
@@ -224,4 +224,4 @@ should evaluate to
      (FMAKUNBOUND 'GET-NODE-NEXT)
      (FMAKUNBOUND 'GET-NODE-DATA)
      (FMAKUNBOUND 'MAKE-NODE)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ()))))
+  NIL))

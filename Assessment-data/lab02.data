@@ -53,7 +53,7 @@ should evaluate to
     (CHECK (EQUALP (LIST-SUM '(1 2 3 4 5)) 15) (EQUALP (LIST-SUM '(10)) 10)
      (EQUALP (LIST-SUM 'NIL) 0)))
    (DEFUN TEST-Q1 () (TEST-LIST-SUM) (FMAKUNBOUND 'LIST-SUM)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+  NIL)
  ("q2"
   ("whats-asked"
    ("
@@ -113,7 +113,7 @@ Reflect on this: What is the difference between the LIST-SUM function (from Exer
    (DEFUN TEST-Q2 ()
      (TEST-COUNT-ODD-NUMBERS)
      (FMAKUNBOUND 'COUNT-ODD-NUMBERS)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+  NIL)
  ("q3"
   ("whats-asked"
    ("
@@ -170,4 +170,4 @@ NIL
    (DEFUN TEST-Q3 ()
      (TEST-FILTER-EVEN-NUMBERS)
      (FMAKUNBOUND 'FILTER-EVEN-NUMBERS)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ()))))
+  NIL))

@@ -155,7 +155,7 @@ should evaluate to
      (FMAKUNBOUND 'GET-POINT-LIST-Y)
      (FMAKUNBOUND 'GET-POINT-LIST-X)
      (FMAKUNBOUND 'MAKE-POINT-LIST)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+  NIL)
  ("q2"
   ("whats-asked"
    ("
@@ -176,13 +176,7 @@ Define a Common Lisp function named MY-COMPLEXITY-ANSWER that, when evaluated, r
  'X)
 
 "))
-  NIL ("given" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ()))
-  ("hidden" (DECLAIM (NOTINLINE MY-COMPLEXITY-ANSWER))
-   (DEFTEST TEST-MY-COMPLEXITY-ANSWER NIL
-    (CHECK (EQUALP (MY-COMPLEXITY-ANSWER) 'A)))
-   (DEFUN TEST-Q2 ()
-     (TEST-MY-COMPLEXITY-ANSWER)
-     (FMAKUNBOUND 'MY-COMPLEXITY-ANSWER))))
+  NIL ("given" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())) NIL)
  ("q3"
   ("whats-asked"
    ("
@@ -255,7 +249,7 @@ should evaluate to
    (DEFUN TEST-Q3 ()
      (TEST-CREATE-INITIALIZED-ARRAY)
      (FMAKUNBOUND 'CREATE-INITIALIZED-ARRAY)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ())))
+  NIL)
  ("q4"
   ("whats-asked"
    ("
@@ -337,7 +331,7 @@ should evaluate to
    (DEFUN TEST-Q4 ()
      (TEST-BUILD-DYNAMIC-ARRAY)
      (FMAKUNBOUND 'BUILD-DYNAMIC-ARRAY)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q4 ())))
+  NIL)
  ("q5"
   ("whats-asked"
    ("
@@ -401,4 +395,4 @@ should evaluate to
    (DEFUN TEST-Q5 ()
      (TEST-COUNT-POSITIVE-NUMBERS)
      (FMAKUNBOUND 'COUNT-POSITIVE-NUMBERS)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q5 ()))))
+  NIL))

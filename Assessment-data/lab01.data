@@ -59,7 +59,7 @@ should evaluate to
     (CHECK (EQUALP (SQUARE 2) 4) (EQUALP (SQUARE 0) 0) (EQUALP (SQUARE -1) 1)
      (EQUALP (SQUARE 10) 100)))
    (DEFUN TEST-Q1 () (TEST-SQUARE) (FMAKUNBOUND 'SQUARE)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ())))
+  NIL)
  ("q2"
   ("whats-asked"
    ("
@@ -119,7 +119,7 @@ should evaluate to
     (CHECK (EQUALP (FACT 0) 1) (EQUALP (FACT 4) 24)
      (EQUALP (FACT 10) 3628800)))
    (DEFUN TEST-Q2 () (TEST-FACT) (FMAKUNBOUND 'FACT)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())))
+  NIL)
  ("q3"
   ("whats-asked"
    ("
@@ -205,4 +205,4 @@ should evaluate to
    (DEFUN TEST-Q3 ()
      (TEST-CALCULATE-DISCOUNT)
      (FMAKUNBOUND 'CALCULATE-DISCOUNT)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q3 ()))))
+  NIL))

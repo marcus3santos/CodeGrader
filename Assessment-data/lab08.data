@@ -225,4 +225,4 @@ should evaluate to
      (EQUALP (EVALUATE '(UNLESS NIL (SETF Y 1) (+ Y 1)) (LIST (CONS 'Y 0)))
              2)))
    (DEFUN TEST-Q1 () (TEST-EVALUATE) (FMAKUNBOUND 'EVALUATE)))
-  ("hidden" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q1 ()))))
+  NIL))

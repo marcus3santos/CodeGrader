@@ -16,7 +16,7 @@
 
 (defparameter *std-sub-folder* "pt/")
 
-(defparameter *assessment-data-folder* "~/Codegrader/")
+(defparameter *assessment-data-folder* "~/quicklisp/local-projects/CodeGrader/Assessment-data/")
 
 ;; Root folder where the examples' test case files  and the names of the
 ;; assessment functions are stored.
@@ -382,7 +382,10 @@ Please check your logic and consider adding a termination condition.")
     (dolist (question questions)
       (let* ((question-data (cdr (assoc question assessment-data :test #'string=)))
              (testcase-code (cdr (assoc test-cases-kind question-data :test #'string=))))
-        (load-test-cases testcase-code)))
+        (format t "---~%~a" testcase-code)
+        (if testcase-code
+            (load-test-cases testcase-code)
+            (error "Missing hidden test cases for question ~a. ~%Ensure you have generated the assessment data file by setting the :hidden key to T, as follows: ~%(GEN-EXAM-FILES <sxm file> :HIDDEN T)" question))))
     (setf *package* current)))
 
 #|

@@ -304,15 +304,16 @@
                   (dolist (e rfm-names (reverse res))
                     (push (list 'fmakunbound  (list 'quote (first e))) res))))))))
 
-(defun gen-tcs (qnumber description forbidden penalty examples testcases)
+(defun gen-tcs (qnumber description forbidden penalty examples testcases hidden)
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
               ,(if forbidden
                    `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
               ("given" ,@(gen-tc-code qlabel examples))
-              ("hidden" ,@(gen-tc-code qlabel testcases)))))
+              ,(if hidden
+                   `("hidden" ,@(gen-tc-code qlabel testcases))))))
 
-(defun gen-exam-files (from)
+(defun gen-exam-files (from &key hidden)
   "From is the file containing the assessment's sexprmarkup description"
   (let* ((fn-ext (pathname-type from))
          (assessment-sexpr (if (and fn-ext (string= fn-ext "sxm"))
@@ -331,7 +332,7 @@
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
     (maphash (lambda (k v)
-               (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v))
+               (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) hidden)
                       tcs-driver)
                (push (format nil "q~a" k) questions)
                (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
