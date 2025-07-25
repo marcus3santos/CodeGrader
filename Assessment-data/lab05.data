@@ -136,9 +136,9 @@ Implement a function MY-CONS that takes a number item and a list (a two-element 
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (LST (MAKE-EMPTY-LIST)))
+(LET ((LST (MAKE-EMPTY-LIST)))
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
  (MY-CONS 10 LST)
  (AREF (AREF *CELL-ARRAY* (AREF LST 0)) 0))
 
@@ -148,10 +148,12 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
- (LST (MAKE-EMPTY-LIST))
- (NEWLST (MY-CONS 10 (MY-CONS 20 LST))))
+(LET* ((LST (MAKE-EMPTY-LIST))
+ (NEWLST
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
+ (MY-CONS 10 (MY-CONS 20 LST)))))
  (AREF NEWLST 1))
 
 should evaluate to
@@ -160,10 +162,12 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (LST (MAKE-EMPTY-LIST))
- (NEW (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST)))))
+(LET* ((LST (MAKE-EMPTY-LIST))
+ (NEW
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST))))))
  NEW)
 
 should evaluate to
@@ -183,9 +187,9 @@ If the list is empty (i.e., the head is NIL), MY-CAR must return NIL.
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (LST (MAKE-EMPTY-LIST)))
+(LET ((LST (MAKE-EMPTY-LIST)))
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
  (MY-CAR LST))
 
 should evaluate to
@@ -194,9 +198,11 @@ NIL
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (I (ALLOCATE-CELL 99 NIL))
+(LET* ((I
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 99 NIL)))
  (LST (MAKE-EMPTY-LIST)))
  (SETF (AREF LST 0) I
  (AREF LST 1) 1)
@@ -208,9 +214,11 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (N0 (ALLOCATE-CELL 2 NIL))
+(LET* ((N0
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 2 NIL)))
  (N1 (ALLOCATE-CELL 3 N0))
  (LST (MAKE-EMPTY-LIST)))
  (SETF (AREF LST 0) N1
@@ -234,9 +242,11 @@ Write a function `(MY-CDR list)` that returns a new list with the head moved to 
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (N0 (ALLOCATE-CELL 1 NIL))
+(LET* ((N0
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 1 NIL)))
  (N1 (ALLOCATE-CELL 2 N0))
  (N2 (ALLOCATE-CELL 3 N1))
  (LST (MAKE-EMPTY-LIST))
@@ -253,9 +263,11 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (N0 (ALLOCATE-CELL 1 NIL))
+(LET* ((N0
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 1 NIL)))
  (N1 (ALLOCATE-CELL 2 N0))
  (N2 (ALLOCATE-CELL 3 N1))
  (LST (MAKE-EMPTY-LIST))
@@ -272,9 +284,11 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (N0 (ALLOCATE-CELL 5 NIL))
+(LET* ((N0
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 5 NIL)))
  (LST (MAKE-EMPTY-LIST)))
  (MY-CDR LST))
 
@@ -284,9 +298,11 @@ should evaluate to
 
 The expression below
  
-(LET* ((*FREE-INDEX* 0)
- (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
- (N1 (ALLOCATE-CELL 2 NIL))
+(LET* ((N1
+ (PROGN
+ (SETF *FREE-INDEX* 0)
+ (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (ALLOCATE-CELL 2 NIL)))
  (N2 (ALLOCATE-CELL 3 N1))
  (LST (MAKE-EMPTY-LIST)))
  (SETF (AREF LST 0) N2
@@ -304,47 +320,55 @@ should evaluate to
    (DEFTEST TEST-MY-CONS NIL
     (CHECK
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (LST (MAKE-EMPTY-LIST)))
+      (LET ((LST (MAKE-EMPTY-LIST)))
+        (SETF *FREE-INDEX* 0)
+        (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
         (MY-CONS 10 LST)
         (AREF (AREF *CELL-ARRAY* (AREF LST 0)) 0))
       10)
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
-             (LST (MAKE-EMPTY-LIST))
-             (NEWLST (MY-CONS 10 (MY-CONS 20 LST))))
+      (LET* ((LST (MAKE-EMPTY-LIST))
+             (NEWLST
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
+               (MY-CONS 10 (MY-CONS 20 LST)))))
         (AREF NEWLST 1))
       2)
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (LST (MAKE-EMPTY-LIST))
-             (NEW (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST)))))
+      (LET* ((LST (MAKE-EMPTY-LIST))
+             (NEW
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST))))))
         NEW)
       #(2 3))))
    (DEFTEST TEST-MY-CAR NIL
     (CHECK
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (LST (MAKE-EMPTY-LIST)))
+      (LET ((LST (MAKE-EMPTY-LIST)))
+        (SETF *FREE-INDEX* 0)
+        (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
         (MY-CAR LST))
       NIL)
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (I (ALLOCATE-CELL 99 NIL))
+      (LET* ((I
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 99 NIL)))
              (LST (MAKE-EMPTY-LIST)))
         (SETF (AREF LST 0) I
               (AREF LST 1) 1)
         (MY-CAR LST))
       99)
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (N0 (ALLOCATE-CELL 2 NIL))
+      (LET* ((N0
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 2 NIL)))
              (N1 (ALLOCATE-CELL 3 N0))
              (LST (MAKE-EMPTY-LIST)))
         (SETF (AREF LST 0) N1
@@ -354,9 +378,11 @@ should evaluate to
    (DEFTEST TEST-MY-CDR NIL
     (CHECK
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (N0 (ALLOCATE-CELL 1 NIL))
+      (LET* ((N0
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 1 NIL)))
              (N1 (ALLOCATE-CELL 2 N0))
              (N2 (ALLOCATE-CELL 3 N1))
              (LST (MAKE-EMPTY-LIST))
@@ -368,9 +394,11 @@ should evaluate to
         (AREF (AREF *CELL-ARRAY* (AREF TAIL 0)) 0))
       2)
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (N0 (ALLOCATE-CELL 1 NIL))
+      (LET* ((N0
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 1 NIL)))
              (N1 (ALLOCATE-CELL 2 N0))
              (N2 (ALLOCATE-CELL 3 N1))
              (LST (MAKE-EMPTY-LIST))
@@ -382,16 +410,20 @@ should evaluate to
         TAIL)
       #(1 2))
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (N0 (ALLOCATE-CELL 5 NIL))
+      (LET* ((N0
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 5 NIL)))
              (LST (MAKE-EMPTY-LIST)))
         (MY-CDR LST))
       #(NIL 0))
      (EQUALP
-      (LET* ((*FREE-INDEX* 0)
-             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
-             (N1 (ALLOCATE-CELL 2 NIL))
+      (LET* ((N1
+              (PROGN
+               (SETF *FREE-INDEX* 0)
+               (SETF *CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+               (ALLOCATE-CELL 2 NIL)))
              (N2 (ALLOCATE-CELL 3 N1))
              (LST (MAKE-EMPTY-LIST)))
         (SETF (AREF LST 0) N2
