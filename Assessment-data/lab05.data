@@ -1,7 +1,7 @@
 (("folder" "~/lab05/") ("questions" ("q1" "q2"))
  ("fnames"
-  (SEARCH-FOR-POINT *FREE-INDEX* *CELL-ARRAY* MAKE-EMPTY-LIST MY-CONS MY-CAR
-   MY-CDR))
+  (SEARCH-FOR-POINT *FREE-INDEX* *CELL-ARRAY* MAKE-EMPTY-LIST ALLOCATE-CELL
+   MY-CONS MY-CAR MY-CDR))
  ("q1"
   ("whats-asked"
    ("
@@ -128,7 +128,9 @@ The following code sets up the backing store and provides two utility functions:
 Implement a function MY-CONS that takes a number item and a list (a two-element array), and:
 
  - Calls ALLOCATE-CELL to create a new cons cell with item as the data and the current head as the link.
- - Returns a new list whose head is the newly allocated cell and whose size is one greater than the original list.
+ - Update the list's head to the new cell's index.
+ - Increment the list's size by 1.
+ - Return the modified list.
  For example: 
 
 
@@ -221,8 +223,14 @@ should evaluate to
 
 
 
-Implement a function MY-CDR that takes a list and returns a new list that skips the head element. The new list should point to the next node and have its size reduced by 1. For example:
+*Part 3:*
 
+Write a function `(MY-CDR list)` that returns a new list with the head moved to the next cons cell.
+
+ - If the list is empty (i.e., the head is NIL), return a new empty list.
+ - Otherwise, update the list's head to the index stored in the link part of the current head cell.
+ - Decrement the list's size by 1.
+ - Return the modified list.
 
 The expression below
  
