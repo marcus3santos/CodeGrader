@@ -1,5 +1,5 @@
 (("folder" "~/lab07/") ("questions" ("q1"))
- ("fnames" (HT-ADD HT-GET HT-DELETE))
+ ("fnames" (HT-CREATE HT-COUNT HT-ADD HT-GET HT-DELETE))
  ("q1"
   ("whats-asked"
    ("

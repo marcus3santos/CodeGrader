@@ -11,7 +11,7 @@
 ;; Structure to store information about questions
 
 (defstruct question
-  number forbidden penalty description examples testcases)
+  number forbidden penalty description examples testcases given-functions)
 
 
 ;; Utility functions
@@ -118,7 +118,7 @@
 
 (defun sexprmark->org (sexpr questions-info)
   (labels
-      ((emit (node &key folder qnumber penalty function-name  forbidden (depth 0) nitem mcq)
+      ((emit (node &key folder qnumber penalty function-name given-functions forbidden (depth 0) nitem mcq)
          "folder is the where students are required to store their solutions; qnumber is the question number; 
           penalty is the percentage deduction on a solution; forbidden is a list of forbidden functions;
           and depth is space indentation in items"
@@ -241,13 +241,18 @@
                (list (format nil "(~{~a~}) " (trim-spc-last (flatten (mapcar #'emit  (cdr node)))))))
               (tc
                (let* ((proplist (second node))
-                      (function-name (getf proplist :function)))
+                      (function-name (getf proplist :function))
+                      (gf (getf proplist :given))
+                      (given-functions (if (listp gf) gf (list gf))))
                  (unless function-name
                    (error "Missing function name key in test cases ~s" node))
                  (unless qnumber
                    (error "Test cases not inside a question ~s" node))
+                 (when given-functions
+                   (let ((new-list (union given-functions (question-given-functions (gethash qnumber questions-info)))))
+                     (setf (question-given-functions (gethash qnumber questions-info)) new-list)))
                  (mapcar (lambda (item)
-                           (emit item :depth depth :function-name function-name :qnumber qnumber))
+                           (emit item :depth depth :function-name function-name :qnumber qnumber :given-functions (if (listp given-functions) given-functions (list given-functions))))
                          (nthcdr 2 node))))
               ((gvn hdn) ;; Given test cases , Hidden test cases
                (if (equalp (car node) 'gvn)
@@ -335,7 +340,7 @@
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) hidden)
                       tcs-driver)
                (push (format nil "q~a" k) questions)
-               (setf all-fnames (append (mapcar #'second (question-examples v)) all-fnames)))
+               (setf all-fnames (append (mapcar #'second (question-examples v)) (question-given-functions v) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
       (format out "~s" (cons (list "folder" *folder-name*)

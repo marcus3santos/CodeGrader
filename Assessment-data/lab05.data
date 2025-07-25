@@ -1,7 +1,7 @@
 (("folder" "~/lab05/") ("questions" ("q1" "q2"))
  ("fnames"
-  (SEARCH-FOR-POINT MAKE-NODE GET-NODE-DATA GET-NODE-NEXT LIST-TO-LINKED-LIST
-   SUM-LINKED-LIST LINKED-LIST-TO-LIST))
+  (SEARCH-FOR-POINT *FREE-INDEX* *CELL-ARRAY* MAKE-EMPTY-LIST MY-CONS MY-CAR
+   MY-CDR))
  ("q1"
   ("whats-asked"
    ("
@@ -100,24 +100,45 @@ should evaluate to
  (cg:chk-my-solution \"~/lab05/q2.lisp\")
  
 
+*Provided:*
+
+You are provided with a global backing array (~*CELL-ARRAY*~) of fixed size that holds the cons cells, and a variable (~*FREE-INDEX*~) that tracks the next available index.
+
+The following code sets up the backing store and provides two utility functions:
+
+
+(defparameter *array-size* 100)
+(defparameter *cell-array* (make-array *array-size* :initial-element nil))
+(defparameter *free-index* 0)
+
+(defun allocate-cell (data next-index)
+ (if (>= *free-index* *array-size*)
+ (error \"Backing array is full.\")
+ (let ((index *free-index*))
+ (setf (aref *cell-array* index) (vector data next-index))
+ (incf *free-index*)
+ index)))
+
+(defun make-empty-list ()
+ (vector nil 0))
+
+
 *Part 1:*
 
-Write a function called MAKE-NODE that takes a number (data) and a next-node (which can be NIL or another node array) and returns a two-element array with data in index 0 and next-node in index 1.
+Implement a function MY-CONS that takes a number item and a list (a two-element array), and:
 
-Additionally, write two accessor functions: GET-NODE-DATA that takes a node and returns its data (index 0), and GET-NODE-NEXT that returns the next node (index 1).
+ - Calls ALLOCATE-CELL to create a new cons cell with item as the data and the current head as the link.
+ - Returns a new list whose head is the newly allocated cell and whose size is one greater than the original list.
+ For example: 
 
-
-The expression below
- 
-(MAKE-NODE 10 NIL)
-
-should evaluate to
-
-#(10 NIL)
 
 The expression below
  
-(GET-NODE-DATA (MAKE-NODE 10 NIL))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (LST (MAKE-EMPTY-LIST)))
+ (MY-CONS 10 LST)
+ (AREF (AREF *CELL-ARRAY* (AREF LST 0)) 0))
 
 should evaluate to
 
@@ -125,7 +146,45 @@ should evaluate to
 
 The expression below
  
-(GET-NODE-NEXT (MAKE-NODE 10 NIL))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
+ (LST (MAKE-EMPTY-LIST))
+ (NEWLST (MY-CONS 10 (MY-CONS 20 LST))))
+ (AREF NEWLST 1))
+
+should evaluate to
+
+2
+
+The expression below
+ 
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (LST (MAKE-EMPTY-LIST))
+ (NEW (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST)))))
+ NEW)
+
+should evaluate to
+
+#(2 3)
+
+
+
+*Part 2:*
+
+Implement a function MY-CAR that takes a list (two-element array) and returns the data stored in its head node.
+
+If the list is empty (i.e., the head is NIL), MY-CAR must return NIL.
+
+ For example:
+
+
+The expression below
+ 
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (LST (MAKE-EMPTY-LIST)))
+ (MY-CAR LST))
 
 should evaluate to
 
@@ -133,95 +192,209 @@ NIL
 
 The expression below
  
-(GET-NODE-DATA (GET-NODE-NEXT (MAKE-NODE 20 (MAKE-NODE 30 NIL))))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (I (ALLOCATE-CELL 99 NIL))
+ (LST (MAKE-EMPTY-LIST)))
+ (SETF (AREF LST 0) I
+ (AREF LST 1) 1)
+ (MY-CAR LST))
 
 should evaluate to
 
-30
+99
+
+The expression below
+ 
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (N0 (ALLOCATE-CELL 2 NIL))
+ (N1 (ALLOCATE-CELL 3 N0))
+ (LST (MAKE-EMPTY-LIST)))
+ (SETF (AREF LST 0) N1
+ (AREF LST 1) 2)
+ (MY-CAR LST))
+
+should evaluate to
+
+3
 
 
+
+Implement a function MY-CDR that takes a list and returns a new list that skips the head element. The new list should point to the next node and have its size reduced by 1. For example:
 
 
 The expression below
  
-(GET-NODE-DATA (MAKE-NODE 5 NIL))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (N0 (ALLOCATE-CELL 1 NIL))
+ (N1 (ALLOCATE-CELL 2 N0))
+ (N2 (ALLOCATE-CELL 3 N1))
+ (LST (MAKE-EMPTY-LIST))
+ (TAIL
+ (PROGN
+ (SETF (AREF LST 0) N2
+ (AREF LST 1) 3)
+ (MY-CDR LST))))
+ (AREF (AREF *CELL-ARRAY* (AREF TAIL 0)) 0))
 
 should evaluate to
 
-5
+2
 
 The expression below
  
-(GET-NODE-DATA (MAKE-NODE 10 (MAKE-NODE 20 NIL)))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (N0 (ALLOCATE-CELL 1 NIL))
+ (N1 (ALLOCATE-CELL 2 N0))
+ (N2 (ALLOCATE-CELL 3 N1))
+ (LST (MAKE-EMPTY-LIST))
+ (TAIL
+ (PROGN
+ (SETF (AREF LST 0) N2
+ (AREF LST 1) 3)
+ (MY-CDR LST))))
+ TAIL)
 
 should evaluate to
 
-10
-
-
-
+#(1 2)
 
 The expression below
  
-(GET-NODE-NEXT (MAKE-NODE 5 NIL))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (N0 (ALLOCATE-CELL 5 NIL))
+ (LST (MAKE-EMPTY-LIST)))
+ (MY-CDR LST))
 
 should evaluate to
 
-NIL
+#(NIL 0)
 
 The expression below
  
-(GET-NODE-NEXT (MAKE-NODE 10 (MAKE-NODE 20 NIL)))
+(LET* ((*FREE-INDEX* 0)
+ (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+ (N1 (ALLOCATE-CELL 2 NIL))
+ (N2 (ALLOCATE-CELL 3 N1))
+ (LST (MAKE-EMPTY-LIST)))
+ (SETF (AREF LST 0) N2
+ (AREF LST 1) 2)
+ (MY-CDR (MY-CDR LST)))
 
 should evaluate to
 
-#(20 NIL)
+#(NIL 0)
 
 
 "))
   NIL
-  ("given"
-   (DECLAIM
-    (NOTINLINE MAKE-NODE GET-NODE-DATA GET-NODE-NEXT LIST-TO-LINKED-LIST
-     SUM-LINKED-LIST LINKED-LIST-TO-LIST))
-   (DEFTEST TEST-MAKE-NODE NIL
-    (CHECK (EQUALP (MAKE-NODE 10 NIL) #(10 NIL))
-     (EQUALP (GET-NODE-DATA (MAKE-NODE 10 NIL)) 10)
-     (EQUALP (GET-NODE-NEXT (MAKE-NODE 10 NIL)) NIL)
-     (EQUALP (GET-NODE-DATA (GET-NODE-NEXT (MAKE-NODE 20 (MAKE-NODE 30 NIL))))
-             30)))
-   (DEFTEST TEST-GET-NODE-DATA NIL
-    (CHECK (EQUALP (GET-NODE-DATA (MAKE-NODE 5 NIL)) 5)
-     (EQUALP (GET-NODE-DATA (MAKE-NODE 10 (MAKE-NODE 20 NIL))) 10)))
-   (DEFTEST TEST-GET-NODE-NEXT NIL
-    (CHECK (EQUALP (GET-NODE-NEXT (MAKE-NODE 5 NIL)) NIL)
-     (EQUALP (GET-NODE-NEXT (MAKE-NODE 10 (MAKE-NODE 20 NIL))) #(20 NIL))))
-   (DEFTEST TEST-LIST-TO-LINKED-LIST NIL
-    (CHECK (EQUALP (GET-NODE-DATA (LIST-TO-LINKED-LIST '(1 2 3))) 1)
-     (EQUALP (GET-NODE-DATA (GET-NODE-NEXT (LIST-TO-LINKED-LIST '(1 2 3)))) 2)
-     (EQUALP (LIST-TO-LINKED-LIST 'NIL) NIL)
-     (EQUALP (GET-NODE-DATA (LIST-TO-LINKED-LIST '(5))) 5)))
-   (DEFTEST TEST-SUM-LINKED-LIST NIL
-    (CHECK (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(1 2 3))) 6)
-     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(10))) 10)
-     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST 'NIL)) 0)
-     (EQUALP (SUM-LINKED-LIST (LIST-TO-LINKED-LIST '(-1 0 1))) 0)))
-   (DEFTEST TEST-LINKED-LIST-TO-LIST NIL
+  ("given" (DECLAIM (NOTINLINE MY-CONS MY-CAR MY-CDR))
+   (DEFTEST TEST-MY-CONS NIL
     (CHECK
-     (EQUALP (LINKED-LIST-TO-LIST (LIST-TO-LINKED-LIST '(1 2 3))) '(1 2 3))
-     (EQUALP (LINKED-LIST-TO-LIST NIL) NIL)
-     (EQUALP (LINKED-LIST-TO-LIST (LIST-TO-LINKED-LIST '(5))) '(5))))
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (LST (MAKE-EMPTY-LIST)))
+        (MY-CONS 10 LST)
+        (AREF (AREF *CELL-ARRAY* (AREF LST 0)) 0))
+      10)
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 3 :INITIAL-ELEMENT NIL))
+             (LST (MAKE-EMPTY-LIST))
+             (NEWLST (MY-CONS 10 (MY-CONS 20 LST))))
+        (AREF NEWLST 1))
+      2)
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (LST (MAKE-EMPTY-LIST))
+             (NEW (MY-CONS 12 (MY-CONS 42 (MY-CONS 7 LST)))))
+        NEW)
+      #(2 3))))
+   (DEFTEST TEST-MY-CAR NIL
+    (CHECK
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (LST (MAKE-EMPTY-LIST)))
+        (MY-CAR LST))
+      NIL)
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (I (ALLOCATE-CELL 99 NIL))
+             (LST (MAKE-EMPTY-LIST)))
+        (SETF (AREF LST 0) I
+              (AREF LST 1) 1)
+        (MY-CAR LST))
+      99)
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (N0 (ALLOCATE-CELL 2 NIL))
+             (N1 (ALLOCATE-CELL 3 N0))
+             (LST (MAKE-EMPTY-LIST)))
+        (SETF (AREF LST 0) N1
+              (AREF LST 1) 2)
+        (MY-CAR LST))
+      3)))
+   (DEFTEST TEST-MY-CDR NIL
+    (CHECK
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (N0 (ALLOCATE-CELL 1 NIL))
+             (N1 (ALLOCATE-CELL 2 N0))
+             (N2 (ALLOCATE-CELL 3 N1))
+             (LST (MAKE-EMPTY-LIST))
+             (TAIL
+              (PROGN
+               (SETF (AREF LST 0) N2
+                     (AREF LST 1) 3)
+               (MY-CDR LST))))
+        (AREF (AREF *CELL-ARRAY* (AREF TAIL 0)) 0))
+      2)
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (N0 (ALLOCATE-CELL 1 NIL))
+             (N1 (ALLOCATE-CELL 2 N0))
+             (N2 (ALLOCATE-CELL 3 N1))
+             (LST (MAKE-EMPTY-LIST))
+             (TAIL
+              (PROGN
+               (SETF (AREF LST 0) N2
+                     (AREF LST 1) 3)
+               (MY-CDR LST))))
+        TAIL)
+      #(1 2))
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (N0 (ALLOCATE-CELL 5 NIL))
+             (LST (MAKE-EMPTY-LIST)))
+        (MY-CDR LST))
+      #(NIL 0))
+     (EQUALP
+      (LET* ((*FREE-INDEX* 0)
+             (*CELL-ARRAY* (MAKE-ARRAY 5 :INITIAL-ELEMENT NIL))
+             (N1 (ALLOCATE-CELL 2 NIL))
+             (N2 (ALLOCATE-CELL 3 N1))
+             (LST (MAKE-EMPTY-LIST)))
+        (SETF (AREF LST 0) N2
+              (AREF LST 1) 2)
+        (MY-CDR (MY-CDR LST)))
+      #(NIL 0))))
    (DEFUN TEST-Q2 ()
-     (TEST-LINKED-LIST-TO-LIST)
-     (TEST-SUM-LINKED-LIST)
-     (TEST-LIST-TO-LINKED-LIST)
-     (TEST-GET-NODE-NEXT)
-     (TEST-GET-NODE-DATA)
-     (TEST-MAKE-NODE)
-     (FMAKUNBOUND 'LINKED-LIST-TO-LIST)
-     (FMAKUNBOUND 'SUM-LINKED-LIST)
-     (FMAKUNBOUND 'LIST-TO-LINKED-LIST)
-     (FMAKUNBOUND 'GET-NODE-NEXT)
-     (FMAKUNBOUND 'GET-NODE-DATA)
-     (FMAKUNBOUND 'MAKE-NODE)))
+     (TEST-MY-CDR)
+     (TEST-MY-CAR)
+     (TEST-MY-CONS)
+     (FMAKUNBOUND 'MY-CDR)
+     (FMAKUNBOUND 'MY-CAR)
+     (FMAKUNBOUND 'MY-CONS)))
   NIL))
