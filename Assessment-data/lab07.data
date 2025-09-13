@@ -1,5 +1,6 @@
-(("folder" "~/lab07/") ("questions" ("q1"))
- ("fnames" (HT-CREATE HT-COUNT HT-ADD HT-GET HT-DELETE))
+(("folder" "~/lab07/") ("questions" ("q1" "q2" "q3"))
+ ("fnames"
+  (ENTER-SALES-REPORT UPDATE-PRODUCT-SALES BEST-SELLING-PRODUCT TOTAL-SALES))
  ("q1"
   ("whats-asked"
    ("
@@ -16,198 +17,198 @@
  (cg:chk-my-solution \"~/lab07/q1.lisp\")
  
 
- 1. [@1] Copy-paste or type the code below in your **q1.lisp** buffer. This program is a slightly different version of the program provided on page 126 of the textbook; it implements an open addressing hash-table.
- 
- ;; Functions
- (defun make-ht (&key array (count 0) (comp #'eql))
- (list array count comp))
- 
- (defun ht-array (ht)
- (first ht))
- 
- (defun (setf ht-array) (new-array ht)
- (setf (first ht) new-array))
- 
- (defun ht-count (ht)
- (second ht))
- 
- (defun (setf ht-count) (new-count ht)
- (setf (second ht) new-count))
- 
- (defun ht-comp (ht)
- (third ht))
- 
- (defun ht-create (kvs &key (test #'eql))
- (let ((rez (make-ht :array (make-array 16 :initial-element (list))
- 		 :comp test)))
- (loop :for (k v) :in kvs :do
- (ht-add k v rez))
- rez))
- 
- ;; Do not change the functions given above
- 
- (defun ht-get (key ht)
- (let* ((size (length (ht-array ht))) 
- (start (rem (sxhash key) size))) 
- (do* ((count 0 (1+ count))
- (i start (rem (1+ i) size)) ; linear probing
- (item (aref (ht-array ht) start) (aref (ht-array ht) i)))
- ((or (null item) (= count size)))
- (when (funcall (ht-comp ht) key (car item))
- (return (values (cdr item) i))))))
- 
- (defun ht-add (key val ht)
- (let* ((temp (ht-array ht))
- (size (length temp)))
- (flet ((add-item (k v) ; FLET defines function ADD-ITEM locally
- (do ((i (rem (sxhash k) size) (rem (1+ i) size)))
- ((null (aref (ht-array ht) i)) 
- (setf (aref (ht-array ht) i) (cons k v)))))) ; result form
- (when (= (ht-count ht) size)
- ;; when the backing array is full
- ;; expand it to have the length equal to the next power of 2
- (setf size (expt 2 (ceiling (log (1+ (ht-count ht)) 2))) 
- (ht-array ht) (make-array size :initial-element nil))
- ;; and re-add its contents
- (rtl:dovec (item temp) ; similar to DOLIST but for arrays
- (add-item (car item) (cdr item)))) 
- ;; Adds the new item
- (incf (ht-count ht)) 
- (add-item key val))))
- 
+*Part 1:*
 
- 2. [@2] Note: you should not change the functions noted in the code above.
- 3. [@3] Type ~(load \"~/Lab07/solution.lisp\")~ on the REPL to compile the program (you may be required to provide the full path of the file). You may ignore the STYLE-WARNING about function HT-ADD. It was issued because a call to function HT-ADD appears in the program before that function is defined in the program. That is ok. The definition of HT-ADD appears later in the program and will be ultimately loaded.
- 4. [@4] Experiment using HT-ADD and HT-GET to respectively add and get elements from the hash-table.
- 5. [@5] Type the code below on the REPL to test how to add a key-value pair (a 1) in a hash-table:
- #+BEGIN_SRC LISP
- (let ((htable (ht-create nil)))
- (ht-add 'a 1 htable)
- (multiple-value-bind (k v) (ht-get 'a htable)
- (format t \"Table: ~a~%Key: ~a~%Value: ~a (i.e., the key-value pair's index in the backing array)\" htable k v)))
- 
+Write a Common Lisp function called ENTER-SALES-REPORT that takes a list of sales data as input. Each element in the list is a sublist containing a product name (a string) and a sales amount (an integer). Assume there are no repeated products in the list.
 
- 6. [@6] Implement the following changes to HT-ADD and HT-GET:
- - HT-ADD:
- - HT-ADD should return NIL if the key to be added is already in the hash-table.
- - Deleted items: If HT-ADD is provided a key-value item that hashes to the location of a previously deleted item, then it should insert the item in that location (see Step 7 below).
- For example: 
+Here is an example of a sales report: ~((\"Apple\" 100) (\"Orange\" 50) (\"Banana\" 150))~
 
- 
-The expression below
- 
-(LET ((HT (HT-CREATE NIL)))
- (HT-ADD 'A 1 HT)
- (HT-ADD 'A 2 HT))
+The function should return a hash table where each key is a product name and the corresponding value is the sales amount for that product. For example:
 
-should evaluate to
-
-NIL
 
 The expression below
  
-(LET ((HT (HT-CREATE '((A 1) (B 2)))))
- (HT-DELETE 'A HT)
- (HT-ADD 'C 3 HT)
- (LIST (HT-GET 'C HT) (HT-COUNT HT)))
+(LET* ((SALES-DATA '((\"Apple\" 100) (\"Orange\" 50) (\"Banana\" 150)))
+ (HT (ENTER-SALES-REPORT SALES-DATA)))
+ (AND (EQUALP (GETHASH \"Apple\" HT) 100) (EQUALP (GETHASH \"Orange\" HT) 50)
+ (EQUALP (GETHASH \"Banana\" HT) 150) (= (HASH-TABLE-COUNT HT) 3)))
 
 should evaluate to
 
-(3 2)
+T
 
- 
 
- - HT-GET:
- - HT-GET should return NIL if the provided key hashes to a location of previously deleted item (see Step 7 below). For example: 
- 
-The expression below
- 
-(LET ((HT (HT-CREATE '((A 1)))))
- (HT-DELETE 'A HT)
- (HT-GET 'A HT))
 
-should evaluate to
+*HINT*: To use the product name (a string) as key, you will need to set the an appropriate comparison operator when creating the hash table, as follows ~(make-hash-table :test 'equal)~
 
-NIL
+*Part 2:*
 
- 
+Write a function called UPDATE-PRODUCT-SALES that takes (1) a hash table containing the product and amount as entered by the function above, (2) a string representing a product name, and (3) a product sales amount. The function should aggregate the input amount to the stored amount. If the product is not in the hash table, it should enter the respective product and amount and return a hash table where each key is a product name and the corresponding value is the total sales for that product. For example:
 
- 7. [@7] Considering that the program you are developing defines operations for a hash table using **open addressing**, it is necessary to write the HT-DELETE function. This function, given a key and a hash-table, \"deletes\" the respective item from the hash-table. I encourage you to review the lecture notes to refresh your understanding of how item deletion is implemented in hash tables using open addressing. You can also ask ChatGPT for further assistance. Below are some examples on how HT-DELETE works:
- 
-The expression below
- 
-(LET ((HT (HT-CREATE '((A 1) (B 2)))))
- (HT-DELETE 'A HT)
- (HT-GET 'A HT))
-
-should evaluate to
-
-NIL
 
 The expression below
  
-(LET ((HT (HT-CREATE '((A 1)))))
- (HT-DELETE 'B HT)
- (HT-GET 'A HT))
+(LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+ (SETF (GETHASH \"Apple\" HT) 100)
+ (SETF (GETHASH \"Orange\" HT) 200)
+ (UPDATE-PRODUCT-SALES HT \"Orange\" 50)
+ (AND (EQUALP (GETHASH \"Apple\" HT) 100) (EQUALP (GETHASH \"Orange\" HT) 250)
+ (= (HASH-TABLE-COUNT HT) 2)))
 
 should evaluate to
 
-1
+T
 
 The expression below
  
-(LET ((HT (HT-CREATE NIL)))
- (HT-DELETE 'A HT))
+(LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+ (SETF (GETHASH \"Apple\" HT) 100)
+ (SETF (GETHASH \"Orange\" HT) 200)
+ (UPDATE-PRODUCT-SALES HT \"Grapes\" 50)
+ (AND (EQUALP (GETHASH \"Apple\" HT) 100) (EQUALP (GETHASH \"Orange\" HT) 200)
+ (EQUALP (GETHASH \"Grapes\" HT) 50) (= (HASH-TABLE-COUNT HT) 3)))
 
 should evaluate to
 
-NIL
+T
 
- 
+
 "))
   NIL
-  ("given" (DECLAIM (NOTINLINE HT-ADD HT-GET HT-DELETE))
-   (DEFTEST TEST-HT-ADD NIL
+  ("given" (DECLAIM (NOTINLINE ENTER-SALES-REPORT UPDATE-PRODUCT-SALES))
+   (DEFTEST TEST-ENTER-SALES-REPORT NIL
     (CHECK
      (EQUALP
-      (LET ((HT (HT-CREATE NIL)))
-        (HT-ADD 'A 1 HT)
-        (HT-ADD 'A 2 HT))
-      NIL)
-     (EQUALP
-      (LET ((HT (HT-CREATE '((A 1) (B 2)))))
-        (HT-DELETE 'A HT)
-        (HT-ADD 'C 3 HT)
-        (LIST (HT-GET 'C HT) (HT-COUNT HT)))
-      '(3 2))))
-   (DEFTEST TEST-HT-GET NIL
+      (LET* ((SALES-DATA '(("Apple" 100) ("Orange" 50) ("Banana" 150)))
+             (HT (ENTER-SALES-REPORT SALES-DATA)))
+        (AND (EQUALP (GETHASH "Apple" HT) 100)
+             (EQUALP (GETHASH "Orange" HT) 50)
+             (EQUALP (GETHASH "Banana" HT) 150) (= (HASH-TABLE-COUNT HT) 3)))
+      T)))
+   (DEFTEST TEST-UPDATE-PRODUCT-SALES NIL
     (CHECK
      (EQUALP
-      (LET ((HT (HT-CREATE '((A 1)))))
-        (HT-DELETE 'A HT)
-        (HT-GET 'A HT))
-      NIL)))
-   (DEFTEST TEST-HT-DELETE NIL
-    (CHECK
+      (LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+        (SETF (GETHASH "Apple" HT) 100)
+        (SETF (GETHASH "Orange" HT) 200)
+        (UPDATE-PRODUCT-SALES HT "Orange" 50)
+        (AND (EQUALP (GETHASH "Apple" HT) 100)
+             (EQUALP (GETHASH "Orange" HT) 250) (= (HASH-TABLE-COUNT HT) 2)))
+      T)
      (EQUALP
-      (LET ((HT (HT-CREATE '((A 1) (B 2)))))
-        (HT-DELETE 'A HT)
-        (HT-GET 'A HT))
-      NIL)
-     (EQUALP
-      (LET ((HT (HT-CREATE '((A 1)))))
-        (HT-DELETE 'B HT)
-        (HT-GET 'A HT))
-      1)
-     (EQUALP
-      (LET ((HT (HT-CREATE NIL)))
-        (HT-DELETE 'A HT))
-      NIL)))
+      (LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+        (SETF (GETHASH "Apple" HT) 100)
+        (SETF (GETHASH "Orange" HT) 200)
+        (UPDATE-PRODUCT-SALES HT "Grapes" 50)
+        (AND (EQUALP (GETHASH "Apple" HT) 100)
+             (EQUALP (GETHASH "Orange" HT) 200)
+             (EQUALP (GETHASH "Grapes" HT) 50) (= (HASH-TABLE-COUNT HT) 3)))
+      T)))
    (DEFUN TEST-Q1 ()
-     (TEST-HT-DELETE)
-     (TEST-HT-GET)
-     (TEST-HT-ADD)
-     (FMAKUNBOUND 'HT-DELETE)
-     (FMAKUNBOUND 'HT-GET)
-     (FMAKUNBOUND 'HT-ADD)))
+     (TEST-UPDATE-PRODUCT-SALES)
+     (TEST-ENTER-SALES-REPORT)
+     (FMAKUNBOUND 'UPDATE-PRODUCT-SALES)
+     (FMAKUNBOUND 'ENTER-SALES-REPORT)))
+  NIL)
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab07/q2.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab07/q2.lisp\")
+ 
+
+Write a Common Lisp function called BEST-SELLING-PRODUCT that takes a hash table containing product names as keys and their sales amounts as values, and returns the product with the highest sales. The function should return two values: the product name (a string) and its sales amount (an integer).
+
+For example, given a hash table where ~\"Apple\" 100~, ~\"Orange\" 250~, and ~\"Banana\" 150~, the function should return ~\"Orange\"~ and ~250~.
+
+
+The expression below
+ 
+(LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+ (SETF (GETHASH \"Apple\" HT) 100)
+ (SETF (GETHASH \"Orange\" HT) 250)
+ (SETF (GETHASH \"Banana\" HT) 150)
+ (MULTIPLE-VALUE-BIND (PRODUCT SALES)
+ (BEST-SELLING-PRODUCT HT)
+ (AND (EQUALP PRODUCT \"Orange\") (= SALES 250))))
+
+should evaluate to
+
+T
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE BEST-SELLING-PRODUCT))
+   (DEFTEST TEST-BEST-SELLING-PRODUCT NIL
+    (CHECK
+     (EQUALP
+      (LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+        (SETF (GETHASH "Apple" HT) 100)
+        (SETF (GETHASH "Orange" HT) 250)
+        (SETF (GETHASH "Banana" HT) 150)
+        (MULTIPLE-VALUE-BIND (PRODUCT SALES)
+            (BEST-SELLING-PRODUCT HT)
+          (AND (EQUALP PRODUCT "Orange") (= SALES 250))))
+      T)))
+   (DEFUN TEST-Q2 ()
+     (TEST-BEST-SELLING-PRODUCT)
+     (FMAKUNBOUND 'BEST-SELLING-PRODUCT)))
+  NIL)
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab07/q3.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab07/q3.lisp\")
+ 
+
+Write a Common Lisp function called TOTAL-SALES that takes a hash table containing product names as keys and their sales amounts as values, and returns the total sales amount across all products.
+
+For example, given a hash table where ~\"Apple\" 100~, ~\"Orange\" 250~, and ~\"Banana\" 150~, the function should return ~500~.
+
+
+The expression below
+ 
+(LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+ (SETF (GETHASH \"Apple\" HT) 100)
+ (SETF (GETHASH \"Orange\" HT) 250)
+ (SETF (GETHASH \"Banana\" HT) 150)
+ (= (TOTAL-SALES HT) 500))
+
+should evaluate to
+
+T
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE TOTAL-SALES))
+   (DEFTEST TEST-TOTAL-SALES NIL
+    (CHECK
+     (EQUALP
+      (LET* ((HT (MAKE-HASH-TABLE :TEST 'EQUAL)))
+        (SETF (GETHASH "Apple" HT) 100)
+        (SETF (GETHASH "Orange" HT) 250)
+        (SETF (GETHASH "Banana" HT) 150)
+        (= (TOTAL-SALES HT) 500))
+      T)))
+   (DEFUN TEST-Q3 () (TEST-TOTAL-SALES) (FMAKUNBOUND 'TOTAL-SALES)))
   NIL))

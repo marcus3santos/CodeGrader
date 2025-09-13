@@ -1,4 +1,5 @@
-(("folder" "~/lab08/") ("questions" ("q1")) ("fnames" (EVALUATE))
+(("folder" "~/lab08/") ("questions" ("q1" "q2" "q3"))
+ ("fnames" (SUM-NODES COUNT-INTERNAL-NODES TREE-DEPTHS))
  ("q1"
   ("whats-asked"
    ("
@@ -15,214 +16,156 @@
  (cg:chk-my-solution \"~/lab08/q1.lisp\")
  
 
- 1. [@1] Copy-paste the code below to your **q1.lisp** buffer and save it. We studied the operation of function EVALUATE in class. This program defines an expression evaluator for /μLisp/ .
- 
- (defun evaluate (e env)
- (if (atom e)
- (cond
- ((constant? e) e)
- ((symbol? e) (lookup e env))
- ((or (procedure? e) (numberp e)) e)
- (t (wrong \"Could not evaluate expression: ~S~%\" e)))
- (case (car e)
- ((progn) (eprogn (cdr e) env))
- ((setf) (update! (cadr e) env (evaluate (caddr e) env)))
- (t (invoke (evaluate (car e) env) (evlist (cdr e) env))))))
- 
- (defun lookup (e env)
- (let ((v (assoc e env)))
- (if v (cdr v)
- (wrong \"Unbound-variable: ~S~%\" e))))
- 
- (defun update! (var env value)
- (let ((kv (assoc var env)))
- (setf (cdr kv) value)))
- 
- (defun eprogn (el env)
- (let ((result (evaluate (car el) env)))
- (dolist (e (cdr el) result)
- (setf result (evaluate e env)))))
- 
- (defun procedure? (fn)
- (or (eql fn '+)
- (eql fn '-)
- (eql fn '*)
- (eql fn '/)))
- 
- (defun wrong (m &optional v)
- (format t m v))
- 
- (defun invoke (fn args)
- (if (procedure? fn)
- (apply fn args)
- (wrong \"Could not evaluate function: ~S\" fn)))
- 
- (defun evlist (lis env)
- (when lis
- (let ((a (evaluate (car lis) env)))
- (cons a (evlist (cdr lis) env)))))
- 
- (defun constant? (s)
- (or (eql s 'nil)
- (eql s 't)
- (stringp s)))
- 
- (defun symbol? (s)
- (and (symbolp s) (not (procedure? s)) (not (constant? s))))
- 
- 2. [@2] Add to function EVALUATE the capacity to evaluate ~IF~, ~WHEN~ and ~UNLESS~ expressions. The syntax of these expressions is provided in the grammar above; we reproduce the relevant grammar rules here, for your easy reference:
- #+BEGIN_SRC example
- <if-when-unless-expr> ::= \"(\" \"IF\" <test-expr> <expr> <expr>\")\" |\"(\" \"WHEN\" <test-expr> <expr-seq> \")\" | \"(\" \"UNLESS\" <test-expr> <expr-seq> \")\"
- <test-expr> :: = <expr>
- <expr-seq> ::= <expr> <expr-seq> | <expr>
- 
+Write a Common Lisp function called SUM-NODES that takes a tree as
+input and returns the sum of all numeric node labels in the tree. If
+the tree is empty, return 0. You may assume all node labels are either
+symbols or numbers.
 
- For example, here are some test cases for your reference:
+Examples:
 
- 
-The expression below
- 
-(EVALUATE
- '(IF 1
- \"positive\"
- \"zero or negative\")
- NIL)
-
-should evaluate to
-
-\"positive\"
 
 The expression below
  
-(EVALUATE
- '(IF NIL
- (IF T
- \"a\"
- \"b\")
- \"else-branch\")
- NIL)
+(SUM-NODES '(1 (2 (3) (4)) (5)))
 
 should evaluate to
 
-\"else-branch\"
+15
 
 The expression below
  
-(EVALUATE
- '(IF \"a string\"
- (IF T
- \"a\"
- \"b\")
- \"else-branch\")
- NIL)
+(SUM-NODES '(A (1 (B) (2)) (C (3))))
 
 should evaluate to
 
-\"a\"
+6
 
 The expression below
  
-(EVALUATE '(WHEN T 1) NIL)
+(SUM-NODES 'NIL)
 
 should evaluate to
 
-1
+0
 
-The expression below
- 
-(EVALUATE '(WHEN NIL 1) NIL)
 
-should evaluate to
-
-NIL
-
-The expression below
- 
-(EVALUATE '(WHEN T (+ 1 2)) NIL)
-
-should evaluate to
-
-3
-
-The expression below
- 
-(EVALUATE '(UNLESS T 1) NIL)
-
-should evaluate to
-
-NIL
-
-The expression below
- 
-(EVALUATE '(UNLESS NIL 1) NIL)
-
-should evaluate to
-
-1
-
-The expression below
- 
-(EVALUATE '(UNLESS NIL (+ 1 2)) NIL)
-
-should evaluate to
-
-3
-
-The expression below
- 
-(EVALUATE '(WHEN T (SETF X 1) (+ X 1)) (LIST (CONS 'X 0)))
-
-should evaluate to
-
-2
-
-The expression below
- 
-(EVALUATE '(UNLESS NIL (SETF Y 1) (+ Y 1)) (LIST (CONS 'Y 0)))
-
-should evaluate to
-
-2
-
- 
 "))
   NIL
-  ("given" (DECLAIM (NOTINLINE EVALUATE))
-   (DEFTEST TEST-EVALUATE NIL
-    (CHECK
-     (EQUALP
-      (EVALUATE
-       '(IF 1
-            "positive"
-            "zero or negative")
-       NIL)
-      "positive")
-     (EQUALP
-      (EVALUATE
-       '(IF NIL
-            (IF T
-                "a"
-                "b")
-            "else-branch")
-       NIL)
-      "else-branch")
-     (EQUALP
-      (EVALUATE
-       '(IF "a string"
-            (IF T
-                "a"
-                "b")
-            "else-branch")
-       NIL)
-      "a")
-     (EQUALP (EVALUATE '(WHEN T 1) NIL) 1)
-     (EQUALP (EVALUATE '(WHEN NIL 1) NIL) NIL)
-     (EQUALP (EVALUATE '(WHEN T (+ 1 2)) NIL) 3)
-     (EQUALP (EVALUATE '(UNLESS T 1) NIL) NIL)
-     (EQUALP (EVALUATE '(UNLESS NIL 1) NIL) 1)
-     (EQUALP (EVALUATE '(UNLESS NIL (+ 1 2)) NIL) 3)
-     (EQUALP (EVALUATE '(WHEN T (SETF X 1) (+ X 1)) (LIST (CONS 'X 0))) 2)
-     (EQUALP (EVALUATE '(UNLESS NIL (SETF Y 1) (+ Y 1)) (LIST (CONS 'Y 0)))
-             2)))
-   (DEFUN TEST-Q1 () (TEST-EVALUATE) (FMAKUNBOUND 'EVALUATE)))
+  ("given" (DECLAIM (NOTINLINE SUM-NODES))
+   (DEFTEST TEST-SUM-NODES NIL
+    (CHECK (EQUALP (SUM-NODES '(1 (2 (3) (4)) (5))) 15)
+     (EQUALP (SUM-NODES '(A (1 (B) (2)) (C (3)))) 6)
+     (EQUALP (SUM-NODES 'NIL) 0)))
+   (DEFUN TEST-Q1 () (TEST-SUM-NODES) (FMAKUNBOUND 'SUM-NODES)))
+  NIL)
+ ("q2"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab08/q2.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab08/q2.lisp\")
+ 
+
+Write a Common Lisp function called COUNT-INTERNAL-NODES that takes a tree as input and returns the number of internal nodes (nodes that have one or more children). A leaf node is a node with no children, and should not be counted.
+
+Examples:
+
+
+The expression below
+ 
+(COUNT-INTERNAL-NODES '(A (B (C) (D)) (E)))
+
+should evaluate to
+
+2
+
+The expression below
+ 
+(COUNT-INTERNAL-NODES '(X))
+
+should evaluate to
+
+0
+
+The expression below
+ 
+(COUNT-INTERNAL-NODES 'NIL)
+
+should evaluate to
+
+0
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE COUNT-INTERNAL-NODES))
+   (DEFTEST TEST-COUNT-INTERNAL-NODES NIL
+    (CHECK (EQUALP (COUNT-INTERNAL-NODES '(A (B (C) (D)) (E))) 2)
+     (EQUALP (COUNT-INTERNAL-NODES '(X)) 0)
+     (EQUALP (COUNT-INTERNAL-NODES 'NIL) 0)))
+   (DEFUN TEST-Q2 ()
+     (TEST-COUNT-INTERNAL-NODES)
+     (FMAKUNBOUND 'COUNT-INTERNAL-NODES)))
+  NIL)
+ ("q3"
+  ("whats-asked"
+   ("
+
+** WHAT YOU ARE ASKED
+
+*NOTE:* 
+
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/lab08/q3.lisp* .
+ - You may create helper functions in your program file. 
+
+ - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
+ 
+ (cg:chk-my-solution \"~/lab08/q3.lisp\")
+ 
+
+Write a Common Lisp function called TREE-DEPTHS that takes a tree as input and returns a list of the depths of all leaf nodes. The root has depth 0, its children have depth 1, and so on.
+
+Examples:
+
+
+The expression below
+ 
+(TREE-DEPTHS '(A (B (C) (D)) (E)))
+
+should evaluate to
+
+(2 2 1)
+
+The expression below
+ 
+(TREE-DEPTHS '(X))
+
+should evaluate to
+
+(0)
+
+The expression below
+ 
+(TREE-DEPTHS 'NIL)
+
+should evaluate to
+
+NIL
+
+
+"))
+  NIL
+  ("given" (DECLAIM (NOTINLINE TREE-DEPTHS))
+   (DEFTEST TEST-TREE-DEPTHS NIL
+    (CHECK (EQUALP (TREE-DEPTHS '(A (B (C) (D)) (E))) '(2 2 1))
+     (EQUALP (TREE-DEPTHS '(X)) '(0)) (EQUALP (TREE-DEPTHS 'NIL) 'NIL)))
+   (DEFUN TEST-Q3 () (TEST-TREE-DEPTHS) (FMAKUNBOUND 'TREE-DEPTHS)))
   NIL))
