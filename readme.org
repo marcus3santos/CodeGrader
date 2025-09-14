@@ -187,7 +187,7 @@ We make the following assumptions regarding the physical environment where stude
    You would do something similar to zip the solutions for students in section 10.
    #+begin_src shell
      cd ~/tmp/cps305PracticumTest/cps30510
-     zip -r ~/tmp/PT1/Sections/10/std-sol.zip 
+     zip -r ~/tmp/PT1/Sections/10/std-sol.zip *
    #+end_src
    By zipping this way, you would create a zip archive that does not
    include the parent directories (cps30505 and cps30508).
