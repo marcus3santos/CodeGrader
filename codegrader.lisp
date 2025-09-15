@@ -525,7 +525,7 @@ Please check your logic and consider adding a termination condition.")
   "Loads and processes assessment data for chk-my-solution."
   (let* ((assessment-data-orig (handler-case (with-open-file (in assessment-data-file :direction :input)
                                                (read in))
-                                 (file-error (e) (error "Assessment data file error: ~a" e))))
+                                 (file-error (e) (error "!!!!! Incorrect folder/file name.   !!!!!" e))))
          (sandbox-functions (second (assoc "fnames" assessment-data-orig :test #'string=))))
     (export (mapcar (lambda (s) (intern (symbol-name s) :sandbox)) sandbox-functions) :sandbox)
     (subst-package-symbols assessment-data-orig :test-runtime sandbox-functions :sandbox)))
