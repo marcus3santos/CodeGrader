@@ -1,4 +1,4 @@
-(("folder" "~/lab04/") ("questions" ("q1" "q2" "q3" "q4" "q5"))
+(("folder" "~/mock-pt/") ("questions" ("q1" "q2" "q3" "q4"))
  ("fnames"
   (MAKE-POINT-LIST GET-POINT-LIST-X GET-POINT-LIST-Y DISTANCE-BETWEEN-POINTS
    CREATE-INITIALIZED-ARRAY BUILD-DYNAMIC-ARRAY COUNT-POSITIVE-NUMBERS))
@@ -10,12 +10,12 @@
 
 *NOTE:* 
 
- - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q1.lisp* .
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/mock-pt/q1.lisp* .
  - You may create helper functions in your program file. 
 
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
  
- (cg:chk-my-solution \"~/lab04/q1.lisp\")
+ (cg:chk-my-solution \"~/mock-pt/q1.lisp\")
  
 
 *Part 1*:
@@ -164,33 +164,12 @@ should evaluate to
 
 *NOTE:* 
 
- - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q2.lisp* .
-
-
-
-Define a Common Lisp function named MY-COMPLEXITY-ANSWER that, when evaluated, returns the symbol corresponding to your chosen answer (e.g., if you believe the answer is B, your function should return ='B=).
-
-
-;; Example of how your function should look (replace 'X with your actual answer)
-(defun my-complexity-answer ()
- 'X)
-
-"))
-  NIL ("given" (DECLAIM (NOTINLINE)) (DEFUN TEST-Q2 ())) NIL)
- ("q3"
-  ("whats-asked"
-   ("
-
-** WHAT YOU ARE ASKED
-
-*NOTE:* 
-
- - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q3.lisp* .
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/mock-pt/q2.lisp* .
  - You may create helper functions in your program file. 
 
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
  
- (cg:chk-my-solution \"~/lab04/q3.lisp\")
+ (cg:chk-my-solution \"~/mock-pt/q2.lisp\")
  
 
 Write a function called CREATE-INITIALIZED-ARRAY that takes a positive integer size as an argument. The function should create a static one-dimensional array of that size and initialize each element with its index (starting from 0). The function should return the created array.
@@ -246,11 +225,11 @@ should evaluate to
      (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 3) 2) 2)
      (EQUALP (ARRAY-TOTAL-SIZE (CREATE-INITIALIZED-ARRAY 5)) 5)
      (EQUALP (AREF (CREATE-INITIALIZED-ARRAY 1) 0) 0)))
-   (DEFUN TEST-Q3 ()
+   (DEFUN TEST-Q2 ()
      (TEST-CREATE-INITIALIZED-ARRAY)
      (FMAKUNBOUND 'CREATE-INITIALIZED-ARRAY)))
   NIL)
- ("q4"
+ ("q3"
   ("whats-asked"
    ("
 
@@ -258,12 +237,12 @@ should evaluate to
 
 *NOTE:* 
 
- - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q4.lisp* .
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/mock-pt/q3.lisp* .
  - You may create helper functions in your program file. 
 
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
  
- (cg:chk-my-solution \"~/lab04/q4.lisp\")
+ (cg:chk-my-solution \"~/mock-pt/q3.lisp\")
  
 
 Write a function called BUILD-DYNAMIC-ARRAY that takes a list of numbers as an argument. The function should create an empty adjustable one-dimensional array and then use VECTOR-PUSH-EXTEND to add each number from the elements list into the array. The function should return the final dynamic array.
@@ -328,11 +307,11 @@ should evaluate to
      (EQUALP (ARRAY-TOTAL-SIZE (BUILD-DYNAMIC-ARRAY '(1 2))) 2)
      (EQUALP (BUILD-DYNAMIC-ARRAY 'NIL) #())
      (EQUALP (AREF (BUILD-DYNAMIC-ARRAY '(5)) 0) 5)))
-   (DEFUN TEST-Q4 ()
+   (DEFUN TEST-Q3 ()
      (TEST-BUILD-DYNAMIC-ARRAY)
      (FMAKUNBOUND 'BUILD-DYNAMIC-ARRAY)))
   NIL)
- ("q5"
+ ("q4"
   ("whats-asked"
    ("
 
@@ -340,12 +319,12 @@ should evaluate to
 
 *NOTE:* 
 
- - You are required to write the solutions for the parts of this question in the lisp program file *~/lab04/q5.lisp* .
+ - You are required to write the solutions for the parts of this question in the lisp program file *~/mock-pt/q4.lisp* .
  - You may create helper functions in your program file. 
  - You must not use or refer to the following Lisp built-in function(s) and symbol(s): *COUNT*, *COUNT-IF*, *COUNT-IF-NOT*. The penalty for doing so is a deduction of *80 percent* on the score of your solutions for this question
  - To ensure your solution is in the correct folder and passes the test cases shown in the examples below, type the following expression on the REPL:
  
- (cg:chk-my-solution \"~/lab04/q5.lisp\")
+ (cg:chk-my-solution \"~/mock-pt/q4.lisp\")
  
 
 Write a function called COUNT-POSITIVE-NUMBERS that takes a one-dimensional array of numbers as an argument. The function should iterate through the array and count how many numbers are strictly greater than 0. The function should return this count.
@@ -392,7 +371,7 @@ should evaluate to
      (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR -1 -5 0)) 0)
      (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR)) 0)
      (EQUALP (COUNT-POSITIVE-NUMBERS (VECTOR 7)) 1)))
-   (DEFUN TEST-Q5 ()
+   (DEFUN TEST-Q4 ()
      (TEST-COUNT-POSITIVE-NUMBERS)
      (FMAKUNBOUND 'COUNT-POSITIVE-NUMBERS)))
   NIL))
