@@ -193,7 +193,7 @@ We make the following assumptions regarding the physical environment where stude
    include the parent directories (cps30505 and cps30508).
 
 2. *Create a CSV file containing the mapping of students-to-computers*:
-   We assume the IT technicians have sent you CSV files containing the
+   We assume you already have the CSV files containing the
    student-to-computer mapping for each of the course sections. Now,
    based on these CSV files and on the sections-to-exams-versions, you
    should create a CSV file that contains the mappings of all students
