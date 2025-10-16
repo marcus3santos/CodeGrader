@@ -398,7 +398,6 @@ Please check your logic and consider adding a termination condition.")
 
     (prepare-submission-environment subs-folder submissions-zipped-file feedback-folder)
     (load-questions-testcases (cdr assessment-data) assessment-questions "hidden")
-
     (with-open-file (log-file-stream (ensure-directories-exist (merge-pathnames "codegrader-history/log.txt" (user-homedir-pathname)))
                                      :direction :output
                                      :if-exists :append
@@ -444,8 +443,8 @@ Please check your logic and consider adding a termination condition.")
            (room-pc (subseq temp 0 (1- (length temp))))
            (std (gethash room-pc map)))
       (when std
-        (format t "~%~a~VT~C -- Graded" (cdr std) 40 #\tab)
-        (grade-single-student folder std assessment-questions assessment-data feedback-folder map log-file-stream)))))
+        (grade-single-student folder std assessment-questions assessment-data feedback-folder map log-file-stream)
+        (format t "~%~a~VT~C -- Graded" (cdr std) 40 #\tab)))))
 
 (defun last-folder (path)
   "Return the last folder name from PATH, followed by a slash."
@@ -550,3 +549,13 @@ Please check your logic and consider adding a termination condition.")
            (format t "~%Compile time messages:~%~a" *load-error-message*))
          (format t "~%---------------------------------------------------------------------------")
          (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))
+
+;;
+
+(defun test1 ()
+  (let ((current *package*))
+    (in-package :test-runtime)
+    (multiple-value-bind (lambda-form name env)
+        (function-lambda-expression #'test-runtime::test-double-positives)
+      (print lambda-form))
+    (setf *package* current)))
