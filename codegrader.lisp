@@ -340,17 +340,45 @@ Please check your logic and consider adding a termination condition.")
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
 
+(defun simple-hash (string)
+  "Compute a deterministic integer hash of STRING (portable Common Lisp)."
+  (let ((hash 0))
+    (loop for c across string
+          do (setf hash (mod (+ (* hash 31) (char-code c)) #xffffffff)))
+    hash))
+
+(defun to-base36 (n)
+  "Convert a non-negative integer N to a base36 string."
+  (let ((digits "0123456789abcdefghijklmnopqrstuvwxyz")
+        (result ""))
+    (loop while (> n 0)
+          do (setf result (concatenate 'string
+                                       (string (char digits (mod n 36)))
+                                       result))
+             (setf n (truncate n 36)))
+    (if (string= result "")
+        "0"
+        result)))
+
+(defun my-feedback-file (stdid)
+  (format nil "~A.txt"
+          (to-base36 (simple-hash (format nil "~A" stdid)))))
+
+#|
 (defun my-feedback-file (stdid)
   (format nil "~A.txt" (sxhash (format nil "~A" stdid))))
+|#
+
 
 (defun eval-student-solutions (std-id solutions-folder test-cases-folder output-folder)
   "Based on the given student id (std-id, an integer), the students' solutions in solutions-folder, and 
    the test cases in test-cases-folder, generates a file in the output-folder containing the CodeGrader generated feedback."
-  (let* ((fname (concatenate 'string (format nil "~A" (sxhash (format nil "~A" std-id))) ".txt"))
+  (let* (;(fname (concatenate 'string (format nil "~A" (sxhash (format nil "~A" std-id))) ".txt"))
+         (fname (format nil "~A.txt" (to-base36 (simple-hash (format nil "~A" stdid)))))
 	 (folder (ensure-directories-exist (concatenate 'string  (namestring output-folder) fname))))
     (with-open-file (out folder :direction :output :if-exists :supersede)
       (eval-solutions solutions-folder :exam test-cases-folder out))
-     (format t "Feedback saved in ~a~%" folder)))
+    (format t "Feedback saved in ~a~%" folder)))
 
 
 ;;(in-package :cg)
