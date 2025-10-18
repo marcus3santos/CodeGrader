@@ -22,6 +22,7 @@
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
 
+(defparameter *secret-salt* "A9f4XqZb!")
 
 ;; List of assessments and labs
 
@@ -361,8 +362,7 @@ Please check your logic and consider adding a termination condition.")
         result)))
 
 (defun my-feedback-file (stdid)
-  (format nil "~A.txt"
-          (to-base36 (simple-hash (format nil "~A" stdid)))))
+  (format nil "~A.txt" (simple-hash (format nil "~A~A" stdid *secret-salt*))))
 
 #|
 (defun my-feedback-file (stdid)
@@ -374,7 +374,7 @@ Please check your logic and consider adding a termination condition.")
   "Based on the given student id (std-id, an integer), the students' solutions in solutions-folder, and 
    the test cases in test-cases-folder, generates a file in the output-folder containing the CodeGrader generated feedback."
   (let* (;(fname (concatenate 'string (format nil "~A" (sxhash (format nil "~A" std-id))) ".txt"))
-         (fname (format nil "~A.txt" (to-base36 (simple-hash (format nil "~A" stdid)))))
+         (fname (format nil "~A.txt" (simple-hash (format nil "~A~A" a *secret-salt*))))
 	 (folder (ensure-directories-exist (concatenate 'string  (namestring output-folder) fname))))
     (with-open-file (out folder :direction :output :if-exists :supersede)
       (eval-solutions solutions-folder :exam test-cases-folder out))
@@ -496,7 +496,9 @@ Please check your logic and consider adding a termination condition.")
                                 :room-pc (fourth std)
                                 :evaluation seval
                                 :total-marks (car seval)))
-         (anony-id (format nil "~A" (sxhash (submission-std-id item)))))
+         ;(anony-id (format nil "~A" (sxhash (submission-std-id item))))
+         (anony-id (format nil "~A" (simple-hash (format nil "~A~A" (submission-std-id item) *secret-salt*))))
+         )
     (format log-file-stream "Student ~a (~a ~a),  result:~%~s~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
     (setf (gethash (submission-std-id item) map) item)
     (generate-feedback anony-id seval feedback-folder)))
@@ -580,10 +582,3 @@ Please check your logic and consider adding a termination condition.")
 
 ;;
 
-(defun test1 ()
-  (let ((current *package*))
-    (in-package :test-runtime)
-    (multiple-value-bind (lambda-form name env)
-        (function-lambda-expression #'test-runtime::test-double-positives)
-      (print lambda-form))
-    (setf *package* current)))
