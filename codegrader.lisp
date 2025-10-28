@@ -381,6 +381,20 @@ Please check your logic and consider adding a termination condition.")
   (let ((assessment-data (load-and-process-assessment-data assessment-tooling-file)))
     (load-questions-testcases (cdr assessment-data) assessment-questions "hidden")
     (grade-solutions (directory (format nil "~a/*.*" folder)) assessment-questions (cdr assessment-data))))
+
+(defun chk-given-cases (folder assessment-questions assessment-tooling-file)
+  (mapcar (lambda (q)
+            (load-and-evaluate-solution (format nil "~a/~a.lisp" folder q) q (load-and-process-assessment-data-for-chk-my-solution assessment-tooling-file)))
+          assessment-questions))
+
+(defun chk-given-and-hidden-cases (folder assessment-questions assessment-tooling-file)
+  (format t "Given test cases:~%~a~%~%Hidden test cases:~%~a~%"
+          (mapcar (lambda (res)
+                    (mapcar #'gen-message (nth 3 res)))
+                  (chk-given-cases folder assessment-questions assessment-tooling-file))
+          (mapcar (lambda (res)
+                    (mapcar #'gen-message (nth 3 (second res))))
+                  (chk-hidden-cases folder assessment-questions assessment-tooling-file))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
