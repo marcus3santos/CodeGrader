@@ -388,13 +388,17 @@ Please check your logic and consider adding a termination condition.")
           assessment-questions))
 
 (defun chk-given-and-hidden-cases (folder assessment-questions assessment-tooling-file)
-  (format t "Given test cases:~%~a~%~%Hidden test cases:~%~a~%"
+  (mapcar (lambda (q g h)
+            (format t "~a:~%Given:~a~%Hidden:~a~%" q g h))
+          assessment-questions
           (mapcar (lambda (res)
                     (mapcar #'gen-message (nth 3 res)))
                   (chk-given-cases folder assessment-questions assessment-tooling-file))
           (mapcar (lambda (res)
                     (mapcar #'gen-message (nth 3 (second res))))
-                  (chk-hidden-cases folder assessment-questions assessment-tooling-file))))
+                  (chk-hidden-cases folder assessment-questions assessment-tooling-file)))
+  nil)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
