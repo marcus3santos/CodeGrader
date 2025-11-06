@@ -275,9 +275,9 @@
                       (result (eval (third node))))
                  (list (format nil "~%The expression below~% ~a~%~%should evaluate to~%~a~%" (pretty-print-to-string expected)  (pretty-print-to-string result)))))
               (sols
-               (unless (or function-name qnumber)
-                 (error "Question solutions not inside a TC tag: ~s" node))
-               (push `(sols ,function-name ,@(cdr node))
+               (unless qnumber
+                 (error "Question solutions not inside a Q tag: ~s" node))
+               (push `(sols ,@(cdr node))
                      (question-solutions (gethash qnumber questions-info)))
                nil)
               (cb ;; Code block
@@ -317,14 +317,16 @@
                   (dolist (e rfm-names (reverse res))
                     (push (list 'fmakunbound  (list 'quote (first e))) res))))))))
 
-(defun gen-tcs (qnumber description forbidden penalty examples testcases include-hidden)
+(defun gen-questions-data (qnumber description forbidden penalty examples testcases solutions include-hidden)
+  "Returns a list containing the tooling data for each question"
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
-              ,(if forbidden
+              ,(when forbidden
                    `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
               ("given" ,@(gen-tc-code qlabel examples))
-              ,(if include-hidden
-                   `("hidden" ,@(gen-tc-code qlabel testcases))))))
+              ,(when include-hidden
+                   `("hidden" ,@(gen-tc-code qlabel testcases))
+                   `("solutions" ,@(mapcar #'cdr solutions))))))
 
 (defun gen-exam-files (from &key include-hidden)
   "From is the file containing the assessment's sexprmarkup description"
@@ -345,15 +347,15 @@
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
     (maphash (lambda (k v)
-               (format t "~%Question: ~a~%Solution: ~a" k (question-solutions v))
-               (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) include-hidden)
+               (push  (gen-questions-data k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) (question-solutions v) include-hidden)
                       tcs-driver)
                (push (format nil "q~a" k) questions)
                (setf all-fnames (append (mapcar #'second (question-examples v)) (question-given-functions v) all-fnames)))
              questions-info)
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
-      (format out "~s" (cons (list "folder" *folder-name*)
-                             (cons (list "questions" (reverse questions))
-                                   (cons (list "fnames" (reverse all-fnames)) (reverse tcs-driver))))))
+      (format out "~s" `(("folder" ,*folder-name*)
+                         ("questions" ,(reverse questions))
+                         ("fnames" ,(reverse all-fnames))
+                         ,@(reverse tcs-driver))))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
 
