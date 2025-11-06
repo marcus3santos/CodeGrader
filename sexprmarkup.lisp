@@ -11,7 +11,7 @@
 ;; Structure to store information about questions
 
 (defstruct question
-  number forbidden penalty description examples testcases given-functions)
+  number forbidden penalty description examples testcases given-functions solutions)
 
 
 ;; Utility functions
@@ -255,6 +255,8 @@
                            (emit item :depth depth :function-name function-name :qnumber qnumber :given-functions (if (listp given-functions) given-functions (list given-functions))))
                          (nthcdr 2 node))))
               ((gvn hdn) ;; Given test cases , Hidden test cases
+               (unless (or function-name qnumber)
+                 (error "Test case assertions not inside a TC tag: ~s" node))
                (if (equalp (car node) 'gvn)
                    (push (append (list 'deftest function-name) (cdr node))
                          (question-examples (gethash qnumber questions-info)))
@@ -272,6 +274,12 @@
                (let* ((expected (second node))
                       (result (eval (third node))))
                  (list (format nil "~%The expression below~% ~a~%~%should evaluate to~%~a~%" (pretty-print-to-string expected)  (pretty-print-to-string result)))))
+              (sols
+               (unless (or function-name qnumber)
+                 (error "Question solutions not inside a TC tag: ~s" node))
+               (push `(sols ,function-name ,@(cdr node))
+                     (question-solutions (gethash qnumber questions-info)))
+               nil)
               (cb ;; Code block
                (let* ((proplist (second node))
                       (lang (getf proplist :language))
@@ -337,6 +345,7 @@
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
     (maphash (lambda (k v)
+               (format t "~%Question: ~a~%Solution: ~a" k (question-solutions v))
                (push  (gen-tcs k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) include-hidden)
                       tcs-driver)
                (push (format nil "q~a" k) questions)
