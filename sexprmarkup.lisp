@@ -277,7 +277,7 @@
               (sols
                (unless qnumber
                  (error "Question solutions not inside a Q tag: ~s" node))
-               (push (cdr node) ;`(sols ,@(cdr node))
+               (push `(sols ,@(cdr node))
                      (question-solutions (gethash qnumber questions-info)))
                nil)
               (cb ;; Code block
@@ -295,7 +295,7 @@
            ((atom node) (list (format nil "~a " node))))))
     (format nil "~{~a~}" (flatten (emit sexpr)))))
 
-(defun gen-tc-code (qlabel cases)
+(defun gen-tc-code (qlabel cases given-functions-and-symbols)
   (let (fm-names
         deftests)
     (append
@@ -310,27 +310,28 @@
                           (push `(equalp ,(cadr e) ,(caddr e)) res)))))
                deftests))) 
      (list `(defun ,(intern (format nil "TEST-~a" (string-upcase qlabel))) () 
-              ,@(let ((res)
-                      (rfm-names (reverse fm-names)))
+              ,@(let* ((res)
+                       (rfm-names (reverse fm-names))
+                       (fnames (mapcar #'first rfm-names))
+                       (given-symbs (remove-if (lambda (x) (member x fnames)) given-functions-and-symbols)))
+                  (format t "~%names: ~a~%givens:~a" fnames given-symbs)
                   (dolist (e rfm-names)
                     (push (list (second e)) res))
                   (dolist (e rfm-names (reverse res))
-                    (push (list 'fmakunbound  (list 'quote (first e))) res))))))))
+                    (push (list 'fmakunbound  (list 'quote (first e))) res))
+                  (dolist (s given-symbs (reverse res))
+                          (push (list 'fmakunbound (list 'quote s)) res))))))))
 
-(defun gen-questions-data (qnumber description forbidden penalty examples testcases solutions include-hidden)
-  "Returns a list containing the tooling data for each question.
-   The solutions for a question is a list of lists where each sublist contains
-   the solution for a part of the question. Each part is a list where each 
-   variant of a solution is a form (SOL form+)"
+(defun gen-questions-data (qnumber description forbidden penalty examples testcases given-functions-and-symbols solutions include-hidden)
+  "Returns a list containing the tooling data for each question"
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
               ,(when forbidden
                    `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
-              ("given" ,@(gen-tc-code qlabel examples))
+              ("given" ,@(gen-tc-code qlabel examples given-functions-and-symbols))
               ,(when include-hidden
-                   `("hidden" ,@(gen-tc-code qlabel testcases))
-                   `("solutions" ,@(reverse solutions) ;,@(mapcar #'cdr (reverse solutions))
-                                 )))))
+                   `("hidden" ,@(gen-tc-code qlabel testcases given-functions-and-symbols))
+                   `("solutions" ,@(mapcar #'cdr solutions))))))
 
 (defun gen-exam-files (from &key include-hidden)
   "From is the file containing the assessment's sexprmarkup description"
@@ -351,7 +352,7 @@
       (format out "~a" (sexprmark->org assessment-sexpr questions-info)))
     (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
     (maphash (lambda (k v)
-               (push  (gen-questions-data k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) (question-solutions v) include-hidden)
+               (push  (gen-questions-data k (question-description v ) (question-forbidden v) (question-penalty v) (question-examples v) (question-testcases v) (question-given-functions v) (question-solutions v) include-hidden)
                       tcs-driver)
                (push (format nil "q~a" k) questions)
                (setf all-fnames (append (mapcar #'second (question-examples v)) (question-given-functions v) all-fnames)))

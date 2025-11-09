@@ -333,7 +333,7 @@ Please check your logic and consider adding a termination condition.")
              (testcase-code (cdr (assoc test-cases-kind question-data :test #'string=))))
         (if testcase-code
             (load-test-cases testcase-code)
-            (error "Missing hidden test cases for question ~a. ~%Ensure you have generated the assessment data file by setting the :hidden key to T, as follows: ~%(GEN-EXAM-FILES <sxm file> :HIDDEN T)" question))))
+            (error "Missing hidden test cases for question ~a. ~%Ensure you have generated the assessment data file by setting the :hidden key to T, as follows: ~%(GEN-EXAM-FILES <sxm file> :INCLUDE-HIDDEN T)" question))))
     (setf *package* current)))
 
 
