@@ -314,7 +314,6 @@
                        (rfm-names (reverse fm-names))
                        (fnames (mapcar #'first rfm-names))
                        (given-symbs (remove-if (lambda (x) (member x fnames)) given-functions-and-symbols)))
-                  (format t "~%names: ~a~%givens:~a" fnames given-symbs)
                   (dolist (e rfm-names)
                     (push (list (second e)) res))
                   (dolist (e rfm-names (reverse res))
