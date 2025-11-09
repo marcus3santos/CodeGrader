@@ -277,7 +277,7 @@
               (sols
                (unless qnumber
                  (error "Question solutions not inside a Q tag: ~s" node))
-               (push `(sols ,@(cdr node))
+               (push (cdr node) 
                      (question-solutions (gethash qnumber questions-info)))
                nil)
               (cb ;; Code block
@@ -323,7 +323,10 @@
                           (push (list 'fmakunbound (list 'quote s)) res))))))))
 
 (defun gen-questions-data (qnumber description forbidden penalty examples testcases given-functions-and-symbols solutions include-hidden)
-  "Returns a list containing the tooling data for each question"
+  "Returns a list containing the tooling data for each question.
+   The solutions for a question is a list of lists where each sublist contains
+   the solution for a part of the question. Each part is a list where each 
+   variant of a solution is a form (SOL form+)"
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
               ,(when forbidden
@@ -331,7 +334,7 @@
               ("given" ,@(gen-tc-code qlabel examples given-functions-and-symbols))
               ,(when include-hidden
                    `("hidden" ,@(gen-tc-code qlabel testcases given-functions-and-symbols))
-                   `("solutions" ,@(mapcar #'cdr solutions))))))
+                   `("solutions" ,@(reverse solutions))))))
 
 (defun gen-exam-files (from &key include-hidden)
   "From is the file containing the assessment's sexprmarkup description"
