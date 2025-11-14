@@ -389,7 +389,7 @@ Please check your logic and consider adding a termination condition.")
 
 (defun chk-given-and-hidden-cases (folder assessment-questions assessment-tooling-file)
   (mapcar (lambda (q g h)
-            (format t "~a:~%Given:~a~%Hidden:~a~%" q g h))
+            (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
           assessment-questions
           (mapcar (lambda (res)
                     (mapcar #'gen-message (nth 3 res)))
