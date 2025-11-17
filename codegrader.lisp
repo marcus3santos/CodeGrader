@@ -570,6 +570,8 @@ Please check your logic and consider adding a termination condition.")
          (when (and  *load-error-message* (not (string= *load-error-message* "")))
            (format t "~%---------------------------------------------------------------------------")
            (format t "~%Compile time messages:~%~a" *load-error-message*))
+         (format t "---------------------------------------------------------------------------")
+         (format t "~%Note: Warning messages starting with~%    'WARNING: redefining TEST-RUNTIME::....'~%do not affect the results of your test cases.")
          (format t "~%---------------------------------------------------------------------------")
          (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))
 

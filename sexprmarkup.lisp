@@ -329,11 +329,12 @@
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
               ,(when forbidden
-                   `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
+                 `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
               ("given" ,@(gen-tc-code qlabel examples given-functions-and-symbols))
               ,(when include-hidden
-                   `("hidden" ,@(gen-tc-code qlabel testcases given-functions-and-symbols))
-                   `("solutions" ,@(reverse solutions))))))
+                 `("hidden" ,@(gen-tc-code qlabel testcases given-functions-and-symbols)))
+              ,(when include-hidden
+                 `("solutions" ,@(reverse solutions))))))
 
 (defun gen-exam-files (from &key include-hidden)
   "From is the file containing the assessment's sexprmarkup description"
