@@ -18,6 +18,8 @@
 
 (defparameter *assessment-data-folder* "~/quicklisp/local-projects/CodeGrader/Assessment-data/")
 
+(defparameter *secret-salt* "A9f4XqZb!")
+
 ;; Root folder where the examples' test case files  and the names of the
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
@@ -340,8 +342,19 @@ Please check your logic and consider adding a termination condition.")
 (defun get-lab-files (lab)
   (directory (merge-pathnames (concatenate 'string "Test-Cases/" lab "/*.lisp") (asdf:system-source-directory :codegrader))))
 
+
+(defun simple-hash (string)
+  "Compute a deterministic integer hash of STRING (portable Common Lisp)."
+  (let ((hash 0))
+    (loop for c across string
+          do (setf hash (mod (+ (* hash 31) (char-code c)) #xffffffff)))
+    hash))
+
+(defun hash-std-id (stdid)
+  (format nil "~A" (simple-hash (format nil "~A~A" stdid *secret-salt*))))
+
 (defun my-feedback-file (stdid)
-  (format nil "~A.txt" (sxhash (format nil "~A" stdid))))
+  (format nil "~A.txt" (hash-std-id stdid)))
 
 #|
 (defun eval-student-solutions (std-id solutions-folder test-cases-folder output-folder)
@@ -491,7 +504,7 @@ Please check your logic and consider adding a termination condition.")
                                 :room-pc (fourth std)
                                 :evaluation seval
                                 :total-marks (car seval)))
-         (anony-id (format nil "~A" (sxhash (submission-std-id item)))))
+         (anony-id (hash-std-id (submission-std-id item))))
     (format log-file-stream "Student ~a (~a ~a),  result:~%~s~%" (submission-std-id item) folder (concatenate 'string anony-id ".txt") seval)
     (setf (gethash (submission-std-id item) map) item)
     (generate-feedback anony-id seval feedback-folder)))

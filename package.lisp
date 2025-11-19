@@ -76,11 +76,11 @@
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
   (:use cl :grader :test-runtime :sexprmark-to-org)
-  (:export :grade-it :grade-exam  :chk-given-and-hidden-cases :chk-my-solution))
+  (:export :grade-it :grade-exam  :chk-given-and-hidden-cases :chk-my-solution :my-feedback-file))
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
   (:use :common-lisp :cl-user :codegrader :grader :sexprmark-to-org)
   (:export :start :quit :eval-solutions :grade-it  :grade-exam :chk-given-and-hidden-cases :evaluate-solution :chk-my-solution
-           :gen-exam-files :test1))
+           :gen-exam-files :my-feedback-file))
 
