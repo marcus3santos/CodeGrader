@@ -92,9 +92,12 @@ Please check your logic and consider adding a termination condition.")
 		  (equal error-type "late-submission"))
         (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." std-sol (string-upcase q))
         (format out "~%---------------------------------------------------------------------------"))
-      (when (and  *load-error-message* (not (string= *load-error-message* "")))
-        (format out "~%Compile time messages:~%~a~%End of compile time messages for ~a." *load-error-message* (string-upcase q))
-        (format out "~%---------------------------------------------------------------------------"))
+     
+      (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
+        (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
+        (format out "~%---------------------------------------------------------------------------")
+        (setf *load-error-message* nil))
+      
       (cond ((or (equalp error-type "load-error")
                  (equalp error-type "missing-question-file")
                  (equalp error-type "no-submitted-file")
@@ -107,9 +110,9 @@ Please check your logic and consider adding a termination condition.")
              ;;(format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res))
              )
             #|
-            ((equal error-type "No RT-error") 
-             (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
-	    (t (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res)))
+            ((equal error-type "No RT-error") ;
+            (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res))) ;
+	    (t (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}" func-name (mapcar #'gen-message res))) ;
             |#
             )
       (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}End of Unit Tests for ~a." func-name (mapcar #'gen-message res) (string-upcase q))
@@ -145,7 +148,7 @@ Please check your logic and consider adding a termination condition.")
 
 (defun get-insert-exam-grade (log-file-stream stream csv ht f)
   "This version uses the student id # as hash key"
-  (let* ((std-id (get-std-id csv))
+  (let* ((std-id (parse-integer (get-std-id csv) :junk-allowed t))
 	 (v (gethash std-id ht)))
     (if v
         (let ((new-mark (change-mark-csv csv (funcall f v)))
@@ -316,7 +319,7 @@ Please check your logic and consider adding a termination condition.")
          (sufx2 (subseq sufx1 (1+ (length fname))))
          (lname (subseq sufx2 0 (position #\, sufx2)))
          (room-pc (parse-room-pc (subseq sufx2 (1+ (length lname))))))
-    (setf (gethash room-pc table) (list id fname lname room-pc))))
+    (setf (gethash room-pc table) (list (parse-integer (remove #\u+feff id) :junk-allowed t) fname lname room-pc))))
 
 (defun create-mapping-table (csv-file)
   (let ((htable (make-hash-table :test 'equal)))
