@@ -234,7 +234,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
                                              (reverse *runtime-error*)))))
          (if  *load-error*
               (setf description  (concatenate 'string  description *load-error-message*))
-              (setf description "None."))    
+              (setf description nil))    
          #|
          (when *cr-warning*
            (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
