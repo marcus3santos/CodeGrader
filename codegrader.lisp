@@ -67,7 +67,7 @@ Please check your logic and consider adding a termination condition.")
           (t (format nil "Failed: ~s did not return ~s." fcall  ret)))))
 
 (defun generate-messages (out eval)
-  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T- ~a.lisp~%~}" 
+  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T+ ~a.lisp~%~}" 
           (apply #'append (mapcar (lambda (x)
                                     (let ((qlabel (first x))
                                           (error-message (second (second x))))
