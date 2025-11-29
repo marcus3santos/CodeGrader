@@ -111,68 +111,6 @@
     ;; Retrieve all collected messages from the string stream as a single string.
     (get-output-stream-string messages)))
 
-#|
-(defun safely-load-std-solution (file)
-  "Changes the current environment to the question's sandboxed environment  then loads
-   the student's solution."
-  (let ((current *package*))
-    (in-package :sandbox)
-    (load file)
-    (setf *package* current)))
-
-(defun rewrite-load (file)
-  "Gets rid of CR characters in file creating new file, signals a warning, loads new file,
-   and deletes it (if LOAD does not throw an error)"
-  (let ((newfname (concatenate 'string (directory-namestring file) (string (gensym)))))
-    (with-open-file (in file)
-      (setf *cr-warning* newfname)
-      (with-open-file (out newfname :direction :output)
-        (do ((c (read-char in) (read-char in nil 'eof)))
-            ((not (characterp c)))
-          (if (char= c #\Return)
-              (write-char #\Newline out)
-              (write-char c out)))))
-    (safely-load-std-solution newfname)
-    ;;(load newfname)
-    (delete-file newfname)))
-
-(defun check-balanced-parentheses (code)
-  "Returns T if CODE has balanced parentheses, otherwise NIL."
-  (loop with depth = 0
-        for char across code
-        do (cond
-             ((char= char #\() (incf depth))
-             ((char= char #\)) (decf depth)
-              (when (< depth 0) (return-from check-balanced-parentheses nil))))
-        finally (return (= depth 0))))
-
-(defun file-has-balanced-parentheses-p (filepath)
-  "Reads Lisp source file and checks for balanced parentheses."
-  (when (probe-file filepath)
-    (with-open-file (in filepath :direction :input)
-      (let ((content (make-string (file-length in))))
-        (read-sequence content in)
-        (check-balanced-parentheses content)))))
-
-(defun has-cr? (file)
-  (with-open-file (in file)
-    (do ((c (read-char in) (read-char in nil 'eof)))
-        ((not (characterp c)))
-      (when (char= c #\Return)
-        (return t)))))
-
-(define-condition my-error (error)
-  ((details :initarg :details :reader error-details))
-  (:report (lambda (c s)
-             (format s "My custom error: ~A" (error-details c)))))
-
-(defun load-solution (file)
-  (unless (file-has-balanced-parentheses-p file)
-    (error 'my-error :details "Something specific broke"))
-  (if (has-cr? file) (rewrite-load file)
-      (safely-load-std-solution file)))
-|#
-
 (defun handle-solution-loading (file)
   "Changes the current environment to the question's sandboxed environment  then loads
    the student's solution."
@@ -181,17 +119,6 @@
     (prog1 (load-and-capture-warnings file)
       ;;(load file)
       (setf *package* current))))
-#|
-(defun handle-solution-loading (student-solution)
-  (handler-case (load-solution student-solution)
-    (my-error (e)
-      (push e *load-error*))
-    (error (condition)
-      (when (and *cr-warning* (probe-file *cr-warning*))
-        (delete-file *cr-warning*))
-      (push condition *load-error*))))
-|#
-
 
 (defun load-macros ()
   (load (merge-pathnames (asdf:system-source-directory *system-name*) "macros.lisp")))

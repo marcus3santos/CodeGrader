@@ -67,11 +67,11 @@ Please check your logic and consider adding a termination condition.")
           (t (format nil "Failed: ~s did not return ~s." fcall  ret)))))
 
 (defun generate-messages (out eval)
-  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- The following .lisp files were found in your assessment folder:~%~{~T- ~a.lisp~%~}" 
+  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T- ~a.lisp~%~}" 
           (apply #'append (mapcar (lambda (x)
                                     (let ((qlabel (first x))
                                           (error-message (second (second x))))
-                                      (unless (string= "missing-question-file" error-message)
+                                      (unless (and (stringp error-message) (string= "missing-question-file" error-message))
                                         (list qlabel)))) (cadr eval))))
   (format out "- Each question is worth 100 points.~%- Your score in the assessment is the sum of your questions' points divided by the number of questions in the assessment.")
   (format out "Your total score: ~a (out of 100)~%" (car eval))

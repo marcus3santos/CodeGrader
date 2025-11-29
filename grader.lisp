@@ -174,18 +174,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
                      (t (check-fnames (cdr e))))))
       (check-fnames cap-symbs))))
 
-#|
-(defun contains-forbidden-symbol? (prg-file)
-  ;;(setf *forbidden-symbols* nil)
-  (let ((ffuncs (chng-to-string *forbidden-symbols*))
-        (cap-symbs (capitalize-list (extract-symbols-from-file prg-file))))
-    (labels ((check-fnames (e)
-               (cond ((null e) nil)
-                     ((member (car e) ffuncs :test #'equal) (car e))
-                     (t (check-fnames (cdr e))))))
-      (check-fnames cap-symbs))))
-|#
-
 (defun read-file-as-string (file-name)
   "Reads the content of the file specified by FILE-NAME and returns it as a string."
   (with-open-file (stream file-name :direction :input)
@@ -208,7 +196,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
   (setf *load-error* nil)
   (setf *load-error-message* (handle-solution-loading student-solution)))
 
-(defun score-result (student-solution question assessment-data ws)
+(defun score-result (student-solution question assessment-data ws load-error)
     (let* ((description "")
            (question-data (cdr (assoc question assessment-data :test #'string=)))
            (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
@@ -233,12 +221,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
                                                  (format nil "~s~%~a" (second ce) (first ce)))
                                              (reverse *runtime-error*)))))
          (if  *load-error*
-              (setf description  (concatenate 'string  description *load-error-message*))
+              (setf description  (concatenate 'string  description load-error))
               (setf description nil))    
-         #|
-         (when *cr-warning*
-           (setf description  (concatenate 'string  description "CR character warning! Student's lisp file contains a CR character. New temporary file generated, loaded, and deleted.")))    
-         |#
          (when forbid-symb
            (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
          description)
@@ -250,9 +234,9 @@ the mark is calculated as the # of passes divided by the total # of cases.
   "Loads the student-solution file, initializes the test-runtime environment, and invokes
    the testcases for that question, and assesses the results.  Returns the percentage of 
    correct results over total results"
-  (load-student-solution student-solution)
-  (run-testcases question)
-  (score-result student-solution question assessment-data ws))
+  (let ((load-error (load-student-solution student-solution)))
+    (run-testcases question)
+    (score-result student-solution question assessment-data ws load-error)))
 
 
 (defun evaluate-solution (student-solution question assessmt-data &optional kind)
