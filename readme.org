@@ -61,7 +61,12 @@ better automation and tooling.
          (hdn ;; Hidden test cases used for grading a student's solution
           (a (count-occurrences 1 '(1 1 1 1 1)) 5)
           (a (count-occurrences 0 '(1 2 3 4)) 0)
-          (a (count-occurrences 'z '(a b c z z)) 2))
+          (a (count-occurrences 'z '(a b c z z)) 2)))
+        (sols
+          (defun count-occurrences (a b &optional (acc 0))
+            (cond ((null b) acc)
+                  ((= a (car b)) (count-occurrences a (cdr b) (1+ acc)))
+                  (t (count-occurrences a (cdr b) acc)))))
       (p "Part 2:")
       (p "...")
         ;; Additional example/test blocks can go here
@@ -84,6 +89,7 @@ better automation and tooling.
     - =(tc ...)= - test cases
     - =(gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
     - =(hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
+    - =(sols ...)= - Node containing the question solution(s). 
 
 * Generating the Assessment Support Files
 
