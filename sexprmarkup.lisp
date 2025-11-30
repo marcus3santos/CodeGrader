@@ -277,8 +277,8 @@
               (sols
                (unless qnumber
                  (error "Question solutions not inside a Q tag: ~s" node))
-               (push (cdr node) 
-                     (question-solutions (gethash qnumber questions-info)))
+               (setf (question-solutions (gethash qnumber questions-info))
+                     (append (question-solutions (gethash qnumber questions-info)) (cdr node)))
                nil)
               (cb ;; Code block
                (let* ((proplist (second node))
@@ -334,7 +334,7 @@
               ,(when include-hidden
                  `("hidden" ,@(gen-tc-code qlabel testcases given-functions-and-symbols)))
               ,(when include-hidden
-                 `("solutions" ,@(reverse solutions))))))
+                 `("solutions" ,@solutions)))))
 
 (defun gen-exam-files (from &key include-hidden)
   "From is the file containing the assessment's sexprmarkup description"
