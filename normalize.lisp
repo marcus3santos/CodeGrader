@@ -152,8 +152,7 @@ Returns T if A is considered less than B."
                      ,@new-bdy))))
              ((and (or (eq op 'let) (eq op 'let*)
                        (and (or (eq op 'do) (eq op 'do*))
-                            (listp (third f)) ; Checking syntax
-                            (first (third f)))
+                            (consp (third f))) ;; checking syntax
                        (and (eq op 'dotimes)
                             (symbolp (first (second f)))))
                    (listp (second f))) ; LET, LET*, DO, DO*, DOTIMES
