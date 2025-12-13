@@ -6,7 +6,8 @@ STUDENT-FUNCTIONS is a list of DEFUN forms as read from the student’s file."
     (dolist (form student-functions)
       (when (and (consp form) (eq (first form) 'defun))
         (setf (gethash (second form) function-table)
-              (cdddr form))))        ; skip DEFUN, name, arglist
+              (mapcar (lambda (form)
+                        (macroexpand form)) (cdddr form)))))  ; macroexpand body
     ;; Depth-first search
     (labels ((scan (fname visited)
                (cond
@@ -27,21 +28,7 @@ STUDENT-FUNCTIONS is a list of DEFUN forms as read from the student’s file."
                  ((null forms) nil)
                  ((and (symbolp (first forms))
                        (scan (first forms) visited))
-                  t)
-                 ;; lambda form
-                 ((and (consp forms)
-                       (or (eq (first forms) 'lambda)
-                           (eq (first forms) '#'lambda)))
-                  (calls-forbidden-p (cddr forms) visited))
-                 ;; let, let*, do, do* forms
-                 ((or (eq (first forms) 'let)
-                      (eq (first forms) 'let*)
-                      (eq (first forms) 'do)
-                      (eq (first forms) 'do*)
-                      (eq (first forms) 'dotimes))
-                  (or
-                   (calls-forbidden-p (mapcar #'rest (second forms)) visited)
-                   (calls-forbidden-p (cddr forms) visited)))
+                  t)                 
                  ;; recur through subforms and rest
                  ((or (and (consp (first forms))
                            (calls-forbidden-p (first forms) visited))
