@@ -1,3 +1,9 @@
+(defpackage :gensymifier
+  (:use :cl )
+  (:export :gensymify))
+
+(in-package :gensymifier)
+
 (defun gensymify (form &optional venv fenv)
   "Alpha-convert FORM by renaming all lexically bound variables to fresh GENSYMs.
 

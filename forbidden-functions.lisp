@@ -1,30 +1,31 @@
 (defpackage :chk-forbidden-functions
-  (:use :cl :normalizer)
+  (:use :cl :gensymifier)
   (:export :used-forbidden-function-p))
 
 (in-package :chk-forbidden-functions)
 
 (defun used-forbidden-function-p (q-func-name forbidden-functions student-forms)
-  "Return T if Q-FUNC-NAME directly or indirectly calls a function in FORBIDDEN-FUNCTIONS.
-STUDENT-FUNCTIONS is a list of DEFUN forms as read from the student’s file."
+  "Takes a function name Q-FUNC-NAME (a symbol), a list of function names FORBIDDEN-FUNCTIONS,
+   and a list STUDENT-FORMS containing the forms present in the student's lisp program file. 
+  Returns T if Q-FUNC-NAME directly or indirectly calls a function in FORBIDDEN-FUNCTIONS."
   (let ((function-table (make-hash-table))
         (global-identifier-table (make-hash-table)))
     ;; Build function and global identifier tables: name → body
     (dolist (form student-forms)
-      (let ((form-wth-uniq-vars (change-vars form nil "symbol")))
+      (let ((form-wth-uniq-vars (gensymify form)))
         (cond ((and (consp form-wth-uniq-vars) (eq (first form-wth-uniq-vars) 'defun))
                (setf (gethash (second form-wth-uniq-vars) function-table)
                      (cdddr form-wth-uniq-vars)))
               ((and (consp form-wth-uniq-vars)
-                    (or (eq (first form-wth-uniq-vars) 'defparameter)
-                        (eq (first form-wth-uniq-vars) 'defvar)
+                    (or (eq (first form-wth-uniq-vars) 'defvar)
+                        (eq (first form-wth-uniq-vars) 'defparameter)
                         (eq (first form-wth-uniq-vars) 'defconstant)))
                (setf (gethash (second form-wth-uniq-vars) global-identifier-table)
                      (cddr form-wth-uniq-vars))))))
     (maphash (lambda (k  v) (format t "function --- ~s ~s~%" k v)) function-table)
     (maphash (lambda (k  v) (format t "Global id --- ~s ~s~%" k v)) global-identifier-table )
     ;; Depth-first search
-    (labels ((scan (fname visited)
+    (labels ((scan (fname visited )
                (cond
                  ;; direct forbidden call?
                  ((member fname forbidden-functions)
