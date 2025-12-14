@@ -1,8 +1,8 @@
-(defpackage :normalize
+(defpackage :normalizer
   (:use :cl)
-  (:export :normalize))
+  (:export :normalize :change-vars))
 
-(in-package :normalize)
+(in-package :normalizer)
 
 
 (defun form< (a b)
@@ -75,7 +75,7 @@ Returns T if A is considered less than B."
                     (incf symb-num)
                     (if (string= type "string")
                         (push (list f (format nil "~a" symb-num)) acc)
-                        (push (list f (gensym symb-num)) acc))))
+                        (push (list f (gensym)) acc))))
                  ((listp f)
                   (walk (car f))
                   (walk (cdr f))))))
@@ -109,13 +109,14 @@ Returns T if A is considered less than B."
 (defun change-vars (f  &optional symbs-codes (type "string"))
   "Changes each variable occurring in form F to its respective code obtained
    from the list of symb-code pairs in SYMBS-CODES"
+  (format t "~s~%" symbs-codes)
   (cond ((null f) f)
         ((symbolp f) (let ((sc (assoc f symbs-codes)))
                        (if sc (cadr sc) f)))
         ((listp f)
          (let ((op (car f)))
            (cond
-             ((or (and (eql op 'defun)   ; DEFUN, LAMBDA
+             ((or (and (eql op 'defun)  ; DEFUN, LAMBDA
                        (symbolp (cadr f))
                        (listp (caddr f)))
                   (and (eql op 'lambda)
@@ -157,23 +158,23 @@ Returns T if A is considered less than B."
                             (consp (third f))) ;; checking syntax
                        (and (eq op 'dotimes)
                             (symbolp (first (second f)))))
-                   (listp (second f))) ; LET, LET*, DO, DO*, DOTIMES
+                   (listp (second f)))  ; LET, LET*, DO, DO*, DOTIMES
               (let* ((lvars (if (eql op 'dotimes)
                                 (list (first (second f)))
                                 (mapcar (lambda (x)
                                           (if (listp x) (first x) x))
                                         (second f)))))
                 (multiple-value-bind (_ new-bdy)
-                  (if (or (eq op 'do) (eq op 'do*))
-                      (replace-vars-in-bdy lvars (cdddr f) symbs-codes type)
-                      (replace-vars-in-bdy lvars (cddr f) symbs-codes type))
+                    (if (or (eq op 'do) (eq op 'do*))
+                        (replace-vars-in-bdy lvars (cdddr f) symbs-codes type)
+                        (replace-vars-in-bdy lvars (cddr f) symbs-codes type))
                   (declare (ignore _))
                   `(,op
                     ,(if (eql op 'dotimes)
                          (mapcar (lambda (x)
                                    (multiple-value-bind (_ new-exp) (replace-vars-in-bdy lvars x symbs-codes type)
-                                         (declare (ignore _))
-                                         new-exp))
+                                     (declare (ignore _))
+                                     new-exp))
                                  (second f))
                          (mapcar (lambda (x)
                                    (if (listp x) ; takes care of bindings of the kind ((x 1) y (z 2) ...)
@@ -204,10 +205,4 @@ Returns T if A is considered less than B."
 
 
 (defun normalize (f)
-  (let (
-       #|
-       (macro-expanded (expand-macros f))
-       (rewritten (rewrite-forms ))
-       |#
-       )
-    (sort-form (change-vars f))))
+  (sort-form (change-vars (macroexpand f))))

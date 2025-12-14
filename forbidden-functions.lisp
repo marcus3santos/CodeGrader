@@ -1,13 +1,28 @@
-(defun used-forbidden-function-p (q-func-name forbidden-functions student-functions)
+(defpackage :chk-forbidden-functions
+  (:use :cl :normalizer)
+  (:export :used-forbidden-function-p))
+
+(in-package :chk-forbidden-functions)
+
+(defun used-forbidden-function-p (q-func-name forbidden-functions student-forms)
   "Return T if Q-FUNC-NAME directly or indirectly calls a function in FORBIDDEN-FUNCTIONS.
 STUDENT-FUNCTIONS is a list of DEFUN forms as read from the student’s file."
-  (let ((function-table (make-hash-table)))
-    ;; Build function table: name → body
-    (dolist (form student-functions)
-      (when (and (consp form) (eq (first form) 'defun))
-        (setf (gethash (second form) function-table)
-              (mapcar (lambda (form)
-                        (macroexpand form)) (cdddr form)))))  ; macroexpand body
+  (let ((function-table (make-hash-table))
+        (global-identifier-table (make-hash-table)))
+    ;; Build function and global identifier tables: name → body
+    (dolist (form student-forms)
+      (let ((form-wth-uniq-vars (change-vars form nil "symbol")))
+        (cond ((and (consp form-wth-uniq-vars) (eq (first form-wth-uniq-vars) 'defun))
+               (setf (gethash (second form-wth-uniq-vars) function-table)
+                     (cdddr form-wth-uniq-vars)))
+              ((and (consp form-wth-uniq-vars)
+                    (or (eq (first form-wth-uniq-vars) 'defparameter)
+                        (eq (first form-wth-uniq-vars) 'defvar)
+                        (eq (first form-wth-uniq-vars) 'defconstant)))
+               (setf (gethash (second form-wth-uniq-vars) global-identifier-table)
+                     (cddr form-wth-uniq-vars))))))
+    (maphash (lambda (k  v) (format t "function --- ~s ~s~%" k v)) function-table)
+    (maphash (lambda (k  v) (format t "Global id --- ~s ~s~%" k v)) global-identifier-table )
     ;; Depth-first search
     (labels ((scan (fname visited)
                (cond
