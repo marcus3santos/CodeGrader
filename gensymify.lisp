@@ -1,4 +1,30 @@
 (defun gensymify (form &optional venv fenv)
+  "Alpha-convert FORM by renaming all lexically bound variables to fresh GENSYMs.
+
+GENSYMIFY walks a Common Lisp form and replaces each lexical binding
+with a uniquely generated symbol, preserving lexical scope and
+shadowing. All variable references in value position are rewritten to
+refer to the corresponding gensym.
+
+Handled binding forms include:
+  DEFUN, LAMBDA
+  LET, LET*
+  FLET, LABELS
+  DO, DO*
+  DOTIMES
+  MULTIPLE-VALUE-BIND
+
+Initialization forms are evaluated in the correct (outer) environment,
+while bodies are walked in the extended environment. Sequential binding
+semantics of LET*, DO*, and LABELS are respected.
+
+Quoted forms are left untouched. Function names and operators are not
+renamed at call sites; only lexically bound variables are affected.
+
+This function is intended for hygienic macro expansion and program
+transformation, not for evaluation. It does not handle declarations,
+special variables, SYMBOL-MACROLET, MACROLET, SETF expanders, or
+compiler macros. Use after MACROEXPAND-ALL for best results."
   (labels
       ((vlookup (s venv)  (or (cdr (assoc s venv)) s))
        (flookup (s fenv) (or (cdr (assoc s fenv)) s))
@@ -44,13 +70,13 @@
                                 bindings))
                    (venv* (append new venv)))
               `(let
-                ,(mapcar (lambda (b)
-                           `(,(cdr (assoc (if (consp b) (car b) b) new))
-                             ,(walk (if (consp b) (cadr b) nil) venv fenv)))
-                         bindings)
-                ,@(mapcar (lambda (b)
-                            (walk b venv* fenv))   
-                          body))))
+                   ,(mapcar (lambda (b)
+                              `(,(cdr (assoc (if (consp b) (car b) b) new))
+                                ,(walk (if (consp b) (cadr b) nil) venv fenv)))
+                     bindings)
+                 ,@(mapcar (lambda (b)
+                             (walk b venv* fenv))   
+                           body))))
 
            ;; LET*
            ((and (consp f) (eq (car f) 'let*))
@@ -90,8 +116,8 @@
                   (lambda (d)
                     (destructuring-bind (name params &rest fbody) d
                       (let* ((pnew (mapcar (lambda (p)
-                                              (cons p (gensym (symbol-name p))))
-                                            params))
+                                             (cons p (gensym (symbol-name p))))
+                                           params))
                              (venv* (append pnew venv)))
                         `(,(cdr (assoc name fnew))
                           ,(mapcar #'cdr pnew)
@@ -120,7 +146,7 @@
                     vars)
                   (,(walk test venv* fenv)
                    ,@(mapcar (lambda (r) (walk r venv* fenv)) results))
-                  ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+                   ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            ;; DO*
            ((and (consp f) (eq (car f) 'do*))
             (destructuring-bind (_ vars (test &rest results) &rest body) f
@@ -176,3 +202,19 @@
 
            (t f))))
     (walk form venv fenv)))
+
+(defun normalize-gensyms (form)
+  "Replace all gensyms with deterministic symbols G1, G2, ..."
+  (let ((table (make-hash-table :test #'eq))
+        (counter 0))
+    (labels ((norm (x)
+               (cond
+                 ((and (symbolp x) (null (symbol-package x)))
+                  (or (gethash x table)
+                      (setf (gethash x table)
+                            (intern (format nil "G~D" (incf counter))))))
+                 ((consp x)
+                  (cons (norm (car x))
+                        (norm (cdr x))))
+                 (t x))))
+      (norm form))))
