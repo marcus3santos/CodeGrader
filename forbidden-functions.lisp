@@ -25,7 +25,33 @@
     (maphash (lambda (k  v) (format t "function --- ~s ~s~%" k v)) function-table)
     (maphash (lambda (k  v) (format t "Global id --- ~s ~s~%" k v)) global-identifier-table )
     ;; Depth-first search
-    (labels ((scan (fname visited )
+    (labels ((function-designator->symbol (fd)
+               "Return a symbol if FD statically names a function, else NIL."
+               (cond
+                 ;; #'foo
+                 ((and (consp fd) (eq (car fd) 'function))
+                  (cadr fd))
+                 ;; 'foo
+                 ((and (consp fd) (eq (car fd) 'quote))
+                  (cadr fd))
+                 ;; bare symbol (e.g., (funcall foo ...))
+                 ((symbolp fd)
+                  fd)
+                 (t nil)))
+             (mentions-forbidden-p (form forbidden)
+               (let ((func (function-designator->symbol form)))
+                 (cond
+                   ((member func forbidden)
+                    t)
+                   ((atom form)
+                    nil)
+                   ((eq (car form) 'quote)
+                    nil)
+                   (t
+                    (or (mentions-forbidden-p (car form) forbidden)
+                        (mentions-forbidden-p (cdr form) forbidden))))))
+
+             (scan (fname visited )
                (cond
                  ;; direct forbidden call?
                  ((member fname forbidden-functions)
@@ -42,9 +68,20 @@
              (calls-forbidden-p (forms visited)
                (cond
                  ((null forms) nil)
+                 ;; Direct call: (foo ....)
                  ((and (symbolp (first forms))
                        (scan (first forms) visited))
-                  t)                 
+                  t)
+                 ;; funcall / apply
+                 ((and (symbolp (first forms))
+                       (member (first forms) '(funcall apply)))
+                  (let ((fn (function-designator->symbol (second forms))))
+                    (or (and fn (scan fn visited))
+                        ;; still recurse through arguments
+                        (calls-forbidden-p (rest forms) visited))))
+                 ;; Mentions forbidden function
+                 ((mentions-forbidden-p forms forbidden-functions)
+                  t)
                  ;; recur through subforms and rest
                  ((or (and (consp (first forms))
                            (calls-forbidden-p (first forms) visited))
