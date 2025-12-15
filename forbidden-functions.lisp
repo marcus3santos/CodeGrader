@@ -38,6 +38,7 @@
                  ((symbolp fd)
                   fd)
                  (t nil)))
+             #|
              (mentions-forbidden-p (form forbidden)
                (let ((func (function-designator->symbol form)))
                  (cond
@@ -50,43 +51,62 @@
                    (t
                     (or (mentions-forbidden-p (car form) forbidden)
                         (mentions-forbidden-p (cdr form) forbidden))))))
-
-             (scan (fname visited )
-               (cond
-                 ;; direct forbidden call?
-                 ((member fname forbidden-functions)
-                  t)
-                 ;; already visited? avoid infinite loops
-                 ((member fname visited)
-                  nil)
-                 ;; otherwise look at its body
-                 (t
-                  (let* ((body (gethash fname function-table))
-                         (visited (cons fname visited)))
-                    (when body
-                      (calls-forbidden-p body visited))))))
-             (calls-forbidden-p (forms visited)
+             |#
+             (scan (aname fvisited gvvisited)
+               (let ((name (function-designator->symbol aname)))
+                 (cond
+                   ;; direct forbidden call?
+                   ((member name forbidden-functions)
+                    t)
+                   ;; already visited? avoid infinite loops
+                   ((or (member name fvisited)
+                        (member name gvvisited)) ;; case of a weird naming cycle
+                    nil)
+                   ;; otherwise look at its body
+                   (t
+                    (let* ((fbody (gethash name function-table))
+                           (fvisited (cons name fvisited))
+                           (form (gethash name global-identifier-table))
+                           (gvvisited (cons name gvvisited)))
+                      (when fbody
+                        (calls-forbidden-p fbody fvisited gvvisited))
+                      (when form
+                        (calls-forbidden-p form fvisited gvvisited)))))))
+             (calls-forbidden-p (forms fvisited gvvisited)
+               (format t "Entered forms: ~s~%" forms)
                (cond
                  ((null forms) nil)
                  ;; Direct call: (foo ....)
                  ((and (symbolp (first forms))
-                       (scan (first forms) visited))
+                       (scan (first forms) fvisited gvvisited))
                   t)
                  ;; funcall / apply
-                 ((and (symbolp (first forms))
-                       (member (first forms) '(funcall apply)))
-                  (let ((fn (function-designator->symbol (second forms))))
-                    (or (and fn (scan fn visited))
-                        ;; still recurse through arguments
-                        (calls-forbidden-p (rest forms) visited))))
-                 ;; Mentions forbidden function
-                 ((mentions-forbidden-p forms forbidden-functions)
-                  t)
+                 #|
+                 ((and (symbolp (first forms)) ;
+                 (member (first forms) '(funcall apply))) ;
+                 (let ((fn (function-designator->symbol (second forms)))) ;
+                 (or (and fn (scan fn visited)) ;
+                        ;; still recurse through arguments ;
+                 (calls-forbidden-p (rest forms) visited)))) ;
+                                        ;
+                 ;; Mentions forbidden function ;
+                 ((mentions-forbidden-p forms forbidden-functions) ;
+                 t)|#
                  ;; recur through subforms and rest
                  ((or (and (consp (first forms))
-                           (calls-forbidden-p (first forms) visited))
-                      (calls-forbidden-p (rest forms) visited))
+                           (calls-forbidden-p (first forms) fvisited gvvisited))
+                      (calls-forbidden-p (rest forms) fvisited gvvisited))
+                  (format t "--- First forms: ~s~%Rest forms: ~s~%" (first forms) (rest forms))
                   t)
                  (t nil))))
       ;; Start with q-func-name
-      (scan q-func-name '()))))
+      (scan q-func-name '() '()))))
+
+(defun test ()
+  (let ((q-func-name 'caca)
+        (forbidden-functions '(caca1 caca2))
+        (student-forms '((defparameter v #'caca2)
+                         (defun caca3 () (funcall #'caca1))
+                         (defun caca () (funcall v))
+                         )))
+    (used-forbidden-function-p q-func-name forbidden-functions student-forms)))
