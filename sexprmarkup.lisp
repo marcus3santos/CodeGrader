@@ -328,6 +328,7 @@
    variant of a solution is a form (SOL form+)"
   (let ((qlabel (format nil "q~a" qnumber)))
     `(,qlabel ("whats-asked" (,@description))
+              ("asked-functions" ,(mapcar #'second examples))
               ,(when forbidden
                  `("forbidden-symbols" :penalty ,penalty :symbols (,@forbidden)))
               ("given" ,@(gen-tc-code qlabel examples given-functions-and-symbols))

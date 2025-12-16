@@ -161,7 +161,15 @@ the mark is calculated as the # of passes divided by the total # of cases.
           (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
               ((eq char :eof) (return symbols))
             (process-char char)))))))
-
+#|
+(defun contains-forbidden-symbol? (prog-file forbidden-symbols)
+  (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols))
+        (student-solution (with-open-file (stream prog-file :direction :input)
+                            (loop for form = (read stream nil nil)
+                                  while form
+                                  collect form))))
+    ))
+|#
 
 (defun contains-forbidden-symbol? (prg-file frbn-symbs)
   (let ((fsymbs (if (stringp (car frbn-symbs))
