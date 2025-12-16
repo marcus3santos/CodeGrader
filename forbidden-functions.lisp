@@ -22,8 +22,6 @@
                         (eq (first form-wth-uniq-vars) 'defconstant)))
                (setf (gethash (second form-wth-uniq-vars) global-identifier-table)
                      (cddr form-wth-uniq-vars))))))
-    (maphash (lambda (k  v) (format t "function --- ~s ~s~%" k v)) function-table)
-    (maphash (lambda (k  v) (format t "Global id --- ~s ~s~%" k v)) global-identifier-table )
     ;; Depth-first search
     (labels ((function-designator->symbol (fd)
                "Return a symbol if FD statically names a function, else NIL."
@@ -38,20 +36,6 @@
                  ((symbolp fd)
                   fd)
                  (t nil)))
-             #|
-             (mentions-forbidden-p (form forbidden)
-               (let ((func (function-designator->symbol form)))
-                 (cond
-                   ((member func forbidden)
-                    t)
-                   ((atom form)
-                    nil)
-                   ((eq (car form) 'quote)
-                    nil)
-                   (t
-                    (or (mentions-forbidden-p (car form) forbidden)
-                        (mentions-forbidden-p (cdr form) forbidden))))))
-             |#
              (scan (aname fvisited gvvisited)
                (let ((name (function-designator->symbol aname)))
                  (cond
@@ -68,35 +52,21 @@
                            (fvisited (cons name fvisited))
                            (form (gethash name global-identifier-table))
                            (gvvisited (cons name gvvisited)))
-                      (when fbody
-                        (calls-forbidden-p fbody fvisited gvvisited))
-                      (when form
-                        (calls-forbidden-p form fvisited gvvisited)))))))
+                      (or (when fbody
+                            (calls-forbidden-p fbody fvisited gvvisited))
+                          (when form
+                            (calls-forbidden-p form fvisited gvvisited))))))))
              (calls-forbidden-p (forms fvisited gvvisited)
-               (format t "Entered forms: ~s~%" forms)
                (cond
                  ((null forms) nil)
                  ;; Direct call: (foo ....)
                  ((and (symbolp (first forms))
                        (scan (first forms) fvisited gvvisited))
                   t)
-                 ;; funcall / apply
-                 #|
-                 ((and (symbolp (first forms)) ;
-                 (member (first forms) '(funcall apply))) ;
-                 (let ((fn (function-designator->symbol (second forms)))) ;
-                 (or (and fn (scan fn visited)) ;
-                        ;; still recurse through arguments ;
-                 (calls-forbidden-p (rest forms) visited)))) ;
-                                        ;
-                 ;; Mentions forbidden function ;
-                 ((mentions-forbidden-p forms forbidden-functions) ;
-                 t)|#
                  ;; recur through subforms and rest
                  ((or (and (consp (first forms))
                            (calls-forbidden-p (first forms) fvisited gvvisited))
                       (calls-forbidden-p (rest forms) fvisited gvvisited))
-                  (format t "--- First forms: ~s~%Rest forms: ~s~%" (first forms) (rest forms))
                   t)
                  (t nil))))
       ;; Start with q-func-name
@@ -106,7 +76,9 @@
   (let ((q-func-name 'caca)
         (forbidden-functions '(caca1 caca2))
         (student-forms '((defparameter v #'caca2)
-                         (defun caca3 () (funcall #'caca1))
-                         (defun caca () (funcall v))
+                         (defvar c v)
+                         (defconstant d c)
+                         (defun caca3 () (let ((caca1 'caca1))))
+                         (defun caca () (caca3))
                          )))
     (used-forbidden-function-p q-func-name forbidden-functions student-forms)))
