@@ -7,7 +7,7 @@
 (defun used-forbidden-function-p (q-func-name forbidden-functions student-forms)
   "Takes a function name Q-FUNC-NAME (a symbol), a list of function names FORBIDDEN-FUNCTIONS,
    and a list STUDENT-FORMS containing the forms present in the student's lisp program file. 
-  Returns T if Q-FUNC-NAME directly or indirectly calls a function in FORBIDDEN-FUNCTIONS."
+  Returns FUNC if Q-FUNC-NAME directly or indirectly calls FUNC and FUNC is in FORBIDDEN-FUNCTIONS."
   (let ((function-table (make-hash-table))
         (global-identifier-table (make-hash-table)))
     ;; Build function and global identifier tables: name → body
@@ -41,7 +41,7 @@
                  (cond
                    ;; direct forbidden call?
                    ((member name forbidden-functions)
-                    t)
+                    name)
                    ;; already visited? avoid infinite loops
                    ((or (member name fvisited)
                         (member name gvvisited)) ;; case of a weird naming cycle
@@ -62,12 +62,12 @@
                  ;; Direct call: (foo ....)
                  ((and (symbolp (first forms))
                        (scan (first forms) fvisited gvvisited))
-                  t)
+                  (first forms))
                  ;; recur through subforms and rest
-                 ((or (and (consp (first forms))
-                           (calls-forbidden-p (first forms) fvisited gvvisited))
-                      (calls-forbidden-p (rest forms) fvisited gvvisited))
-                  t)
+                 ((consp (first forms))
+                  (calls-forbidden-p (first forms) fvisited gvvisited))
+                 ((atom (first forms))
+                  (calls-forbidden-p (rest forms) fvisited gvvisited))
                  (t nil))))
       ;; Start with q-func-name
       (scan q-func-name '() '()))))
@@ -78,7 +78,7 @@
         (student-forms '((defparameter v #'caca2)
                          (defvar c v)
                          (defconstant d c)
-                         (defun caca5 () (caca6))
+                         (defun caca5 () (caca2))
                          (defun caca3 () (let ((caca1 (caca5)))))
                          (defun caca () (caca3))
                          )))

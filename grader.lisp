@@ -162,13 +162,13 @@ the mark is calculated as the # of passes divided by the total # of cases.
               ((eq char :eof) (return symbols))
             (process-char char)))))))
 #|
-(defun contains-forbidden-symbol? (prog-file forbidden-symbols)
+(defun contains-forbidden-symbol? (asked-function prog-file forbidden-symbols)
   (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols))
         (student-solution (with-open-file (stream prog-file :direction :input)
                             (loop for form = (read stream nil nil)
                                   while form
                                   collect form))))
-    ))
+    (used-forbidden-function-p asked-function chked-forbidden-symbols student-solution))
 |#
 
 (defun contains-forbidden-symbol? (prg-file frbn-symbs)
@@ -211,8 +211,16 @@ the mark is calculated as the # of passes divided by the total # of cases.
            (forbidden-symbols (nth 3 forb-data))
            (penalty-forbidden (nth 1 forb-data))
            (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
+           (asked-functions (second (assoc "asked-functions" question-data :test #'string=)))
            (score (calc-mark *results* ws))
-           (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols)))
+           #|
+           (forbid-symb (some #'identity
+                              (mapcar #'lambda (asked-function)
+                                      (contains-forbidden-symbol? asked-function student-solution forbidden-symbols)
+                                      asked-functions)))
+           |#
+           (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols))
+           )
       (list
        (if forbid-symb
            (* score (- 1 (/ penalty-forbidden 100)))
