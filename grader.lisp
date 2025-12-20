@@ -199,7 +199,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
                  (cond
                    ;; direct forbidden call?
                    ((member name forbidden-functions)
-                    (setf forbidden-found name)
+                    (setf forbidden-found (list q-func-name name))
                     name)
                    ;; already visited? avoid infinite loops
                    ((or (member name fvisited)
@@ -299,7 +299,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (cond (*runtime-error* "runtime-error")
 	     (*load-error* "load-error")
              (*cr-warning* "cr-warning")
-             (forbid-symb (list "used forbidden symbol" (list asked-functions forbid-symb) penalty-forbidden))
+             (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
 	     (t "No RT-error"))
        (progn
          (when *runtime-error*
