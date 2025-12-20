@@ -400,8 +400,22 @@ Please check your logic and consider adding a termination condition.")
                     (mapcar #'gen-message (nth 3 (second res))))
                   (chk-hidden-cases folder assessment-questions assessment-tooling-file)))
   nil)
+#|
+(defun chk-given-and-hidden-cases (assessment-questions assessment-tooling-file)
+  (let ((folder "/tmp/CodeGrader")))
+  (create-temp-program-files assessment-questions assessment-tooling-file)
+  (mapcar (lambda (q g h)
+            (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
+          assessment-questions
+          (mapcar (lambda (res)
+                    (mapcar #'gen-message (nth 3 res)))
+                  (chk-given-cases folder assessment-questions assessment-tooling-file))
+          (mapcar (lambda (res)
+                    (mapcar #'gen-message (nth 3 (second res))))
+                  (chk-hidden-cases folder assessment-questions assessment-tooling-file))))
+|#
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun grade-exam (submissions-zipped-file std-pc-map assessment-tooling-file results-folder &optional exam-grades-export-file)
   "Main function to grade an exam.
