@@ -166,11 +166,11 @@ the mark is calculated as the # of passes divided by the total # of cases.
    and a list STUDENT-FORMS containing the forms present in the student's lisp program file. 
   Returns FUNC if Q-FUNC-NAME directly or indirectly calls FUNC and FUNC is in FORBIDDEN-FUNCTIONS."
   (let ((function-table (make-hash-table))
-        (global-identifier-table (make-hash-table)))
+        (global-identifier-table (make-hash-table))
+        (forbidden-found))
     ;; Build function and global identifier tables: name → body
     (dolist (form student-forms)
-      (let ((form-wth-uniq-vars (gensymify form))
-            (forbidden-found))
+      (let ((form-wth-uniq-vars (gensymify form)))
         (cond ((and (consp form-wth-uniq-vars) (eq (first form-wth-uniq-vars) 'defun))
                (setf (gethash (second form-wth-uniq-vars) function-table)
                      (cdddr form-wth-uniq-vars)))
