@@ -103,15 +103,13 @@ the mark is calculated as the # of passes divided by the total # of cases.
 	   (pass-fail (car result)))
       (cons (cons (if pass-fail "Pass" "Fail") (cdr result))
 	    (change-results-readable (cdr results))))))
-
+#|
 (defun read-lisp-file (file-path)
   (setf *inside-multiline-comment* nil)
   (with-open-file (stream file-path)
     (loop for line = (read-line stream nil)
           while line
           collect (remove-comments line))))
-
-
 
 (defun remove-comments (line)
   (let* ((semicolon-position (position #\; line))
@@ -161,16 +159,90 @@ the mark is calculated as the # of passes divided by the total # of cases.
           (do ((char (read-char stream nil :eof) (read-char stream nil :eof)))
               ((eq char :eof) (return symbols))
             (process-char char)))))))
-#|
-(defun contains-forbidden-symbol? (asked-function prog-file forbidden-symbols)
-  (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols))
-        (student-solution (with-open-file (stream prog-file :direction :input)
-                            (loop for form = (read stream nil nil)
-                                  while form
-                                  collect form))))
-    (used-forbidden-function-p asked-function chked-forbidden-symbols student-solution))
 |#
 
+(defun used-forbidden-function-p (q-func-name forbidden-functions student-forms)
+  "Takes a function name Q-FUNC-NAME (a symbol), a list of function names FORBIDDEN-FUNCTIONS,
+   and a list STUDENT-FORMS containing the forms present in the student's lisp program file. 
+  Returns FUNC if Q-FUNC-NAME directly or indirectly calls FUNC and FUNC is in FORBIDDEN-FUNCTIONS."
+  (let ((function-table (make-hash-table))
+        (global-identifier-table (make-hash-table)))
+    ;; Build function and global identifier tables: name → body
+    (dolist (form student-forms)
+      (let ((form-wth-uniq-vars (gensymify form))
+            (forbidden-found))
+        (cond ((and (consp form-wth-uniq-vars) (eq (first form-wth-uniq-vars) 'defun))
+               (setf (gethash (second form-wth-uniq-vars) function-table)
+                     (cdddr form-wth-uniq-vars)))
+              ((and (consp form-wth-uniq-vars)
+                    (or (eq (first form-wth-uniq-vars) 'defvar)
+                        (eq (first form-wth-uniq-vars) 'defparameter)
+                        (eq (first form-wth-uniq-vars) 'defconstant)))
+               (setf (gethash (second form-wth-uniq-vars) global-identifier-table)
+                     (cddr form-wth-uniq-vars))))))
+    ;; Depth-first search
+    (labels ((function-designator->symbol (fd)
+               "Return a symbol if FD statically names a function, else NIL."
+               (cond
+                 ;; #'foo
+                 ((and (consp fd) (eq (car fd) 'function))
+                  (cadr fd))
+                 ;; 'foo
+                 ((and (consp fd) (eq (car fd) 'quote))
+                  (cadr fd))
+                 ;; bare symbol (e.g., (funcall foo ...))
+                 ((symbolp fd)
+                  fd)
+                 (t nil)))
+             (scan (aname fvisited gvvisited)
+               (let ((name (function-designator->symbol aname)))
+                 (cond
+                   ;; direct forbidden call?
+                   ((member name forbidden-functions)
+                    (setf forbidden-found name)
+                    name)
+                   ;; already visited? avoid infinite loops
+                   ((or (member name fvisited)
+                        (member name gvvisited)) ;; case of a weird naming cycle
+                    nil)
+                   ;; otherwise look at its body
+                   (t
+                    (let* ((fbody (gethash name function-table))
+                           (fvisited (cons name fvisited))
+                           (form (gethash name global-identifier-table))
+                           (gvvisited (cons name gvvisited)))
+                      (or (when fbody
+                            (calls-forbidden-p fbody fvisited gvvisited))
+                          (when form
+                            (calls-forbidden-p form fvisited gvvisited))))))))
+             (calls-forbidden-p (forms fvisited gvvisited)
+               (cond
+                 ((null forms)
+                  nil)
+                 ;; Direct call: (foo ....)
+                 ((and (symbolp (first forms))
+                       (scan (first forms) fvisited gvvisited))
+                  (first forms))
+                 ;; recur through subforms and rest
+                 ((consp (first forms))
+                  (calls-forbidden-p (first forms) fvisited gvvisited))
+                 ((atom (first forms))
+                  (calls-forbidden-p (rest forms) fvisited gvvisited))
+                 (t nil))))
+      ;; Start with q-func-name
+      (scan q-func-name '() '())
+      forbidden-found)))
+
+(defun contains-forbidden-symbol? (asked-function prog-file forbidden-symbols)
+  (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols)) 
+        (student-solution (with-open-file (stream prog-file :direction :input) 
+                            (loop for form = (read stream nil nil)  
+                                  while form                              
+                                  collect form))))
+    (used-forbidden-function-p (intern (symbol-name asked-function)) chked-forbidden-symbols student-solution)))
+
+
+#|
 (defun contains-forbidden-symbol? (prg-file frbn-symbs)
   (let ((fsymbs (if (stringp (car frbn-symbs))
                     (mapcar #'string-upcase frbn-symbs)
@@ -181,6 +253,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
                      ((member (car e) fsymbs :test #'equal) (car e))
                      (t (check-fnames (cdr e))))))
       (check-fnames cap-symbs))))
+|#
 
 (defun read-file-as-string (file-name)
   "Reads the content of the file specified by FILE-NAME and returns it as a string."
@@ -199,7 +272,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
     (setf *cr-warning* nil)
     (eval `(,(intern (format nil "TEST-~a" (string-upcase question)))))
     (setf *package* cur)))
-
+  
 (defun load-student-solution (student-solution)
   (setf *load-error* nil)
   (setf *load-error-message* (handle-solution-loading student-solution)))
@@ -213,13 +286,11 @@ the mark is calculated as the # of passes divided by the total # of cases.
            (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
            (asked-functions (second (assoc "asked-functions" question-data :test #'string=)))
            (score (calc-mark *results* ws))
-           #|
            (forbid-symb (some #'identity
-                              (mapcar #'lambda (asked-function)
-                                      (contains-forbidden-symbol? asked-function student-solution forbidden-symbols)
+                              (mapcar #'(lambda (asked-function)
+                                        (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
                                       asked-functions)))
-           |#
-           (forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols))
+           ;(forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols))
            )
       (list
        (if forbid-symb
@@ -228,7 +299,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (cond (*runtime-error* "runtime-error")
 	     (*load-error* "load-error")
              (*cr-warning* "cr-warning")
-             (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
+             (forbid-symb (list "used forbidden symbol" (list asked-functions forbid-symb) penalty-forbidden))
 	     (t "No RT-error"))
        (progn
          (when *runtime-error*

@@ -61,9 +61,13 @@
   (:export *cr-warning*)
   (:export :handle-solution-loading :load-macros :load-test-cases))
 
+(defpackage #:gensymifier
+  (:use :cl )
+  (:export :gensymify))
+
 (defpackage #:grader
   (:documentation "Creates the code grading apparatus")
-  (:use cl :test-runtime)
+  (:use cl :test-runtime :gensymifier)
   (:export :evaluate-solution)
   (:export :grade-code))
 

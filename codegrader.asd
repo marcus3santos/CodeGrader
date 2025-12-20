@@ -10,6 +10,7 @@
   :depends-on (#:zip :rutils)
   :components ((:file "package")
                (:file "macros")
+               (:file "gensymify")
                (:file "grader")
                (:file "sexprmarkup")
                (:file "codegrader")))

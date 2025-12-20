@@ -1,7 +1,3 @@
-(defpackage :gensymifier
-  (:use :cl )
-  (:export :gensymify))
-
 (in-package :gensymifier)
 
 (defun gensymify (form &optional venv fenv)
