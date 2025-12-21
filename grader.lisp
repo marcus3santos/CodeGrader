@@ -225,13 +225,26 @@ the mark is calculated as the # of passes divided by the total # of cases.
                   (first forms))
                  ;; recur through subforms and rest
                  ((consp (first forms))
-                  (calls-forbidden-p (first forms) fvisited gvvisited))
+                  (or (calls-forbidden-p (first forms) fvisited gvvisited)
+                      (calls-forbidden-p (rest forms) fvisited gvvisited)))
                  ((atom (first forms))
                   (calls-forbidden-p (rest forms) fvisited gvvisited))
                  (t nil))))
       ;; Start with q-func-name
       (scan q-func-name '() '())
       forbidden-found)))
+
+(defun test ()
+  (let ((q-func-name 'caca)
+        (forbidden-functions '(caca1 caca2))
+        (student-forms '((defparameter v #'caca2)
+                         (defvar c v)
+                         (defconstant d c)
+                         (defun caca5 () (caca2))
+                         (defun caca3 () (let ((caca1 (caca5)))))
+                         (defun caca () (labels ((test (caca1))))())
+                         )))
+    (used-forbidden-function-p q-func-name forbidden-functions student-forms)))
 
 (defun contains-forbidden-symbol? (asked-function prog-file forbidden-symbols)
   (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols)) 

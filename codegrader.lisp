@@ -389,6 +389,7 @@ Please check your logic and consider adding a termination condition.")
             (load-and-evaluate-solution (format nil "~a/~a.lisp" folder q) q (load-and-process-assessment-data-for-chk-my-solution assessment-tooling-file)))
           assessment-questions))
 
+#|
 (defun chk-given-and-hidden-cases (folder assessment-questions assessment-tooling-file)
   (mapcar (lambda (q g h)
             (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
@@ -400,10 +401,35 @@ Please check your logic and consider adding a termination condition.")
                     (mapcar #'gen-message (nth 3 (second res))))
                   (chk-hidden-cases folder assessment-questions assessment-tooling-file)))
   nil)
+|#
 
-#|
+
+
+(defun create-temp-solution-files (folder assessment-questions assessment-data)
+  (ensure-directories-exist folder)
+  (dolist (question-label assessment-questions)
+    (with-open-file (out (format nil "~a~a.lisp" folder question-label) :direction :output :if-exists :supersede)
+      (let* ((question-data (cdr (assoc question-label assessment-data :test #'string=)))
+             (question-solution-s (cdr (assoc "solutions" question-data :test #'string=))))
+        (mapcar #'(lambda (form)
+                    (format out "~s~%" form))
+                question-solution-s)))))
+
+(defun delete-temp-solution-files (folder assessment-questions)
+  (dolist (question-label assessment-questions)
+    (let ((file-name (format nil "~a~a.lisp" folder question-label)))
+      (when (probe-file file-name)
+        (delete-file file-name))))
+  (when (uiop:directory-exists-p folder)
+    (uiop:delete-directory-tree folder :validate (lambda (x)
+                                                   (equal (truename x)
+                                                          (truename folder))))))
+
 (defun chk-given-and-hidden-cases (assessment-data-file)
-  (let* ((folder "/tmp/CodeGrader")
+  (let* ((folder-raw "/tmp/CodeGrader")
+         (folder (if (char= (char folder-raw (1- (length folder-raw))) #\/)
+                     folder-raw
+                     (format nil "~a/" folder-raw)))
          (assessment-data (with-open-file (in assessment-data-file :direction :input)
                             (read in)))
          (assessment-questions (second (assoc "questions" assessment-data :test #'string=))))
@@ -418,7 +444,8 @@ Please check your logic and consider adding a termination condition.")
                       (mapcar #'gen-message (nth 3 (second res))))
                     (chk-hidden-cases folder assessment-questions assessment-data-file)))
     (delete-temp-solution-files folder assessment-questions)))
-|#
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;
 
 
