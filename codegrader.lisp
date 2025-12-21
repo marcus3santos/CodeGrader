@@ -400,19 +400,24 @@ Please check your logic and consider adding a termination condition.")
                     (mapcar #'gen-message (nth 3 (second res))))
                   (chk-hidden-cases folder assessment-questions assessment-tooling-file)))
   nil)
+
 #|
-(defun chk-given-and-hidden-cases (assessment-questions assessment-tooling-file)
-  (let ((folder "/tmp/CodeGrader")))
-  (create-temp-program-files assessment-questions assessment-tooling-file)
-  (mapcar (lambda (q g h)
-            (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
-          assessment-questions
-          (mapcar (lambda (res)
-                    (mapcar #'gen-message (nth 3 res)))
-                  (chk-given-cases folder assessment-questions assessment-tooling-file))
-          (mapcar (lambda (res)
-                    (mapcar #'gen-message (nth 3 (second res))))
-                  (chk-hidden-cases folder assessment-questions assessment-tooling-file))))
+(defun chk-given-and-hidden-cases (assessment-data-file)
+  (let* ((folder "/tmp/CodeGrader")
+         (assessment-data (with-open-file (in assessment-data-file :direction :input)
+                            (read in)))
+         (assessment-questions (second (assoc "questions" assessment-data :test #'string=))))
+    (create-temp-solution-files folder assessment-questions assessment-data)
+    (mapcar (lambda (q g h)
+              (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
+            assessment-questions
+            (mapcar (lambda (res)
+                      (mapcar #'gen-message (nth 3 res)))
+                    (chk-given-cases folder assessment-questions assessment-data-file))
+            (mapcar (lambda (res)
+                      (mapcar #'gen-message (nth 3 (second res))))
+                    (chk-hidden-cases folder assessment-questions assessment-data-file)))
+    (delete-temp-solution-files folder assessment-questions)))
 |#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;
 
