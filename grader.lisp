@@ -235,14 +235,20 @@ the mark is calculated as the # of passes divided by the total # of cases.
       forbidden-found)))
 
 (defun test ()
-  (let ((q-func-name 'caca)
-        (forbidden-functions '(caca1 caca2))
+  (let ((q-func-name 'remove-nils)
+        (forbidden-functions '(caca1 remove))
         (student-forms '((defparameter v #'caca2)
                          (defvar c v)
                          (defconstant d c)
                          (defun caca5 () (caca2))
                          (defun caca3 () (let ((caca1 (caca5)))))
                          (defun caca () (labels ((test (caca1))))())
+                         (defun remove-nils (a &optional res)
+                           (let ((r #'remove)))
+                           (do ((i (1- (length a)) (1- i)))
+                               ((< i 0) res)
+                             (when (nth i a)
+                               (push (nth i a) res))))
                          )))
     (used-forbidden-function-p q-func-name forbidden-functions student-forms)))
 
@@ -299,16 +305,28 @@ the mark is calculated as the # of passes divided by the total # of cases.
            (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
            (asked-functions (second (assoc "asked-functions" question-data :test #'string=)))
            (score (calc-mark *results* ws))
+           (forbid-symb)
+           #|
            (forbid-symb (some #'identity
                               (mapcar #'(lambda (asked-function)
-                                        (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
+                                          (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
                                       asked-functions)))
+
+           |#
+
            ;(forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols))
            )
       (list
-       (if forbid-symb
-           (* score (- 1 (/ penalty-forbidden 100)))
-           score)
+       (if *load-error* ;; look for forbidden symbol only if there are no load errors
+           score
+           (progn
+             (setf forbid-symb (some #'identity
+                                     (mapcar #'(lambda (asked-function)
+                                                 (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
+                                             asked-functions)))
+             (if forbid-symb
+                 (* score (- 1 (/ penalty-forbidden 100)))
+                 score)))
        (cond (*runtime-error* "runtime-error")
 	     (*load-error* "load-error")
              (*cr-warning* "cr-warning")
