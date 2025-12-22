@@ -2,6 +2,7 @@
 
 (defvar *inside-multiline-comment* nil)
 
+(defparameter *name-prefix-for-symbols* "TEST-")
 
 (defun month->number (name)
   (let* ((sname (symbol-name name))
@@ -296,57 +297,53 @@ the mark is calculated as the # of passes divided by the total # of cases.
   (setf *load-error* nil)
   (setf *load-error-message* (handle-solution-loading student-solution)))
 
+(defun function-raised-condition (func-name results)
+  (let (res)
+    (dolist (ares results res)
+      (if (and (string= (subseq (symbol-name (third ares)) (length *name-prefix-for-symbols*))
+                        (symbol-name func-name))
+               (typep (second ares) 'condition))
+          (return t)))))
+
 (defun score-result (student-solution question assessment-data ws load-error)
-    (let* ((description "")
-           (question-data (cdr (assoc question assessment-data :test #'string=)))
-           (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
-           (forbidden-symbols (nth 3 forb-data))
-           (penalty-forbidden (nth 1 forb-data))
-           (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
-           (asked-functions (second (assoc "asked-functions" question-data :test #'string=)))
-           (score (calc-mark *results* ws))
-           (forbid-symb)
-           #|
-           (forbid-symb (some #'identity
-                              (mapcar #'(lambda (asked-function)
-                                          (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
-                                      asked-functions)))
-
-           |#
-
-           ;(forbid-symb (contains-forbidden-symbol? student-solution forbidden-symbols))
-           )
-      (list
-       (if *load-error* ;; look for forbidden symbol only if there are no load errors
-           score
-           (progn
-             (setf forbid-symb (some #'identity
-                                     (mapcar #'(lambda (asked-function)
-                                                 (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))
-                                             asked-functions)))
-             (if forbid-symb
-                 (* score (- 1 (/ penalty-forbidden 100)))
-                 score)))
-       (cond (*runtime-error* "runtime-error")
-	     (*load-error* "load-error")
-             (*cr-warning* "cr-warning")
-             (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
-	     (t "No RT-error"))
-       (progn
-         (when *runtime-error*
-           (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
-                                     (mapcar #'(lambda (ce)
-                                                 (format nil "~s~%~a" (second ce) (first ce)))
-                                             (reverse *runtime-error*)))))
-         (if  *load-error*
-              (setf description  (concatenate 'string  description load-error))
-              (setf description nil))    
-         (when forbid-symb
-           (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
-         description)
-       (change-results-readable *results*)
-       (read-file-as-string student-solution)
-       whats-asked)))
+  (let* ((description "")
+         (question-data (cdr (assoc question assessment-data :test #'string=)))
+         (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
+         (forbidden-symbols (nth 3 forb-data))
+         (penalty-forbidden (nth 1 forb-data))
+         (whats-asked (second (assoc "whats-asked" question-data :test #'string=)))
+         (asked-functions (second (assoc "asked-functions" question-data :test #'string=)))     
+         (score (calc-mark *results* ws))
+         (forbid-symb (some #'identity
+                            (mapcar #'(lambda (x)
+                                        (let ((asked-function (intern (symbol-name x))))
+                                          (unless (function-raised-condition asked-function *results*)
+                                            (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))))
+                                    asked-functions))))
+    (list
+     (if forbid-symb
+         (* score (- 1 (/ penalty-forbidden 100)))
+         score)
+     (cond (*runtime-error* "runtime-error")
+	   (*load-error* "load-error")
+           (*cr-warning* "cr-warning")
+           (forbid-symb (list "used forbidden symbol" forbid-symb penalty-forbidden))
+	   (t "No RT-error"))
+     (progn
+       (when *runtime-error*
+         (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
+                                   (mapcar #'(lambda (ce)
+                                               (format nil "~s~%~a" (second ce) (first ce)))
+                                           (reverse *runtime-error*)))))
+       (if  *load-error*
+            (setf description  (concatenate 'string  description load-error))
+            (setf description nil))    
+       (when forbid-symb
+         (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
+       description)
+     (change-results-readable *results*)
+     (read-file-as-string student-solution)
+     whats-asked)))
 
 (defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, initializes the test-runtime environment, and invokes
