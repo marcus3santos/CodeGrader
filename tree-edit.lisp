@@ -4,7 +4,7 @@
 ;;;; ============================================================
 
 (defpackage :tree-edit
-  (:use :cl :normalize)
+  (:use :cl :gensymifier)
   (:export :tree-edit-distance
            tree-size))
 
@@ -55,6 +55,55 @@
 
 ;;;; Main tree-edit-distance
 
+(defun type-order (x)
+  "Assign an ordering value to a type."
+  (cond
+    ((numberp x) 0)
+    ((stringp x) 1)
+    ((symbolp x) 2)
+    ((listp x) 3)
+    (t 4)))
+
+(defun form< (a b)
+  "Compare two Common Lisp forms A and B.
+Returns T if A is considered less than B."
+  (cond
+    ;; Numbers: compare numerically
+    ((and (numberp a) (numberp b))
+     (< a b))
+
+    ;; Strings: compare lexicographically
+    ((and (stringp a) (stringp b))
+     (string< a b))
+
+    ;; Symbols: compare by name lexicographically
+    ((and (symbolp a) (symbolp b))
+     (string< (symbol-name a) (symbol-name b)))
+
+    ;; Lists: compare element by element recursively
+    ((and (listp a) (listp b))
+     (cond
+       ((null a) (not (null b)))   ; empty list is less than non-empty
+       ((null b) nil)           ; non-empty list is greater than empty
+       (t (or (form< (first a) (first b))
+              (and (equal (first a) (first b))
+                   (form< (rest a) (rest b)))))))
+
+    ;; Different types: define some arbitrary type ordering
+    (t
+     (< (type-order a) (type-order b)))))
+
+(defun sort-form (f)
+  (cond ((null f) f)
+        ((atom f) f)
+        ((and (listp f)
+              (or (eq (car f) '*)
+                  (eq (car f) '+)))
+         (cons (car f)
+               (sort (mapcar #'sort-form (cdr f)) #'form<)))
+        (t (cons (sort-form (car f)) (mapcar #'sort-form (cdr f))))))
+
+
 (defun tree-edit-distance (t1 t2)
   (cond
     ;; both leaves (atoms or small lists): treat as one replacement
@@ -72,9 +121,14 @@
           (seq-edit-distance (node-children t1)
                              (node-children t2)))))))
 
+(defun normalize (f)
+  (sort-form (macroexpand (normalize-gensyms (gensymify f)))))
 
 (defun solution-distance (s1 s2)
-  (tree-edit-distance (normalize s1) (normalize s2)))
+  (let* ((ns1 (normalize s1))
+         (ns2 (normalize s2)))
+    (format t "Original:~%~s~%~s~%Normalized:~%~s~%~s~%" s1 s2 ns1 ns2)
+    (tree-edit-distance ns1 ns2)))
 
 (defun similarity (qs ss)
   (- 1 (float (/ (tree-edit-distance (normalize qs) (normalize ss)) (tree-size qs)))))
@@ -109,8 +163,8 @@
              0)
             (= (solution-distance
                 '(defun ht-get (key ht)
-                  (let ((size (length (ht-array ht)))  
-                        (start (rem (sxhash key) size)))   ; sxhash is a CL function
+                  (let* ((size (length (ht-array ht)))  
+                         (start (rem (sxhash key) size)))   ; sxhash is a CL function
                    (do* ((count 0 (1+ count))
                          (i start (rem (1+ i) size))
                          (item (aref (ht-array ht) start) 
@@ -127,7 +181,7 @@
                                  i))))))
                 '(defun ht-get (key ht)
                   (let* ((size (length (ht-array ht)))  
-                             (start (rem (sxhash key) size)))   ; sxhash is a CL function
+                         (start (rem (sxhash key) size)))   ; sxhash is a CL function
                    (do* ((count1 0 (1+ count1))
                          (i start (rem (1+ i) size))
                          (item1 (aref (ht-array ht) start) 
@@ -142,4 +196,4 @@
                                  ;; (also used to distinguish the value nil from not found,
                                  ;; which is also represented by nil but with no second value)
                                  i)))))))
-            3))))
+            2))))

@@ -63,7 +63,7 @@
 
 (defpackage #:gensymifier
   (:use :cl )
-  (:export :gensymify))
+  (:export :gensymify :normalize-gensyms))
 
 (defpackage #:grader
   (:documentation "Creates the code grading apparatus")

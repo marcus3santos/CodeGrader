@@ -1,9 +1,17 @@
 (defpackage :normalizer
   (:use :cl)
-  (:export :normalize :change-vars))
+  (:export :normalize))
 
 (in-package :normalizer)
 
+(defun type-order (x)
+  "Assign an ordering value to a type."
+  (cond
+    ((numberp x) 0)
+    ((stringp x) 1)
+    ((symbolp x) 2)
+    ((listp x) 3)
+    (t 4)))
 
 (defun form< (a b)
   "Compare two Common Lisp forms A and B.
@@ -34,14 +42,6 @@ Returns T if A is considered less than B."
     (t
      (< (type-order a) (type-order b)))))
 
-(defun type-order (x)
-  "Assign an ordering value to a type."
-  (cond
-    ((numberp x) 0)
-    ((stringp x) 1)
-    ((symbolp x) 2)
-    ((listp x) 3)
-    (t 4)))
 
 (defun sort-form (f)
   (cond ((null f) f)
@@ -105,7 +105,7 @@ Returns T if A is considered less than B."
                             (change-vars x (append ll-symbs env) type))
                         bdy)
                 (change-vars bdy (append ll-symbs env) type)))))
-
+#|
 (defun change-vars (f  &optional symbs-codes (type "string"))
   "Changes each variable occurring in form F to its respective code obtained
    from the list of symb-code pairs in SYMBS-CODES"
@@ -202,7 +202,5 @@ Returns T if A is considered less than B."
                                      (change-vars f symbs-codes type))
                                  (cdr f)))))))
         (t f)))
+|#
 
-
-(defun normalize (f)
-  (sort-form (change-vars (macroexpand f))))

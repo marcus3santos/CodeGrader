@@ -54,7 +54,7 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
 
            ;; DEFUN
            ((and (consp f) (eq (car f) 'defun)
-                 (listp (second f)))
+                 (listp (third f)))
             (destructuring-bind (head name params &rest body) f
               (multiple-value-bind (new-params venv*) (walk-lambda-list params venv fenv)
                 `(,head ,name ,new-params
@@ -96,12 +96,43 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                 ,@(mapcar (lambda (b) (walk b venv-for-body fenv)) body))))
 
            ;; Other forms (DO, DOTIMES, etc. remain the same as your source)
+
+           ;; DO / DO*
+           ((and (consp f) (member (car f) '(do do*)))
+            (destructuring-bind (kind vars (test &rest results) &rest body) f
+              (let* ((new (mapcar (lambda (v)
+                                     (cons (car v)
+                                           (gensym (symbol-name (car v)))))
+                                   vars))
+                     (venv* (append new venv)))
+                `(,kind
+                  ,(mapcar
+                    (lambda (v)
+                      (destructuring-bind (var init step) v
+                        `(,(cdr (assoc var new))
+                          ,(walk init venv fenv)
+                          ,(walk step venv* fenv))))
+                    vars)
+                  (,(walk test venv* fenv)
+                   ,@(mapcar (lambda (r) (walk r venv* fenv)) results))
+                  ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+
+           ;; DOTIMES
+           ((and (consp f) (eq (car f) 'dotimes))
+            (destructuring-bind (dotimes (var count &optional result) &rest body) f
+              (let* ((g (gensym (symbol-name var)))
+                     (venv* (acons var g venv)))
+                `(dotimes (,g ,(walk count venv fenv)
+                               ,(walk result venv* fenv))
+                   ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+           
+           ;; MULTIPLE-VALUE-BIND
            ((and (consp f) (eq (car f) 'multiple-value-bind))
             (destructuring-bind (mvb vars expr &rest body) f
               (let* ((new (mapcar (lambda (v) (cons v (gensym (symbol-name v)))) vars))
                      (venv* (append new venv)))
                 `(,mvb ,(mapcar #'cdr new) ,(walk expr venv fenv)
-                  ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+                       ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
 
            ((consp f)
             (let ((head (car f)))
