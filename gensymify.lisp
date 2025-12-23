@@ -142,7 +142,8 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
     (walk form venv fenv)))
 
 (defun normalize-gensyms (form)
-  "Replace all gensyms with deterministic symbols G1, G2, ..."
+  "Replace all gensyms with deterministic symbols G1, G2, ...
+   and normalize equivalent forms, first <-> car, ..."
   (let ((table (make-hash-table :test #'eq))
         (counter 0))
     (labels ((norm (x)
@@ -151,8 +152,18 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                   (or (gethash x table)
                       (setf (gethash x table)
                             (intern (format nil "G~D" (incf counter))))))
+                 ((and (consp x) ; open-branch if a
+                       (eq 'if (first x))
+                       (null (cdddr x)))
+                  (list 'when (norm (second x)) (norm (third x))))
                  ((consp x)
                   (cons (norm (car x))
                         (norm (cdr x))))
+                 ((symbolp x)
+                  (or (and (eq 'car x) 'first)
+                      (and (eq 'cdr x) 'rest)
+                      (and (eq 'cadr x) 'second)
+                      (and (eq 'caddr x) 'third)
+                      x))
                  (t x))))
       (norm form))))
