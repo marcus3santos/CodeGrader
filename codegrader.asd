@@ -11,6 +11,7 @@
   :components ((:file "package")
                (:file "macros")
                (:file "gensymify")
+               (:file "similarity-scorer")
                (:file "grader")
                (:file "sexprmarkup")
                (:file "codegrader")))
