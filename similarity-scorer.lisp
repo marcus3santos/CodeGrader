@@ -171,10 +171,9 @@ Returns T if A is considered less than B."
 
 (defun score-similarity (target-func student-solution instructor-solutions)
   (let* ((student-solution-cg (get-call-graph target-func student-solution))
-         (student-used-functions nil))
-    (mapc (lambda (func)
-              (let ((def (car (member func student-solution :key #'second))))
-                (when def
-                  (push def student-used-functions))))
-          (mapcar #'first student-solution-cg))
+         (student-used-functions
+           (remove nil (mapcar (lambda (func)
+                                 (car (member func student-solution :key #'second)))
+                               (mapcar #'first student-solution-cg)))))
+    
     student-used-functions))
