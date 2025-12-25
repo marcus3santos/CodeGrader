@@ -137,7 +137,6 @@ Returns T if A is considered less than B."
   "Returns a list of functions called by target-func within the given program."
   (let ((seen '())
         (graph '()))
-    
     (labels ((find-defun (name)
                ;; Finds the body of a specific function in the program
                (cdr (assoc name 
@@ -146,7 +145,6 @@ Returns T if A is considered less than B."
                                                 (eq (first form) 'defun))
                                        (list (cons (second form) (cdddr form)))))
                                    program))))
-             
              (extract-calls (body)
                ;; Recursively finds all symbols in the first position of a list
                (let ((calls '()))
@@ -155,21 +153,28 @@ Returns T if A is considered less than B."
                                   ((listp item)
                                    (when (symbolp (car item))
                                      (pushnew (car item) calls))
-                                   (mapc #'scan item)))))
+                                   (mapc #'scan (reverse item))))))
                    (scan body)
-                   (reverse calls))))
-
+                   calls)))
              (build-graph (func)
                ;; Traverses the calls to build the adjacency list
                (unless (member func seen)
                  (push func seen)
                  (let* ((body (find-defun func))
                         (calls (extract-calls body)))
-                   (format t "Func: ~a Calls: ~a~%" func calls)
                    (push (cons func (list calls)) graph)
                    (dolist (child calls)
                      (build-graph child))))))
-      
       (build-graph target-func)
       graph)))
 
+
+(defun score-similarity (target-func student-solution instructor-solutions)
+  (let* ((student-solution-cg (get-call-graph target-func student-solution))
+         (student-used-functions nil))
+    (mapc (lambda (func)
+              (let ((def (car (member func student-solution :key #'second))))
+                (when def
+                  (push def student-used-functions))))
+          (mapcar #'first student-solution-cg))
+    student-used-functions))
