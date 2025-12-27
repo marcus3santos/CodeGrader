@@ -170,10 +170,19 @@ Returns T if A is considered less than B."
 
 
 (defun score-similarity (target-func student-solution instructor-solutions)
+  "Currently, a solution to a question consists of a single defun, with no
+   helpers. This applies to the instructor's versions of the solution
+   and to the student's solution"
   (let* ((student-solution-cg (get-call-graph target-func student-solution))
          (student-used-functions
            (remove nil (mapcar (lambda (func)
                                  (car (member func student-solution :key #'second)))
-                               (mapcar #'first student-solution-cg)))))
-    
-    student-used-functions))
+                               (mapcar #'first student-solution-cg))))
+         (max-similarity))
+    (mapc (lambda (instructor-solution)
+            (let ((similarity-score (similarity instructor-solution student-used-functions)))
+              (when (or (null max-similarity)
+                        (> similarity-score (first max-similarity)))
+                (setf max-similarity (list similarity-score instructor-solution)))))
+          instructor-solutions)
+    max-similarity))
