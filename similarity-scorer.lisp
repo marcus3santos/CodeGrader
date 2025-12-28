@@ -178,6 +178,8 @@ Returns T if A is considered less than B."
            (remove nil (mapcar (lambda (func)
                                  (car (member func student-solution :key #'second)))
                                (mapcar #'first student-solution-cg))))
+         (instructor-solution-for-target-func
+           )
          (max-similarity))
     (mapc (lambda (instructor-solution)
             (let ((similarity-score (similarity instructor-solution student-used-functions)))

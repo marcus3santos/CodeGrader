@@ -108,10 +108,19 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                 `(,kind
                   ,(mapcar
                     (lambda (v)
-                      (destructuring-bind (var init step) v
-                        `(,(cdr (assoc var new))
-                          ,(walk init venv fenv)
-                          ,(walk step venv* fenv))))
+                      (cond ((null v) v)
+                            ((and (listp v)
+                                  (= (length v) 2))
+                             (destructuring-bind (var init) v
+                               `(,(cdr (assoc var new))
+                                 ,(walk init venv fenv))))
+                            ((and (listp v)
+                                  (= (length v) 3))
+                             (destructuring-bind (var init step) v
+                               `(,(cdr (assoc var new))
+                                 ,(walk init venv fenv)
+                                 ,(walk step venv* fenv))))
+                            (t v)))
                     vars)
                   (,(walk test venv* fenv)
                    ,@(mapcar (lambda (r) (walk r venv* fenv)) results))
