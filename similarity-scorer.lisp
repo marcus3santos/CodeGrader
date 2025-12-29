@@ -17,10 +17,14 @@
 (defun node-children (x) (if (consp x) (cdr x) nil))
 
 ;;;; Count nodes in a tree (each atom or cons counts as 1 node)
+
 (defun tree-size (tree)
-  (if (leafp tree)
-      1
-      (1+ (reduce #'+ (mapcar #'tree-size (node-children tree)) :initial-value 0))))
+  (cond ((null tree) 0)
+        ((leafp tree) 1)
+        ((listp (first tree))
+         (+ (tree-size (first tree))
+            (tree-size (rest tree))))
+        (t (+ 1 (tree-size (rest tree))))))
 
 ;;;; Cost functions (unit relabel cost; insert/delete cost = number of nodes inserted/removed)
 (defun cost-relabel (a b)
@@ -114,14 +118,26 @@ Returns T if A is considered less than B."
      (cost-insert-subtree t2))
     ((leafp t2)
      (cost-delete-subtree t1))
+    ((and (listp t1) (listp t2))
+     (+ (tree-edit-distance (first t1) (first t2))
+        (seq-edit-distance (node-children t1)
+                           (node-children t2))))
     ;; otherwise combine relabel + child sequence edit
     (t
      (let ((label-cost (cost-relabel t1 t2)))
        (+ label-cost
           (seq-edit-distance (node-children t1)
                              (node-children t2)))))))
+
 (defun normalize (f)
-  (sort-form (macroexpand (normalize-gensyms (gensymify f)))))
+  (let ((gensymified (gensymify f)))
+    (sort-form (macroexpand (normalize-gensyms (gensymify gensymified))))))
+
+
+#|
+(defun normalize (f)
+  (sort-form (normalize-gensyms (gensymify f))))
+|#
 
 (defun solution-distance (s1 s2)
   (let* ((ns1 (normalize s1))
@@ -178,13 +194,18 @@ Returns T if A is considered less than B."
            (remove nil (mapcar (lambda (func)
                                  (car (member func student-solution :key #'second)))
                                (mapcar #'first student-solution-cg))))
-         (instructor-solution-for-target-func
-           )
+         (instructor-solutions-for-target-func
+           (remove nil (mapcar (lambda (s)
+                                 
+                                 (when  (second (assoc target-func (get-call-graph target-func (rest s))))
+                                   (rest s)))
+                               instructor-solutions)))
          (max-similarity))
     (mapc (lambda (instructor-solution)
             (let ((similarity-score (similarity instructor-solution student-used-functions)))
+              (format t "-----~%Solution: ~s~%Student's: ~s~%Dist: ~s~%Similarity: ~s~%" instructor-solution student-used-functions (tree-edit-distance instructor-solution student-used-functions) similarity-score)
               (when (or (null max-similarity)
                         (> similarity-score (first max-similarity)))
                 (setf max-similarity (list similarity-score instructor-solution)))))
-          instructor-solutions)
+          instructor-solutions-for-target-func)
     max-similarity))
