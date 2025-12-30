@@ -323,9 +323,9 @@ the mark is calculated as the # of passes divided by the total # of cases.
                                             (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))))
                                     asked-functions)))
          (similarity (remove nil (mapcar (lambda (x)
-                                           (let ((asked-function (intern (symbol-name x))))
-                                             (score-similarity asked-function student-solution question-solutions)))
-                                         asked-functions))))
+                                             (let ((asked-function (intern (symbol-name x))))
+                                               (score-similarity asked-function student-solution question-solutions)))
+                                           asked-functions))))
     
     (list
      (if forbid-symb
