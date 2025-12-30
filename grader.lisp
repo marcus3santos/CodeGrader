@@ -253,12 +253,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
                          )))
     (used-forbidden-function-p q-func-name forbidden-functions student-forms)))
 
-(defun contains-forbidden-symbol? (asked-function prog-file forbidden-symbols)
-  (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols)) 
-        (student-solution (with-open-file (stream prog-file :direction :input) 
-                            (loop for form = (read stream nil nil)  
-                                  while form                              
-                                  collect form))))
+(defun contains-forbidden-symbol? (asked-function student-solution forbidden-symbols)
+  (let ((chked-forbidden-symbols (mapcar #'(lambda (s) (if (stringp s) (intern s) s)) forbidden-symbols)))
     (used-forbidden-function-p (intern (symbol-name asked-function)) chked-forbidden-symbols student-solution)))
 
 
@@ -275,14 +271,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
       (check-fnames cap-symbs))))
 |#
 
-(defun read-file-as-string (file-name)
-  "Reads the content of the file specified by FILE-NAME and returns it as a string."
-  (with-open-file (stream file-name :direction :input)
-    (let ((content (make-string-output-stream))) ;; Create a stream to collect the file content
-      (loop for line = (read-line stream nil nil)
-            while line
-            do (format content "~A~%" line)) ;; Append each line to content with a newline
-      (get-output-stream-string content))))
 
 (defun run-testcases (question)
   (let ((cur *package*))
@@ -305,9 +293,23 @@ the mark is calculated as the # of passes divided by the total # of cases.
                (typep (second ares) 'condition))
           (return t)))))
 
-(defun score-result (student-solution question assessment-data ws load-error)
+(defun intern-symbols-in-form (form)
+  (cond
+    ((symbolp form)
+     (intern (symbol-name form)))
+    ((consp form)
+     (cons (intern-symbols-in-form (car form))
+           (intern-symbols-in-form (cdr form))))
+    (t form)))
+
+(defun score-result (student-prog-file question assessment-data ws load-error)
   (let* ((description "")
-         (question-data (cdr (assoc question assessment-data :test #'string=)))
+         (student-solution (with-open-file (stream student-prog-file :direction :input) 
+                             (loop for form = (read stream nil nil)  
+                                   while form
+                                   collect form)))
+         (question-data (cdr (assoc question (intern-symbols-in-form assessment-data) :test #'string=)))
+         (question-solutions (intern-symbols-in-form (rest (assoc "solutions" question-data :test #'string=))))
          (forb-data (cdr (assoc "forbidden-symbols" question-data :test #'string=)))
          (forbidden-symbols (nth 3 forb-data))
          (penalty-forbidden (nth 1 forb-data))
@@ -319,7 +321,12 @@ the mark is calculated as the # of passes divided by the total # of cases.
                                         (let ((asked-function (intern (symbol-name x))))
                                           (unless (function-raised-condition asked-function *results*)
                                             (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))))
-                                    asked-functions))))
+                                    asked-functions)))
+         (similarity (remove nil (mapcar (lambda (x)
+                                           (let ((asked-function (intern (symbol-name x))))
+                                             (score-similarity asked-function student-solution question-solutions)))
+                                         asked-functions))))
+    
     (list
      (if forbid-symb
          (* score (- 1 (/ penalty-forbidden 100)))
@@ -333,6 +340,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (when *runtime-error*
          (setf description (format nil "~%Runtime error(s) when evaluating the following expressions:~%~{- ~a~%~}"
                                    (mapcar #'(lambda (ce)
+                                               
                                                (format nil "~s~%~a" (second ce) (first ce)))
                                            (reverse *runtime-error*)))))
        (if  *load-error*
@@ -342,8 +350,9 @@ the mark is calculated as the # of passes divided by the total # of cases.
          (setf description  (concatenate 'string  description (format nil "~%You have used a forbidden symbol, ~a, in your Lisp file !!!~%" forbid-symb))))
        description)
      (change-results-readable *results*)
-     (read-file-as-string student-solution)
-     whats-asked)))
+     (format nil "~s" student-solution)
+     whats-asked
+     similarity)))
 
 (defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, initializes the test-runtime environment, and invokes
@@ -359,6 +368,8 @@ the mark is calculated as the # of passes divided by the total # of cases.
          (list 0 "no-submitted-file" "No submitted file" nil))
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
-        (t (grade-code student-solution question assessmt-data kind))))
+        (t (let ((grade (grade-code student-solution question assessmt-data kind)))
+             (format t "+++++~%Grade: ~s~%" grade)
+             grade) )))
 
 

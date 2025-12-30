@@ -47,27 +47,21 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
            ;; LAMBDA
            ((and (consp f) (eq (car f) 'lambda)
                  (listp (second f)))
-            (handler-case
-                (destructuring-bind (head params &rest body) f
+            (destructuring-bind (head params &rest body) f
                   (multiple-value-bind (new-params venv*) (walk-lambda-list params venv fenv)
                     `(,head ,new-params
-                            ,@(mapcar (lambda (b) (walk b venv* fenv)) body))))
-              (error () f)))
-
+                            ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            ;; DEFUN
            ((and (consp f) (eq (car f) 'defun)
                  (listp (third f)))
-            (handler-case
-                (destructuring-bind (head name params &rest body) f
+            (destructuring-bind (head name params &rest body) f
                   (multiple-value-bind (new-params venv*) (walk-lambda-list params venv fenv)
                     `(,head ,name ,new-params
-                            ,@(mapcar (lambda (b) (walk b venv* fenv)) body))))
-              (error () f)))
+                            ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
 
            ;; FLET / LABELS
            ((and (consp f) (member (car f) '(flet labels)))
-            (handler-case
-                (let* ((kind (car f))
+            (let* ((kind (car f))
                        (defs (cadr f))
                        (body (cddr f))
                        (fnew (mapcar (lambda (d) (cons (car d) (gensym (symbol-name (car d))))) defs))
@@ -81,13 +75,11 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                             `(,(flookup name fnew) ,new-params
                               ,@(mapcar (lambda (b) (walk b venv* fenv*)) fbody)))))
                       defs)
-                    ,@(mapcar (lambda (b) (walk b venv fenv*)) body)))
-              (error () f)))
+                    ,@(mapcar (lambda (b) (walk b venv fenv*)) body))))
 
            ;; LET / LET* 
            ((and (consp f) (member (car f) '(let let*)))
-            (handler-case 
-                (let ((is-star (eq (car f) 'let*))
+            (let ((is-star (eq (car f) 'let*))
                       (bindings (cadr f))
                       (body (cddr f))
                       (new-bindings '())
@@ -100,15 +92,13 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                       (setf venv-for-body (acons var g venv-for-body))
                       (push `(,g ,init*) new-bindings)))
                   `(,(car f) ,(nreverse new-bindings)
-                    ,@(mapcar (lambda (b) (walk b venv-for-body fenv)) body)))
-              (error () f)))
+                    ,@(mapcar (lambda (b) (walk b venv-for-body fenv)) body))))
 
            ;; Other forms (DO, DOTIMES, etc. remain the same as your source)
 
            ;; DO / DO*
            ((and (consp f) (member (car f) '(do do*)))
-            (handler-case 
-                (destructuring-bind (kind vars (test &rest results) &rest body) f
+            (destructuring-bind (kind vars (test &rest results) &rest body) f
                   (let* ((new (mapcar (lambda (v)
                                         (cons (car v)
                                               (gensym (symbol-name (car v)))))
@@ -133,30 +123,25 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                         vars)
                       (,(walk test venv* fenv)
                        ,@(mapcar (lambda (r) (walk r venv* fenv)) results))
-                      ,@(mapcar (lambda (b) (walk b venv* fenv)) body))))
-              (error () f)))
+                      ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
 
            ;; DOTIMES
            ((and (consp f) (eq (car f) 'dotimes))
-            (handler-case
-                (destructuring-bind (dotimes (var count &optional result) &rest body) f
+            (destructuring-bind (dotimes (var count &optional result) &rest body) f
                   (declare (ignore dotimes))
                   (let* ((g (gensym (symbol-name var)))
                          (venv* (acons var g venv)))
                     `(dotimes (,g ,(walk count venv fenv)
                                   ,(walk result venv* fenv))
-                       ,@(mapcar (lambda (b) (walk b venv* fenv)) body))))
-              (error () f)))
+                       ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            
            ;; MULTIPLE-VALUE-BIND
            ((and (consp f) (eq (car f) 'multiple-value-bind))
-            (handler-case
-                (destructuring-bind (mvb vars expr &rest body) f
+            (destructuring-bind (mvb vars expr &rest body) f
                   (let* ((new (mapcar (lambda (v) (cons v (gensym (symbol-name v)))) vars))
                          (venv* (append new venv)))
                     `(,mvb ,(mapcar #'cdr new) ,(walk expr venv fenv)
-                           ,@(mapcar (lambda (b) (walk b venv* fenv)) body))))
-              (error () f)))
+                           ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            ((and (listp f) (consp (car f)))
             (cons (gensymify (car f))
                   (gensymify (cdr f))))
@@ -165,7 +150,9 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
               (cons (if (symbolp head) (flookup head fenv) head)
                     (mapcar (lambda (x) (walk x venv fenv)) (cdr f)))))
            (t f))))
-    (walk form venv fenv)))
+    (handler-case
+        (walk form venv fenv)
+      (error () form))))
 
 (defun normalize-gensyms (form)
   "Replace all gensyms with deterministic symbols G1, G2, ...

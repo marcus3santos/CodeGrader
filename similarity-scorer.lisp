@@ -3,11 +3,6 @@
 ;;;; Counts node insert/delete costs correctly and handles atoms
 ;;;; ============================================================
 
-(defpackage :similarity-scorer
-  (:use :cl :gensymifier)
-  (:export :tree-edit-distance
-           tree-size))
-
 (in-package :similarity-scorer)
 
 ;;;; Helpers: treat any Lisp form as a tree node (atoms are leaves)
@@ -101,6 +96,11 @@ Returns T if A is considered less than B."
   (cond ((null f) f)
         ((atom f) f)
         ((and (listp f)
+              (eq (first f) 'labels))
+         `(,(first f)
+           ,(sort (mapcar #'sort-form (second f)) #'form<)
+           ,@(sort-form (cddr f))))
+        ((and (listp f)
               (or (eq (car f) '*)
                   (eq (car f) '+)))
          (cons (car f)
@@ -142,7 +142,6 @@ Returns T if A is considered less than B."
 (defun solution-distance (s1 s2)
   (let* ((ns1 (normalize s1))
          (ns2 (normalize s2)))
-    (format t "Original:~%~s~%~s~%Normalized:~%~s~%~s~%" s1 s2 ns1 ns2)
     (tree-edit-distance ns1 ns2)))
 
 (defun similarity (qs ss)
@@ -186,7 +185,12 @@ Returns T if A is considered less than B."
 
 
 (defun score-similarity (target-func student-solution instructor-solutions)
-  "Currently, a solution to a question consists of a single defun, with no
+  "Return the similarity score (0 to 1.0) between the definition for function
+   TARGET-FUNC present in the STUDENT-SOLUTION list and the one found in the 
+   INSTRUCTOR-SOLUTIONS list. The latter is in the form 
+   (doc (defun ...) ...) 
+
+   Currently, a solution to a question consists of a single defun, with no
    helpers. This applies to the instructor's versions of the solution
    and to the student's solution"
   (let* ((student-solution-cg (get-call-graph target-func student-solution))
@@ -196,14 +200,12 @@ Returns T if A is considered less than B."
                                (mapcar #'first student-solution-cg))))
          (instructor-solutions-for-target-func
            (remove nil (mapcar (lambda (s)
-                                 
                                  (when  (second (assoc target-func (get-call-graph target-func (rest s))))
                                    (rest s)))
                                instructor-solutions)))
          (max-similarity))
     (mapc (lambda (instructor-solution)
             (let ((similarity-score (similarity instructor-solution student-used-functions)))
-              (format t "-----~%Solution: ~s~%Student's: ~s~%Dist: ~s~%Similarity: ~s~%" instructor-solution student-used-functions (tree-edit-distance instructor-solution student-used-functions) similarity-score)
               (when (or (null max-similarity)
                         (> similarity-score (first max-similarity)))
                 (setf max-similarity (list similarity-score instructor-solution)))))

@@ -65,9 +65,13 @@
   (:use :cl )
   (:export :gensymify :normalize-gensyms))
 
+(defpackage :similarity-scorer
+  (:use :cl :gensymifier)
+  (:export :score-similarity))
+
 (defpackage #:grader
   (:documentation "Creates the code grading apparatus")
-  (:use cl :test-runtime :gensymifier)
+  (:use cl :test-runtime :gensymifier :similarity-scorer)
   (:export :evaluate-solution)
   (:export :grade-code))
 
