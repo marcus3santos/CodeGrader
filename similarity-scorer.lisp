@@ -130,19 +130,10 @@ Returns T if A is considered less than B."
                              (node-children t2)))))))
 
 (defun normalize (f)
-  (let ((gensymified (gensymify f)))
-    (sort-form (macroexpand (normalize-gensyms (gensymify gensymified))))))
+  (let* ((gensymified (gensymify f))
+         (normed-gensyms (normalize-gensyms gensymified)))
+    (sort-form (macroexpand normed-gensyms))))
 
-
-#|
-(defun normalize (f)
-  (sort-form (normalize-gensyms (gensymify f))))
-|#
-
-(defun solution-distance (s1 s2)
-  (let* ((ns1 (normalize s1))
-         (ns2 (normalize s2)))
-    (tree-edit-distance ns1 ns2)))
 
 (defun similarity (qs ss)
   (- 1 (float (/ (tree-edit-distance (normalize qs) (normalize ss)) (tree-size qs)))))
@@ -193,21 +184,59 @@ Returns T if A is considered less than B."
    Currently, a solution to a question consists of a single defun, with no
    helpers. This applies to the instructor's versions of the solution
    and to the student's solution"
-  (let* ((student-solution-cg (get-call-graph target-func student-solution))
-         (student-used-functions
-           (remove nil (mapcar (lambda (func)
-                                 (car (member func student-solution :key #'second)))
-                               (mapcar #'first student-solution-cg))))
-         (instructor-solutions-for-target-func
-           (remove nil (mapcar (lambda (s)
-                                 (when  (second (assoc target-func (get-call-graph target-func (rest s))))
-                                   (rest s)))
-                               instructor-solutions)))
-         (max-similarity))
-    (mapc (lambda (instructor-solution)
-            (let ((similarity-score (similarity instructor-solution student-used-functions)))
-              (when (or (null max-similarity)
-                        (> similarity-score (first max-similarity)))
-                (setf max-similarity (list similarity-score instructor-solution)))))
-          instructor-solutions-for-target-func)
-    max-similarity))
+  (labels ((get-relevant-code (program call-graph)
+             (remove nil (append (mapcar (lambda (form)
+                                           (when (member (car form) '(defconstant defparameter defvar))
+                                             form))
+                                       program)
+                               (mapcar (lambda (func)
+                                         (car (member func program :key #'second)))
+                                       (mapcar (lambda (node)
+                                                 (when (second node)
+                                                   (first node)))
+                                               call-graph)))))
+           (embed-helpers (main-func-name program)
+             (let* ((globals (remove nil (mapcar (lambda (form)
+                                                   (when (member (car form) '(defconstant defvar 'defparameter))
+                                                     form))
+                                                 program)))
+                    (helpers (remove nil (mapcar (lambda (form)
+                                                   (when (and (eq (first form) 'defun)
+                                                              (not (eq (second form) main-func-name)))
+                                                     form))
+                                                 program)))
+                    (main-def (first (member main-func-name program :key #'second)))
+                    (main-lamblist (third main-def))
+                    (main-bdy (cdddr main-def)))
+               (if (and main-def helpers)
+                   (append  globals
+                            (list`(defun ,main-func-name ,main-lamblist
+                                    (labels ,(mapcar #'rest helpers)
+                                      ,@main-bdy))))
+                   program))))
+    (let* ((student-solution-cg (get-call-graph target-func student-solution))
+           (student-used-functions-and-globals
+             (get-relevant-code student-solution student-solution-cg))
+           (student-sols-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
+           (instructor-solutions-for-target-func
+             (remove nil 
+                     (mapcar (lambda (s)
+                               (when  (second (assoc target-func (get-call-graph target-func (rest s))))
+                                 (rest s)))
+                             instructor-solutions)))
+           (instructor-solutions-used-functions-and-globals
+             (mapcar (lambda (instructor-solution)
+                       (get-relevant-code instructor-solution (get-call-graph target-func instructor-solution)))
+                     instructor-solutions-for-target-func))
+           (instructor-sols-with-embedded-helpers
+             (mapcar (lambda (sol)
+                       (embed-helpers target-func sol))
+                     instructor-solutions-used-functions-and-globals))
+           (max-similarity))
+      (mapc (lambda (instructor-solution)
+              (let ((similarity-score (similarity instructor-solution student-sols-with-embedded-helpers)))
+                (when (or (null max-similarity)
+                          (> similarity-score (first max-similarity)))
+                  (setf max-similarity (list similarity-score instructor-solution)))))
+            instructor-sols-with-embedded-helpers)
+      max-similarity)))
