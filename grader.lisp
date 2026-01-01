@@ -295,6 +295,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
 
 (defun intern-symbols-in-form (form)
   (cond
+    ((keywordp form) form)
     ((symbolp form)
      (intern (symbol-name form)))
     ((consp form)

@@ -157,9 +157,11 @@ Returns T if A is considered less than B."
                  (labels ((scan (item)
                             (cond ((null item) nil)
                                   ((listp item)
-                                   (when (symbolp (car item))
-                                     (pushnew (car item) calls))
-                                   (mapc #'scan (reverse item))))))
+                                   (if (eq (first item) 'function) ; handles #'  symbols
+                                       (pushnew (cadr item) calls)
+                                       (when (car item)
+                                         (pushnew  (car item) calls)))
+                                   (mapc #'scan (reverse  item))))))
                    (scan body)
                    calls)))
              (build-graph (func)
@@ -185,26 +187,27 @@ Returns T if A is considered less than B."
    helpers. This applies to the instructor's versions of the solution
    and to the student's solution"
   (labels ((get-relevant-code (program call-graph)
-             (remove nil (append (mapcar (lambda (form)
-                                           (when (member (car form) '(defconstant defparameter defvar))
-                                             form))
-                                       program)
-                               (mapcar (lambda (func)
-                                         (car (member func program :key #'second)))
-                                       (mapcar (lambda (node)
-                                                 (when (second node)
-                                                   (first node)))
-                                               call-graph)))))
+             (let ((form-map (make-hash-table :test 'eq)))
+               ;; Index the program once: O(N)
+               (dolist (form program)
+                 (setf (gethash (second form) form-map) form))
+
+               (append
+                ;; Filter constants: O(N)
+                (remove-if-not (lambda (f) (member (car f) '(defconstant defparameter defvar)))
+                               program)
+                ;; Map call-graph nodes to forms: O(M)
+                (loop for (node-name has-target) in call-graph
+                      when (and has-target (gethash node-name form-map))
+                        collect (gethash node-name form-map)))))
            (embed-helpers (main-func-name program)
-             (let* ((globals (remove nil (mapcar (lambda (form)
-                                                   (when (member (car form) '(defconstant defvar 'defparameter))
-                                                     form))
-                                                 program)))
-                    (helpers (remove nil (mapcar (lambda (form)
-                                                   (when (and (eq (first form) 'defun)
-                                                              (not (eq (second form) main-func-name)))
-                                                     form))
-                                                 program)))
+             (let* ((globals (loop for form in program
+                                   when (member (car form) '(defconstant defvar 'defparameter))
+                                     collect form))
+                    (helpers (loop for form in program
+                                   when (and (eq (first form) 'defun)
+                                                       (not (eq (second form) main-func-name)))
+                                     collect form))
                     (main-def (first (member main-func-name program :key #'second)))
                     (main-lamblist (third main-def))
                     (main-bdy (cdddr main-def)))
@@ -219,11 +222,10 @@ Returns T if A is considered less than B."
              (get-relevant-code student-solution student-solution-cg))
            (student-sols-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
            (instructor-solutions-for-target-func
-             (remove nil 
-                     (mapcar (lambda (s)
-                               (when  (second (assoc target-func (get-call-graph target-func (rest s))))
-                                 (rest s)))
-                             instructor-solutions)))
+             (loop for s in instructor-solutions
+                   for data = (rest s)
+                   when (second (assoc target-func (get-call-graph target-func data)))
+                     collect data))
            (instructor-solutions-used-functions-and-globals
              (mapcar (lambda (instructor-solution)
                        (get-relevant-code instructor-solution (get-call-graph target-func instructor-solution)))
