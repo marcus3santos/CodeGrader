@@ -136,7 +136,11 @@ Returns T if A is considered less than B."
 
 
 (defun similarity (qs ss)
-  (- 1 (float (/ (tree-edit-distance (normalize qs) (normalize ss)) (tree-size qs)))))
+  (let ((distance (tree-edit-distance (normalize qs) (normalize ss)))
+        (tree-size (tree-size qs)))
+    (if (> distance tree-size)
+        0
+        (- 1 (float (/ distance tree-size))))))
 
 
 (defun get-call-graph (target-func program)
@@ -177,7 +181,7 @@ Returns T if A is considered less than B."
       graph)))
 
 
-(defun score-similarity (target-func student-solution instructor-solutions)
+(defun score-similarity (target-func raw-student-solution instructor-solutions)
   "Return the similarity score (0 to 1.0) between the definition for function
    TARGET-FUNC present in the STUDENT-SOLUTION list and the one found in the 
    INSTRUCTOR-SOLUTIONS list. The latter is in the form 
@@ -186,7 +190,11 @@ Returns T if A is considered less than B."
    Currently, a solution to a question consists of a single defun, with no
    helpers. This applies to the instructor's versions of the solution
    and to the student's solution"
-  (labels ((get-relevant-code (program call-graph)
+  (labels ((filter-atoms (program)
+             (cond ((null program) program)
+                   ((atom (car program)) (filter-atoms (cdr program)))
+                   (t (cons (car program) (filter-atoms (cdr program))))))
+           (get-relevant-code (program call-graph)
              (let ((form-map (make-hash-table :test 'eq)))
                ;; Index the program once: O(N)
                (dolist (form program)
@@ -194,7 +202,9 @@ Returns T if A is considered less than B."
 
                (append
                 ;; Filter constants: O(N)
-                (remove-if-not (lambda (f) (member (car f) '(defconstant defparameter defvar)))
+                (remove-if-not (lambda (f)
+                                 (and (consp f)
+                                      (member (car f) '(defconstant defparameter defvar))))
                                program)
                 ;; Map call-graph nodes to forms: O(M)
                 (loop for (node-name has-target) in call-graph
@@ -202,11 +212,12 @@ Returns T if A is considered less than B."
                         collect (gethash node-name form-map)))))
            (embed-helpers (main-func-name program)
              (let* ((globals (loop for form in program
-                                   when (member (car form) '(defconstant defvar 'defparameter))
+                                   when (and  (consp form) (member (car form) '(defconstant defvar 'defparameter)))
                                      collect form))
                     (helpers (loop for form in program
-                                   when (and (eq (first form) 'defun)
-                                                       (not (eq (second form) main-func-name)))
+                                   when (and (consp form)
+                                             (eq (first form) 'defun)
+                                             (not (eq (second form) main-func-name)))
                                      collect form))
                     (main-def (first (member main-func-name program :key #'second)))
                     (main-lamblist (third main-def))
@@ -217,7 +228,8 @@ Returns T if A is considered less than B."
                                     (labels ,(mapcar #'rest helpers)
                                       ,@main-bdy))))
                    program))))
-    (let* ((student-solution-cg (get-call-graph target-func student-solution))
+    (let* ((student-solution (filter-atoms raw-student-solution))
+           (student-solution-cg (get-call-graph target-func student-solution))
            (student-used-functions-and-globals
              (get-relevant-code student-solution student-solution-cg))
            (student-sols-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))

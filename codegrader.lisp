@@ -20,6 +20,12 @@
 
 (defparameter *secret-salt* "A9f4XqZb!")
 
+;; Weights used for calculating final grade
+
+(defconstant +correctness-weight+ 0.5)
+
+(defconstant +style-weight+ 0.3)
+
 ;; Root folder where the examples' test case files  and the names of the
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
@@ -282,7 +288,7 @@ Please check your logic and consider adding a termination condition.")
       (let ((qfname (format nil "~a.lisp" question-name)))
         (push (list question-name
                     (if (member qfname sol-fnames :test #'string=)
-                        (let* ((solution (get-solution qfname solution-files))
+                        (let* ((solution   (get-solution qfname solution-files))
                                (evaluation (evaluate-solution solution question-name assessment-data "hidden")))
                           (if (and (stringp (second evaluation)) (string= (second evaluation) "load-error"))
                               (list 0 "load-error" "Your program contains unbalanced parentheses and cannot be compiled. Please check for missing or extra parentheses in the source file." nil)
@@ -397,7 +403,6 @@ Please check your logic and consider adding a termination condition.")
              (question-solutions (cdr (assoc "solutions" question-data :test #'string=)))
              (question-solutions-defuns  (mapcar #'rest question-solutions))
              )
-        ;(format t "@@@@ ~s~%" question-solutions)
         (mapc (lambda (list-of-defuns)
                 (mapc #'(lambda (form)
                           (format out "~s~%" form))
@@ -516,23 +521,36 @@ Please check your logic and consider adding a termination condition.")
          (folder (subseq clean-path (if last-slash (1+ last-slash) 0))))
     (concatenate 'string folder "/")))
 
+(defun final-mark (correctness similarity)
+  (+ correctness (* 100 (* similarity +style-weight+))))
+
+(defun print-similarity-scores (std evaluations n)
+  (format t "~%~s (~{~s ~})(~{~s ~})~s,~s~%"  ;
+          (first std)                   ; student id
+          (mapcar #'caadr evaluations)  ; correctness scores
+          (mapcar (lambda (e)           ; similarity scores
+                    (first (nth 6 (second e))))             
+                  evaluations)                  
+          (/ (reduce #'+ evaluations :key #'caadr) n) ; averaged correctness score
+          (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
+                                   (if (or (and (stringp (second (second e)))
+                                                (string= (second (second e)) "No RT-error"))
+                                           (and (listp (second (second e)))
+                                                (string= (first (second (second e))) "used forbidden symbol")))
+                                       (progn
+                                         (format t "(~a ~a)" (first (second e)) (first (nth 6 (second e))))
+                                         (final-mark (first (second e)) (first (nth 6 (second e)))))
+                                       0.0))
+                                 evaluations))
+             n)))
+
 (defun grade-single-student (folder std assessment-questions assessment-data feedback-folder map log-file-stream)
   "Grades a single student's submission."
   (let* ((std-sub-folder (concatenate 'string (car (last (pathname-directory (second (assoc "folder" assessment-data :test #'string=))))) "/"))
          (student-files (directory (concatenate 'string (namestring  folder) std-sub-folder "*.*")))
          (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
          (seval (progn
-                  #|
-                  (format *output-similarity* "~s,~{~s,~}~{~s,~}~s,~s~%"
-                          (first std)
-                          (mapcar #'caadr solutions-evaluations)
-                          (mapcar (lambda (e)
-                                    (nth 6 (cadr e)))
-                                  solutions-evaluations)
-                          (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
-                          (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions)))
-                   |#
-                  
+                  (print-similarity-scores std solutions-evaluations (length assessment-questions))
                   (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
                         solutions-evaluations)))
          (item (make-submission :std-id (first std)
