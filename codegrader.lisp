@@ -521,8 +521,20 @@ Please check your logic and consider adding a termination condition.")
   (let* ((std-sub-folder (concatenate 'string (car (last (pathname-directory (second (assoc "folder" assessment-data :test #'string=))))) "/"))
          (student-files (directory (concatenate 'string (namestring  folder) std-sub-folder "*.*")))
          (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
-         (seval (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
-                      solutions-evaluations))
+         (seval (progn
+                  #|
+                  (format *output-similarity* "~s,~{~s,~}~{~s,~}~s,~s~%"
+                          (first std)
+                          (mapcar #'caadr solutions-evaluations)
+                          (mapcar (lambda (e)
+                                    (nth 6 (cadr e)))
+                                  solutions-evaluations)
+                          (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+                          (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions)))
+                   |#
+                  
+                  (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+                        solutions-evaluations)))
          (item (make-submission :std-id (first std)
                                 :std-fname (second std)
                                 :std-lname (third std)
