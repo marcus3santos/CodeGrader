@@ -251,6 +251,6 @@ Returns T if A is considered less than B."
               (let ((similarity-score (similarity instructor-solution student-sols-with-embedded-helpers)))
                 (when (or (null max-similarity)
                           (> similarity-score (first max-similarity)))
-                  (setf max-similarity (list similarity-score instructor-solution)))))
+                  (setf max-similarity (list similarity-score instructor-solution student-sols-with-embedded-helpers)))))
             instructor-sols-with-embedded-helpers)
       max-similarity)))

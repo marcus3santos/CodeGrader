@@ -363,7 +363,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (format nil "~s" (uiop:read-file-string student-prog-file))
        whats-asked
        (if similarity similarity
-           "Your program caused a compiling error.")))))
+           "Program caused a compiling error.")))))
 
 (defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, initializes the test-runtime environment, and invokes

@@ -538,7 +538,7 @@ Please check your logic and consider adding a termination condition.")
                                            (and (listp (second (second e)))
                                                 (string= (first (second (second e))) "used forbidden symbol")))
                                        (progn
-                                         (format t "(~a ~a)" (first (second e)) (first (nth 6 (second e))))
+                                         (format t "~%(~a ~a ~%~a)~%" (first (second e)) (first (nth 6 (second e))) (third (nth 6 (second e))))
                                          (final-mark (first (second e)) (first (nth 6 (second e)))))
                                        0.0))
                                  evaluations))
