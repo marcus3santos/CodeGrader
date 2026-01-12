@@ -22,7 +22,11 @@
 
 ;; Weights used for calculating final grade
 
-(defconstant +correctness-weight+ 0.5)
+(defconstant +style-bonus-mark+ 10)
+
+(defconstant +similarity-threshold+ 0.5)
+
+(defconstant +correctness-weight+ 0.7)
 
 (defconstant +style-weight+ 0.3)
 
@@ -522,10 +526,39 @@ Please check your logic and consider adding a termination condition.")
     (concatenate 'string folder "/")))
 
 (defun final-mark (correctness similarity)
-  (+ correctness (* 100 (* similarity +style-weight+))))
+  "Calculates the final grade by combining correctness and similarity scores.
+
+Arguments:
+  - correctness: The raw score for code functionality (0 to 100).
+  - similarity: The style/similarity metric (0.0 to 1.0).
+
+Returns:
+  - A float representing the final grade, incorporating weights, a safety floor, 
+    and potential bonuses for perfect correctness.
+
+Global Constants Used:
+  - +correctness-weight+: The multiplier for the correctness score (e.g., 0.7).
+  - +style-weight+: The multiplier for the style score (e.g., 0.3).
+  - +similarity-threshold+: The cutoff for bonus eligibility (e.g., 0.5).
+  - +style-bonus-mark+: The multiplier used to calculate the bonus points."
+  (let* ((rounded-similarity (/ (round (* similarity 10)) 10.0))
+         (weighted-score (+ (* correctness +correctness-weight+) (* rounded-similarity 100 +style-weight+)))
+         (base-score (max correctness weighted-score)))
+    (cond 
+      ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
+      ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
+       (+ base-score (* +style-bonus-mark+ rounded-similarity)))
+      
+      ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
+      ;; We return 100 directly to ensure they aren't dragged down by style.
+      ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
+       100.0)
+
+      ;; Case 3: All other cases (Standard weighted average)
+      (t base-score))))
 
 (defun print-similarity-scores (std evaluations n)
-  (format t "~%~s (~{~s ~})(~{~s ~})~s,~s~%"  ;
+  (format t "~%~s Correctness: (~{~s ~}) Similarity: (~{~s ~}) AvgCorrectness: ~s, AvgSimilarity: ~s~%"  ;
           (first std)                   ; student id
           (mapcar #'caadr evaluations)  ; correctness scores
           (mapcar (lambda (e)           ; similarity scores
@@ -538,7 +571,13 @@ Please check your logic and consider adding a termination condition.")
                                            (and (listp (second (second e)))
                                                 (string= (first (second (second e))) "used forbidden symbol")))
                                        (progn
-                                         (format t "~%(~a ~a ~%~a)~%" (first (second e)) (first (nth 6 (second e))) (third (nth 6 (second e))))
+                                         #|
+                                         (format t "@@@~%Correctness: ~a~%Similarity: ~a~%Final Mark: ~a~%"
+                                                 (first (second e))
+                                                 (first (nth 6 (second e)))
+                                                 (final-mark (first (second e)) (first (nth 6 (second e))))
+                                                 )
+                                         |#
                                          (final-mark (first (second e)) (first (nth 6 (second e)))))
                                        0.0))
                                  evaluations))

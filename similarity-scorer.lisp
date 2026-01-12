@@ -136,7 +136,9 @@ Returns T if A is considered less than B."
 
 
 (defun similarity (qs ss)
-  (let ((distance (tree-edit-distance (normalize qs) (normalize ss)))
+  (let* ((nqs (normalize qs))
+         (nss (normalize ss))
+         (distance (tree-edit-distance nqs nss))
         (tree-size (tree-size qs)))
     (if (> distance tree-size)
         0

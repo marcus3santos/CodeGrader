@@ -325,20 +325,20 @@ the mark is calculated as the # of passes divided by the total # of cases.
       (unless *load-error*
         
         (let* ((student-solution  (with-open-file (stream student-prog-file :direction :input) 
-                                  (loop for form = (read stream nil nil)  
-                                        while form
-                                        collect form)))
+                                    (loop for form = (read stream nil nil)  
+                                          while form
+                                          collect form)))
                (raw-correctness-score (calc-mark *results* ws)))
           (setf similarity (comp-similarity asked-functions student-solution question-solutions))
-          (setf score (cond (*load-error* 0)
-                            (forbid-symb (* raw-correctness-score (- 1 (/ penalty-forbidden 100))))
-                            (t raw-correctness-score)))
           (setf forbid-symb (some #'identity
                                   (mapcar #'(lambda (x)
                                               (let ((asked-function (intern (symbol-name x))))
                                                 (unless (function-raised-condition asked-function *results*)
                                                   (contains-forbidden-symbol? asked-function student-solution forbidden-symbols))))
-                                          asked-functions)))))           
+                                          asked-functions)))
+          (setf score (cond (*load-error* 0)
+                            (forbid-symb (* raw-correctness-score (- 1 (/ penalty-forbidden 100))))
+                            (t raw-correctness-score)))))           
       (list
        score
        (cond (*runtime-error* "runtime-error")
@@ -380,7 +380,7 @@ the mark is calculated as the # of passes divided by the total # of cases.
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
         (t (let ((grade (grade-code student-solution question assessmt-data kind)))
-                                        ;(format t "+++++~%Grade: ~s~%" grade)
+             ;(format t "+++++~%Grade: ~s~%" grade)
              grade) )))
 
 
