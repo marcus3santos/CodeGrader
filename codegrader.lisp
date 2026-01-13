@@ -76,6 +76,63 @@ Please check your logic and consider adding a termination condition.")
           ((and (string= res "Fail") rt-error) (format nil "Failed when evaluating ~s.~a" fcall rt-error))
           (t (format nil "Failed: ~s did not return ~s." fcall  ret)))))
 
+
+(defun generate-messages-new (out eval)
+  (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T+ ~a.lisp~%~}" 
+          (apply #'append (mapcar (lambda (x)
+                                    (let ((qlabel (first x))
+                                          (error-message (second (second x))))
+                                      (unless (and (stringp error-message) (string= "missing-question-file" error-message))
+                                        (list qlabel)))) (cadr eval))))
+  (format out "- Each question is worth 100 points.~%- Your score in the assessment is the sum of your questions' points divided by the number of questions in the assessment.~%")
+  (format out "Your final score in this assessment: ~a (out of 100)~%" (car eval))
+  (dolist (question (cadr eval))
+    (let* ((q (car question))
+           (qeval (cadr question))
+           (mark (first qeval))
+           (error-type (second qeval))
+	   (descr (third qeval))
+	   (res (clean-symbol-names (fourth qeval)))
+           (messages (mapcar #'gen-message res))
+           (std-sol (nth 4 qeval))
+           (question-text (nth 5 qeval))
+           (solution-similarity (nth 6 qeval))
+           (unit-test-name (symbol-name (third (car res))))
+           (pos (position #\- unit-test-name))
+           (func-name (if pos (subseq unit-test-name (1+ pos))
+                          unit-test-name)))
+      (format out "~%* QUESTION: ~a~%Your score: ~a points (out of 100). ~a~%" (string-upcase q) mark (nth 3 solution-similarity))
+      (when question-text
+        (format out "Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
+      (format out "~%---------------------------------------------------------------------------")
+      (unless (or (equalp error-type "load-error")
+                  (equalp error-type "missing-question-file")
+                  (equalp error-type "no-submitted-file")
+		  (equalp error-type "not-lisp-file")
+		  (equal error-type "late-submission"))
+        (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." std-sol (string-upcase q))
+        (format out "~%---------------------------------------------------------------------------"))
+     
+      (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
+        (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
+        (format out "~%---------------------------------------------------------------------------")
+        (setf *load-error-message* nil))
+      
+      (cond ((or (equalp error-type "load-error")
+                 (equalp error-type "missing-question-file")
+                 (equalp error-type "no-submitted-file")
+		 (equalp error-type "not-lisp-file")
+		 (equal error-type "late-submission")) 
+             (format out "~%Your mark for all parts of this question is zero. ~A !!!" descr))
+            ((and (listp error-type) (string= (car error-type) "used forbidden symbol"))
+             (format out "~%!!! FORBIDDEN FUNCTION DETECTED!!!~%~%Forbidden function ~A detected in the call graph of ~A.~%" (second (cadr error-type)) (first (cadr error-type)))
+             (format out "~%Penalty applied: -~a% for this question.~%" (caddr error-type))
+             ))
+      (when messages
+        (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}End of Unit Tests for ~a." func-name messages (string-upcase q)))
+      (format out "~%---------------------------------------------------------------------------")))
+  (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
+
 (defun generate-messages (out eval)
   (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T+ ~a.lisp~%~}" 
           (apply #'append (mapcar (lambda (x)
@@ -525,7 +582,7 @@ Please check your logic and consider adding a termination condition.")
          (folder (subseq clean-path (if last-slash (1+ last-slash) 0))))
     (concatenate 'string folder "/")))
 
-(defun final-mark (correctness similarity)
+(defun final-mark (correctness similarity similarity-data)
   "Calculates the final grade by combining correctness and similarity scores.
 
 Arguments:
@@ -547,15 +604,19 @@ Global Constants Used:
     (cond 
       ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
       ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
+       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Consequently, you have received ~a = ~a*~a bonus marks" (truncate (* 100 rounded-similarity)) (* +style-bonus-mark+ rounded-similarity) +style-bonus-mark+ rounded-similarity )) )
        (+ base-score (* +style-bonus-mark+ rounded-similarity)))
       
       ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
       ;; We return 100 directly to ensure they aren't dragged down by style.
       ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
+       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Since that similarity is less than ~a%, you are not eligible to receive bonus marks." (truncate (* 100 rounded-similarity)) (* 100 +similarity-threshold+))) )
        100.0)
 
       ;; Case 3: All other cases (Standard weighted average)
-      (t base-score))))
+      (t
+       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Since your solution did not pass all test cases, you are not eligible to receive bonus marks." (truncate (* 100 rounded-similarity)))) )
+       base-score))))
 
 (defun print-similarity-scores (std evaluations n)
   (format t "~%~s Correctness: (~{~s ~}) Similarity: (~{~s ~}) AvgCorrectness: ~s, AvgSimilarity: ~s~%"  ;
@@ -578,7 +639,7 @@ Global Constants Used:
                                                  (final-mark (first (second e)) (first (nth 6 (second e))))
                                                  )
                                          |#
-                                         (final-mark (first (second e)) (first (nth 6 (second e)))))
+                                         (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e))))
                                        0.0))
                                  evaluations))
              n)))
