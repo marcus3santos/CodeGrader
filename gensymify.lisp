@@ -128,20 +128,30 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
            ;; DOTIMES
            ((and (consp f) (eq (car f) 'dotimes))
             (destructuring-bind (dotimes (var count &optional result) &rest body) f
-                  (declare (ignore dotimes))
-                  (let* ((g (gensym (symbol-name var)))
-                         (venv* (acons var g venv)))
-                    `(dotimes (,g ,(walk count venv fenv)
-                                  ,(walk result venv* fenv))
-                       ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+              (declare (ignore dotimes))
+              (let* ((g (gensym (symbol-name var)))
+                     (venv* (acons var g venv)))
+                `(dotimes (,g ,(walk count venv fenv)
+                              ,(walk result venv* fenv))
+                   ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+           
+           ;; DOLIST
+           ((and (consp f) (eq (car f) 'dolist))
+            (destructuring-bind (dolist (var list &optional result) &rest body) f
+              (declare (ignore dolist))
+              (let* ((g (gensym (symbol-name var)))
+                     (venv* (acons var g venv)))
+                `(dolist (,g ,(walk list venv fenv)
+                             ,(walk result venv* fenv))
+                   ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            
            ;; MULTIPLE-VALUE-BIND
            ((and (consp f) (eq (car f) 'multiple-value-bind))
             (destructuring-bind (mvb vars expr &rest body) f
-                  (let* ((new (mapcar (lambda (v) (cons v (gensym (symbol-name v)))) vars))
-                         (venv* (append new venv)))
-                    `(,mvb ,(mapcar #'cdr new) ,(walk expr venv fenv)
-                           ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
+              (let* ((new (mapcar (lambda (v) (cons v (gensym (symbol-name v)))) vars))
+                     (venv* (append new venv)))
+                `(,mvb ,(mapcar #'cdr new) ,(walk expr venv fenv)
+                       ,@(mapcar (lambda (b) (walk b venv* fenv)) body)))))
            ((and (listp f) (consp (car f)))
             (cons (gensymify (car f))
                   (gensymify (cdr f))))

@@ -131,8 +131,9 @@ Returns T if A is considered less than B."
 
 (defun normalize (f)
   (let* ((gensymified (gensymify f))
-         (normed-gensyms (normalize-gensyms gensymified)))
-    (sort-form (macroexpand normed-gensyms))))
+         (normed-gensyms (normalize-gensyms gensymified))
+         (macroexpanded (macroexpand normed-gensyms)))
+    (sort-form macroexpanded)))
 
 
 (defun similarity (qs ss)
