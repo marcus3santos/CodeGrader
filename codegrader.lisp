@@ -608,8 +608,11 @@ Global Constants Used:
       (cond 
         ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
         ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [~a*~a] (Style Bonus)~%Note: Your 'style similarity' was ~a. This factor [0 to 1] reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS (* MAX-STYLE-BONUS STYLE-SIMILARITY)), where:~%- Your solution CORRECTNESS: ~a~%- The MAX-STYLE-BONUS: ~a~%- Your solution's STYLE-SIMILARITY: ~a, which is greater or equal than the minimum ~a~%- Your style bonus marks: (* ~a ~a)~%Note: Your STYLE-SIMILARITY was ~a. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"
                                               correctness
+                                              +style-bonus-mark+
+                                              rounded-similarity
+                                              +similarity-threshold+
                                               +style-bonus-mark+
                                               rounded-similarity
                                               rounded-similarity
@@ -620,7 +623,7 @@ Global Constants Used:
         ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
         ;; We return 100 directly to ensure they aren't dragged down by style.
         ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [0.0] (Style Bonus)~%Note: Your solution’s code 'style similarity' (~a) is below the required minimum (~a) to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS 0.0), where:~%- Your solution CORRECTNESS: ~a~%Note: Your solution’s code style similarity, ~a, is below the required minimum, ~a, to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"
                                               correctness
                                               rounded-similarity
                                               +similarity-threshold+
@@ -630,16 +633,14 @@ Global Constants Used:
 
         ;; Case 3: All other cases (Standard weighted average)
         (t
-         (let* ((base-msg "Calculation: [max(~a, ~a*~a+~a*~a)] (max(correctness, correctness * correctness_weight + style_similarity * style_weight))~%Note: Your style_similarity was ~a. This factor [0 to 1] ")
+         (let* ((base-msg " Calculation, in Lisp notation: (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~a~%- CORRECTNESS-WEIGHT for this assessment: ~a~%- The STYLE-WEIGHT for this assessment: ~a~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
                 (suffix (if (zerop rounded-similarity)
                             "reflects the maximum style similarity found between your solution and the solutions recorded for this question. Since there was zero similarity, no instructor solution will shown in this feedback report."
-                            "reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"))
+                            "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"))
                 (full-msg (concatenate 'string base-msg suffix))
                 ;; Gather shared arguments
                 (args (list correctness
-                            correctness
                             +correctness-weight+
-                            rounded-similarity
                             +style-weight+
                             rounded-similarity)))
            ;; Apply the format function
@@ -664,13 +665,7 @@ Global Constants Used:
                                                 (string= (second (second e)) "No RT-error"))
                                            (and (listp (second (second e)))
                                                 (string= (first (second (second e))) "used forbidden symbol")))
-                                       (progn
-
-                                         (format t "@@@~%Correctness: ~a~%Similarity: ~a~%Final Mark: ~a~%"
-                                                 (first (second e))
-                                                 (first (nth 6 (second e)))
-                                                 (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
-                                                 )
+                                       (progn                                        
                                          (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e))))
                                        0.0))
                                  evaluations))
@@ -686,13 +681,13 @@ Global Constants Used:
                   (list
                    #|
                    (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
-                                   (if (or (and (stringp (second (second e)))
-                                                (string= (second (second e)) "No RT-error"))
-                                           (and (listp (second (second e)))
-                                                (string= (first (second (second e))) "used forbidden symbol")))                                       
-                                       (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
-                                       0.0))
-                                 solutions-evaluations))
+                                            (if (or (and (stringp (second (second e)))
+                                                         (string= (second (second e)) "No RT-error"))
+                                                    (and (listp (second (second e)))
+                                                         (string= (first (second (second e))) "used forbidden symbol")))                                       
+                                                (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
+                                                0.0))
+                                          solutions-evaluations))
                       (length assessment-questions))
                    |#
                    (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
