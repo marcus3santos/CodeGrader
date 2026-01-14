@@ -105,17 +105,16 @@ Please check your logic and consider adding a termination condition.")
               (string-upcase q)
               (if (nth 4 solution-similarity) (nth 4 solution-similarity) 0.0)
               (if (nth 3 solution-similarity) (nth 3 solution-similarity) ""))
-      (when question-text
-        (format out "~%Question Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
-      (format out "~%---------------------------------------------------------------------------")
       (unless (or (equalp error-type "load-error")
                   (equalp error-type "missing-question-file")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
-        (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." std-sol (string-upcase q))
+        (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." (read-from-string std-sol) (string-upcase q))
         (format out "~%---------------------------------------------------------------------------"))
-     
+     (when question-text
+        (format out "~%Question Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
+      (format out "~%---------------------------------------------------------------------------")
       (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
         (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
         (format out "~%---------------------------------------------------------------------------")
@@ -601,41 +600,56 @@ Global Constants Used:
   - +style-weight+: The multiplier for the style score (e.g., 0.3).
   - +similarity-threshold+: The cutoff for bonus eligibility (e.g., 0.5).
   - +style-bonus-mark+: The multiplier used to calculate the bonus points."
-  (let* ((rounded-similarity (/ (round (* similarity 10)) 10.0))
-         (weighted-score (+ (* correctness +correctness-weight+) (* rounded-similarity 100 +style-weight+)))
-         (base-score (max correctness weighted-score)))
-    (cond 
-      ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
-      ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
-       (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [~a*~a] (Style Bonus)~%Note: Your 'style similarity' was ~a. This factor [0 to 1] measures how similar your logic is to (one of) the instructor solution(s)."
-                                            correctness
-                                            +style-bonus-mark+
-                                            rounded-similarity
-                                            rounded-similarity)
-                                    (+ base-score (* +style-bonus-mark+ rounded-similarity))) )
-       (+ base-score (* +style-bonus-mark+ rounded-similarity)))
-      
-      ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
-      ;; We return 100 directly to ensure they aren't dragged down by style.
-      ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
-       (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [0.0] (Style Bonus)~%Note: Your solution’s code 'style similarity' (~a), a factor [0 to 1] that measures how similar your logic is to (one of) the instructor solution(s), is below the required minimum (~a) to qualify for bonus marks."
-                                            correctness
-                                            rounded-similarity
-                                            +similarity-threshold+)
-                                    correctness))
-       100.0)
+  (labels ((set-feedback-message-string (control-string &rest args)
+             `(nconc similarity-data (list (format nil ,control-string ,@args)))))
+    (let* ((rounded-similarity (/ (round (* similarity 10)) 10.0))
+           (weighted-score (+ (* correctness +correctness-weight+) (* rounded-similarity 100 +style-weight+)))
+           (base-score (max correctness weighted-score)))
+      (cond 
+        ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
+        ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
+         (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [~a*~a] (Style Bonus)~%Note: Your 'style similarity' was ~a. This factor [0 to 1] reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+                                              correctness
+                                              +style-bonus-mark+
+                                              rounded-similarity
+                                              rounded-similarity
+                                              (second similarity-data))
+                                      (+ base-score (* +style-bonus-mark+ rounded-similarity))) )
+         (+ base-score (* +style-bonus-mark+ rounded-similarity)))
+        
+        ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
+        ;; We return 100 directly to ensure they aren't dragged down by style.
+        ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
+         (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [0.0] (Style Bonus)~%Note: Your solution’s code 'style similarity' (~a) is below the required minimum (~a) to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+                                              correctness
+                                              rounded-similarity
+                                              +similarity-threshold+
+                                              (second similarity-data))
+                                      correctness))
+         100.0)
 
-      ;; Case 3: All other cases (Standard weighted average)
-      (t
-       (nconc similarity-data (list (format nil "Calculation: [max(~a, ~a*~a+100*~a*~a)] (max(correctness, correctness * correctness_weight + style_similarity * style_weight))~%Note: Your style_similarity was ~a. This factor [0 to 1] measures how similar your logic is to (one of) the instructor solution(s)."
-                                            correctness
-                                            correctness
-                                            +correctness-weight+
-                                            rounded-similarity
-                                            +style-weight+
-                                            rounded-similarity)
-                                    base-score)) 
-       base-score))))
+        ;; Case 3: All other cases (Standard weighted average)
+        (t
+         (let* ((base-msg "Calculation: [max(~a, ~a*~a+~a*~a)] (max(correctness, correctness * correctness_weight + style_similarity * style_weight))~%Note: Your style_similarity was ~a. This factor [0 to 1] ")
+                (suffix (if (zerop rounded-similarity)
+                            "reflects the maximum style similarity found between your solution and the solutions recorded for this question. Since there was zero similarity, no instructor solution will shown in this feedback report."
+                            "reflects the maximum style similarity found between the following solution among the recorded instructor solutions and your solution. ~%~%The Instructor's selected solution:~%~{~s~%~}"))
+                (full-msg (concatenate 'string base-msg suffix))
+                ;; Gather shared arguments
+                (args (list correctness
+                            correctness
+                            +correctness-weight+
+                            rounded-similarity
+                            +style-weight+
+                            rounded-similarity)))
+           ;; Apply the format function
+           (nconc similarity-data
+                  (list (apply #'format nil full-msg 
+                               (if (zerop rounded-similarity) 
+                                   args
+                                   (append args (list (second similarity-data)))))
+                        base-score))) 
+         base-score)))))
 
 (defun print-similarity-scores (std evaluations n)
   (format t "~%~s Correctness: (~{~s ~}) Similarity: (~{~s ~}) AvgCorrectness: ~s, AvgSimilarity: ~s~%"  ;
