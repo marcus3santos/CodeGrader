@@ -101,9 +101,12 @@ Please check your logic and consider adding a termination condition.")
            (pos (position #\- unit-test-name))
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
-      (format out "~%* QUESTION: ~a~%Your score: ~a points (out of 100). ~a~%" (string-upcase q) mark (nth 3 solution-similarity))
+      (format out "~%* QUESTION: ~a~%~%Your score: ~a points (out of 100).~a~%"
+              (string-upcase q)
+              (if (nth 4 solution-similarity) (nth 4 solution-similarity) 0.0)
+              (if (nth 3 solution-similarity) (nth 3 solution-similarity) ""))
       (when question-text
-        (format out "Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
+        (format out "~%Question Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
       (format out "~%---------------------------------------------------------------------------")
       (unless (or (equalp error-type "load-error")
                   (equalp error-type "missing-question-file")
@@ -604,18 +607,34 @@ Global Constants Used:
     (cond 
       ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
       ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
-       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Consequently, you have received ~a = ~a*~a bonus marks" (truncate (* 100 rounded-similarity)) (* +style-bonus-mark+ rounded-similarity) +style-bonus-mark+ rounded-similarity )) )
+       (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [~a*~a] (Style Bonus)~%Note: Your 'style similarity' was ~a. This factor [0 to 1] measures how similar your logic is to (one of) the instructor solution(s)."
+                                            correctness
+                                            +style-bonus-mark+
+                                            rounded-similarity
+                                            rounded-similarity)
+                                    (+ base-score (* +style-bonus-mark+ rounded-similarity))) )
        (+ base-score (* +style-bonus-mark+ rounded-similarity)))
       
       ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
       ;; We return 100 directly to ensure they aren't dragged down by style.
       ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
-       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Since that similarity is less than ~a%, you are not eligible to receive bonus marks." (truncate (* 100 rounded-similarity)) (* 100 +similarity-threshold+))) )
+       (nconc similarity-data (list (format nil "Calculation: ~a (Correctness) + [0.0] (Style Bonus)~%Note: Your solution’s code 'style similarity' (~a), a factor [0 to 1] that measures how similar your logic is to (one of) the instructor solution(s), is below the required minimum (~a) to qualify for bonus marks."
+                                            correctness
+                                            rounded-similarity
+                                            +similarity-threshold+)
+                                    correctness))
        100.0)
 
       ;; Case 3: All other cases (Standard weighted average)
       (t
-       (nconc similarity-data (list (format nil "Your solution was ~a% similar to the instructor's solutions. Since your solution did not pass all test cases, you are not eligible to receive bonus marks." (truncate (* 100 rounded-similarity)))) )
+       (nconc similarity-data (list (format nil "Calculation: [max(~a, ~a*~a+100*~a*~a)] (max(correctness, correctness * correctness_weight + style_similarity * style_weight))~%Note: Your style_similarity was ~a. This factor [0 to 1] measures how similar your logic is to (one of) the instructor solution(s)."
+                                            correctness
+                                            correctness
+                                            +correctness-weight+
+                                            rounded-similarity
+                                            +style-weight+
+                                            rounded-similarity)
+                                    base-score)) 
        base-score))))
 
 (defun print-similarity-scores (std evaluations n)
@@ -632,13 +651,12 @@ Global Constants Used:
                                            (and (listp (second (second e)))
                                                 (string= (first (second (second e))) "used forbidden symbol")))
                                        (progn
-                                         #|
+
                                          (format t "@@@~%Correctness: ~a~%Similarity: ~a~%Final Mark: ~a~%"
                                                  (first (second e))
                                                  (first (nth 6 (second e)))
-                                                 (final-mark (first (second e)) (first (nth 6 (second e))))
+                                                 (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
                                                  )
-                                         |#
                                          (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e))))
                                        0.0))
                                  evaluations))
@@ -651,8 +669,21 @@ Global Constants Used:
          (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
          (seval (progn
                   (print-similarity-scores std solutions-evaluations (length assessment-questions))
-                  (list (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
-                        solutions-evaluations)))
+                  (list
+                   #|
+                   (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
+                                   (if (or (and (stringp (second (second e)))
+                                                (string= (second (second e)) "No RT-error"))
+                                           (and (listp (second (second e)))
+                                                (string= (first (second (second e))) "used forbidden symbol")))                                       
+                                       (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
+                                       0.0))
+                                 solutions-evaluations))
+                      (length assessment-questions))
+                   |#
+                   (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+
+                   solutions-evaluations)))
          (item (make-submission :std-id (first std)
                                 :std-fname (second std)
                                 :std-lname (third std)
