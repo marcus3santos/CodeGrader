@@ -63,11 +63,11 @@
 
 (defpackage #:gensymifier
   (:use :cl )
-  (:export :gensymify :normalize-gensyms))
+  (:export :gensymify ::normalize-gensyms))
 
 (defpackage :similarity-scorer
   (:use :cl :gensymifier)
-  (:export :score-similarity))
+  (:export :normalize :score-similarity))
 
 (defpackage #:grader
   (:documentation "Creates the code grading apparatus")
@@ -83,7 +83,7 @@
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
-  (:use cl :grader :test-runtime :sexprmark-to-org)
+  (:use cl :grader :test-runtime :sexprmark-to-org :similarity-scorer)
   (:export :grade-it :grade-exam  :chk-given-and-hidden-cases :chk-my-solution :my-feedback-file))
 
 (defpackage #:cg

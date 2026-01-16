@@ -77,7 +77,7 @@ Please check your logic and consider adding a termination condition.")
           (t (format nil "Failed: ~s did not return ~s." fcall  ret)))))
 
 
-(defun generate-messages-new (out eval)
+(defun generate-messages (out eval)
   (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T+ ~a.lisp~%~}" 
           (apply #'append (mapcar (lambda (x)
                                     (let ((qlabel (first x))
@@ -110,7 +110,7 @@ Please check your logic and consider adding a termination condition.")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
-        (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." (read-from-string std-sol) (string-upcase q))
+        (format out "~%Your Solution:~%~A~%~%Your Solution normalized and macroexpanded:~%~a~%~%End of Your Solution for ~a" (read-from-string std-sol)  (normalize (first (third solution-similarity))) (string-upcase q) )
         (format out "~%---------------------------------------------------------------------------"))
      (when question-text
         (format out "~%Question Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
@@ -135,7 +135,7 @@ Please check your logic and consider adding a termination condition.")
       (format out "~%---------------------------------------------------------------------------")))
   (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
 
-(defun generate-messages (out eval)
+(defun generate-messages-old (out eval)
   (format out "--EVALUATION FEEDBACK--~%~%NOTE:~%- CodeGrader found the following assessment-related Lisp program files in your assessment folder:~%~{~T+ ~a.lisp~%~}" 
           (apply #'append (mapcar (lambda (x)
                                     (let ((qlabel (first x))
@@ -225,9 +225,11 @@ Please check your logic and consider adding a termination condition.")
         (let ((new-mark (change-mark-csv csv (funcall f v)))
               (std-name (concatenate 'string (submission-std-fname v) " " (submission-std-lname v))))
           (format log-file-stream "Mark of student ~a (~a) changed from ~a to ==> ~a~%" std-name std-id csv new-mark)
-          (format stream "~A~%"  new-mark))
+          (format stream "~A~%"  new-mark)
+          (funcall f v))
 	(progn 
-          (format log-file-stream "Student ~a did not submit solution!~%" std-id)))))
+          (format log-file-stream "Student ~a did not submit solution!~%" std-id)
+          nil))))
 
 (defun get-insert-grade (log-file-stream stream csv ht f)
   (let* ((std-name (get-std-name csv))
@@ -240,16 +242,33 @@ Please check your logic and consider adding a termination condition.")
           (format log-file-stream "~S did not submit solution!~%" std-name)
           (format *standard-output* "~A~%" std-name)))))
 
-(defun generate-exam-marks-spreadsheet (log-file-stream d2l-file folder ht f out-file)
+(defun generate-exam-marks-spreadsheet-and-stats (log-file-stream d2l-file folder ht f out-file)
   (when d2l-file
     (with-open-file (in d2l-file :direction :input)
       (with-open-file (out (merge-pathnames folder out-file)
 			   :direction :output :if-exists :supersede)
         (format out "~A~%" (read-line in nil))
         ;(format *standard-output* "Students that did not write a solution are listed below:~%")
-        (loop for line = (read-line in nil)
-	      while line do
-	        (get-insert-exam-grade log-file-stream out line ht f))))))
+        (let ((count 0)
+              (sum 0)
+              max-val min-val (values (list)) value)
+          (loop for line = (read-line in nil)
+	        while line do
+                  (progn
+                    (setf value (get-insert-exam-grade log-file-stream out line ht f))
+                    (when value
+                      (incf count)
+	              (push value values)
+                      (incf sum value)
+                      (if (or (null max-val) (> value max-val)) (setf max-val value))
+                      (if (or (null min-val) (< value min-val)) (setf min-val value))
+                      (setf value nil))))
+          (let* ((mean (/ sum count))
+                 (sum-sq-diff (reduce #'+ (mapcar (lambda (x) (expt (- x mean) 2)) 
+                                           values)))
+                 (std-dev (sqrt (/ sum-sq-diff count))))
+            (format t "~%Stats: ~a~%" (list :count count :mean (float mean) :max max-val :min min-val :std-dev (float std-dev)))))))))
+
 
 (defun generate-marks-spreadsheet (log-file-stream d2l-file folder ht f out-file)
   (when d2l-file
@@ -652,34 +671,13 @@ Global Constants Used:
                         base-score))) 
          base-score)))))
 
-(defun print-similarity-scores (std evaluations n)
-  (format t "~%~s Correctness: (~{~s ~}) Similarity: (~{~s ~}) AvgCorrectness: ~s, AvgSimilarity: ~s~%"  ;
-          (first std)                   ; student id
-          (mapcar #'caadr evaluations)  ; correctness scores
-          (mapcar (lambda (e)           ; similarity scores
-                    (first (nth 6 (second e))))             
-                  evaluations)                  
-          (/ (reduce #'+ evaluations :key #'caadr) n) ; averaged correctness score
-          (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
-                                   (if (or (and (stringp (second (second e)))
-                                                (string= (second (second e)) "No RT-error"))
-                                           (and (listp (second (second e)))
-                                                (string= (first (second (second e))) "used forbidden symbol")))
-                                       (progn                                        
-                                         (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e))))
-                                       0.0))
-                                 evaluations))
-             n)))
-
 (defun grade-single-student (folder std assessment-questions assessment-data feedback-folder map log-file-stream)
   "Grades a single student's submission."
   (let* ((std-sub-folder (concatenate 'string (car (last (pathname-directory (second (assoc "folder" assessment-data :test #'string=))))) "/"))
          (student-files (directory (concatenate 'string (namestring  folder) std-sub-folder "*.*")))
          (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
          (seval (progn
-                  (print-similarity-scores std solutions-evaluations (length assessment-questions))
                   (list
-                   #|
                    (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
                                             (if (or (and (stringp (second (second e)))
                                                          (string= (second (second e)) "No RT-error"))
@@ -689,8 +687,7 @@ Global Constants Used:
                                                 0.0))
                                           solutions-evaluations))
                       (length assessment-questions))
-                   |#
-                   (/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
+                   ;;(/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
 
                    solutions-evaluations)))
          (item (make-submission :std-id (first std)
@@ -709,7 +706,7 @@ Global Constants Used:
   (in-package :codegrader)
   (format broadcast-stream "~%~%Done marking students solutions.~%")
   (when exam-grades-export-file (format broadcast-stream "Generating the grades spreadsheet...~%"))
-  (generate-exam-marks-spreadsheet log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
+  (generate-exam-marks-spreadsheet-and-stats log-file-stream exam-grades-export-file results-folder map #'(lambda (x) (submission-total-marks x)) "grades.csv")
   (when exam-grades-export-file (format broadcast-stream "Done.~%"))
   (sb-ext:delete-directory (namestring subs-folder) :recursive t)
   (format broadcast-stream "Exam grading complete!~%" )
