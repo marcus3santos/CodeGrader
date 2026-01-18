@@ -69,6 +69,40 @@
        (sb-ext:timeout (,c)
          ,c))))
 
+#|
+(defmacro time-execution (expression max-time)
+  "Evaluates the given expression and returns its result. If the expression
+   does not complete within the specified max-time (in seconds), it returns
+   a timeout error condition. If the expression triggers a stack overflow
+   the store-condition captures that condition. Other kinds of errors are
+   captured by the general ERROR condition"
+  (let ((c (gensym)))
+    `(handler-case(defmacro time-execution (expression max-time)
+  "Evaluates the given expression and returns its result. If the expression
+   does not complete within the specified max-time (in seconds), it returns
+   a timeout error condition. If the expression triggers a stack overflow
+   the store-condition captures that condition. Other kinds of errors are
+   captured by the general ERROR condition"
+  (let ((c (gensym)))
+    `(handler-case
+         (trivial-timeout:with-timeout (,max-time)
+           ,expression) 
+       (trivial-timeout:timeout-error (,c)
+         ,c)
+       (storage-condition (,c)
+         ,c)
+       (error (,c)
+         ,c))))
+         (trivial-timeout:with-timeout (,max-time)
+           ,expression) 
+       (trivial-timeout:timeout-error (,c)
+         ,c)
+       (storage-condition (,c)
+         ,c)
+       (error (,c)
+         ,c))))
+|#
+
 (defmacro check (&body forms)
   `(combine-results                     
      ,@(loop for f in forms collect     
