@@ -23,7 +23,9 @@
       (let* ((tag (car markup))
              (rest (cdr markup))
              (macro-name (intern (format nil "~A-MACRO" (symbol-name tag)))))
-        (cond ((and (member tag *sxm*) (eq 'a-macro macro-name))
+        (cond ((and (member tag *sxm*)
+                    (or (eq 'a-macro macro-name)
+                        (eq 'sol-macro macro-name)))
                (cons macro-name rest))
               ((member tag *sxm*)
                (cons macro-name (mapcar #'transform-to-calls rest)))
@@ -33,10 +35,13 @@
 (defun compile-markup (markup)
   "Main entry point to reset state and evaluate the markup."
   (setf *metadata* (make-hash-table :test #'equal))
-  (let ((result (eval (transform-to-calls markup))))
+  (let ((result (eval (transform-to-calls markup)))
+        acc)
+    (maphash (lambda (k v)
+                               (push (list k v) acc))
+                             *metadata*)
     (list :org-text result
-          :metadata (maphash (lambda (k v) (format t "~%~s ~s" k v))
-                             *metadata*))))
+          :metadata acc)))
 
 ;; --- Macro Definitions ---
 
@@ -271,31 +276,29 @@
   `(when ,include-hidden-flag
      '(sol ,@body)))
 
-(defparameter *input-data* '(:doc (:title "test" :folder "~/tmp")
-                             (:q (:number 1 :title "Question")
-                              (:wa
-                               (:p "Do something")
-                               (:tc (:function alist)
-                                (:gvn
-                                 (:a (alist a) (a))
-                                 (:a (alist '(list)) (list))))))
-                             (:q (:number 2 :title "Question")
-                              (:wa
-                               (:p "Do something")
-                               (:tc (:function fact)
-                                (:gvn
-                                 (:a (fact a) (a))
-                                 (:a (fact '(list)) (list))))))))
+(defparameter *input-data*
+  '(:doc (:title "Exame" :folder "~/tmp")
+         (:q (:number 1 :title "Question")
+             (:wa
+              (:p "Implement a SUM function.")
+              (:tc (:function sum)
+                   (:gvn
+                    (:a (sum 0 1) 1)
+                    (:a (sum 0 0) 0) )))
+             (:sols
+              (:sol (defun sum (a b) (+ a b))))
+             )))
+         
 
 
 (let ((output (compile-markup *input-data*)))
   (format t "--- ORG OUTPUT ---~%~A" (getf output :org-text))
   (format t "--- METADATA ---~%~S" (getf output :metadata)))
 
-#|
+
 (defun gen-exam-files (from &key include-hidden)
   "From is the .sxm file containing the assessment's description"
-  (setf *include-hidden-flag* include)
+  (setf *include-hidden-flag* include-hidden)
   (let* ((fn-ext (pathname-type from))
          (assessment-sexpr (if (and fn-ext (string= fn-ext "sxm"))
                                (with-open-file (in from)
@@ -320,4 +323,3 @@
     (with-open-file (out exam-data :direction :output :if-exists :supersede)
       (format out "~s" metadata))
     (format t "~%Generated assessment testing code at: ~a~%Done." exam-data)))
-|#
