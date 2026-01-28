@@ -1,4 +1,4 @@
-(defparameter *metadata* nil)
+ol(defparameter *metadata* nil)
 
 (defparameter *include-hidden-flag* t "Includes hidden test cases data in metadata")
 
@@ -38,8 +38,10 @@
   (let ((result (eval (transform-to-calls markup)))
         acc)
     (maphash (lambda (k v)
-                               (push (list k v) acc))
-                             *metadata*)
+               (if (member k (gethash "questions" *metadata*))                   
+                   (push `(,k ,@v) acc)
+                   (push `(,k ,v) acc)))
+             *metadata*)
     (list :org-text result
           :metadata acc)))
 
@@ -117,19 +119,19 @@
             (,q-label-symb (first ,q-labels-list-symb))
             (,q-data-symb (gethash ,q-label-symb ,metadata)))
        (setf (gethash ,q-label-symb ,metadata)
-             (cons (list "whats-asked" ,@body) ,q-data-symb))
+             (cons (list "whats-asked" (list ,@body)) ,q-data-symb))
        (s-macro (:level 2 :title "WHAT YOU ARE ASKED")
-           (p-macro "*NOTE*:")
-           (ul-macro
-            (li-macro (format nil "You are required to write the solutions for the parts of this question in the lisp program file *~a~a.lisp* ."
-                         (gethash "folder" ,metadata)
-                         ,q-label-symb))
-            (li-macro "You may create helper functions in your program file. ")
-            (li-macro "To ensure your solution is in the correct folder and passes the test cases shown in the examples below,  type the following expression on the REPL:"
-              (p-macro (cb-macro (:language "lisp")
-                           (format nil "(cg:chk-my-solution \"~a~a.lisp\")"
-                                   (gethash "folder" ,metadata)
-                                   ,q-label-symb)))))
+         (p-macro "*NOTE*:")
+         (ul-macro
+           (li-macro (format nil "You are required to write the solutions for the parts of this question in the lisp program file *~a~a.lisp* ."
+                             (gethash "folder" ,metadata)
+                             ,q-label-symb))
+           (li-macro "You may create helper functions in your program file. ")
+           (li-macro "To ensure your solution is in the correct folder and passes the test cases shown in the examples below,  type the following expression on the REPL:"
+             (p-macro (cb-macro (:language "lisp")
+                                (format nil "(cg:chk-my-solution \"~a~a.lisp\")"
+                                        (gethash "folder" ,metadata)
+                                        ,q-label-symb)))))
          ,@body))))
 
 (defmacro tc-macro (props &rest body)
@@ -255,16 +257,17 @@
   "Container for solutions."
   (with-gensyms (q-label
                  latest-q-data
-                 rmv-sols-q-data
+                 ;;rmv-sols-q-data
                  sols-data)
     `(progn
        (when ,include-hidden-flag
          (let* ((,q-label (first (gethash "questions" ,metadata)))
                 (,latest-q-data (gethash ,q-label ,metadata))
-                (,rmv-sols-q-data (remove "solutions" ,latest-q-data :key #'first :test #'string=))
+                ;;(,rmv-sols-q-data (remove "solutions" ,latest-q-data :key #'first :test #'string=))
                 (,sols-data (list "solutions" ,@body)))
            (setf (gethash ,q-label ,metadata)
-                 (cons ,sols-data ,rmv-sols-q-data))
+                 ;;(cons ,sols-data ,rmv-sols-q-data)
+                 ,sols-data)
            (list ,@body)))
        "")))
 
@@ -282,9 +285,12 @@
              (:wa
               (:p "Implement a SUM function.")
               (:tc (:function sum)
-                   (:gvn
-                    (:a (sum 0 1) 1)
-                    (:a (sum 0 0) 0) )))
+               (:gvn
+                (:a (sum 0 1) 1)
+                (:a (sum 0 0) 0))
+               (:hdn
+                (:a (sum 1 1) 2)
+                (:a (sum 2 2) 4))))
              (:sols
               (:sol (defun sum (a b) (+ a b))))
              )))
