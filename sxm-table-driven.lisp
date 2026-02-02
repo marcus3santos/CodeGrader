@@ -1,6 +1,6 @@
 (defstruct compiler-state
   tag-compilers     ;; hash-table
-  metadata          ;; accumulator (an alist)
+  metadata          ;; hash-table
   tags              ;; The list of tags
   )
 
@@ -8,15 +8,12 @@
 (defun make-tag-table ()
   (let ((table (make-hash-table)))
     (register-core-tags table)
-    (maphash (lambda (k v)
-               (format t "Key: ~a Value: ~a~%" k (describe v)))
-             table)
     table))
 
 (defun make-initial-state ()
   (make-compiler-state
    :tag-compilers (make-tag-table)
-   :metadata (list)
+   :metadata (make-hash-table :test #'equal)
    :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
            doc q s p ul ol li wa tc gvn hdn a cb sols sol)))
 
@@ -38,24 +35,21 @@
         (concatenate 'string p "/"))))
 
 (defun register-core-tags (table)
-  (register-tag
-   table 'doc-tag
+  (register-tag table 'doc-tag
    (deftag doc-tag (args state)
      (destructuring-bind (props &rest body) args
        (multiple-value-bind (body-text st)
                         (compile-nodes body state)
          (let* ((title (getf props :title ))
                 (folder (check-folder-name (getf props :folder))))
-           (push `("folder" ,folder)
-                 (compiler-state-metadata st))
+           (setf (gethash "folder" (compiler-state-metadata st)) folder)
            (values
             (format nil "#+TITLE: ~a~%#+OPTIONS: toc:nil num:nil date:nil author:nil~%~a"
                     title
                     body-text)
             st))))))
   
-  (register-tag
-   table 's-tag
+  (register-tag table 's-tag
    (deftag s-tag (args state)
      (destructuring-bind (props &rest body) args
          (multiple-value-bind (body-text st)
@@ -67,9 +61,35 @@
                       (make-string level :initial-element #\*)
                       title
                       body-text)
-              st)))))))
+              st))))))
 
+  (register-tag table 'q-tag
+   (deftag q-tag (args state)
+     (destructuring-bind (props &rest body) args
+       (multiple-value-bind (body-text st)
+           (compile-nodes body state)
+         (let* ((number (getf props :number))
+                (forbidden (getf props :forbidden))
+                (penalty (getf props :penalty))
+                (q-label (format nil "q~a" number))
+                (q-labels-list (gethash "questions" (compiler-state-metadata st)))
+                (q-data (gethash q-label (compiler-state-metadata st)))
+                (q-new (cons q-label q-labels-list))
+                (new-q-data (when (and penalty forbidden)
+                              (push (list "forbidden-symbols"
+                                          :penalty penalty
+                                          :symbols forbidden)
+                                    q-data))))
+           (setf (gethash "questions" (compiler-state-metadata st)) q-new
+                 (gethash q-label (compiler-state-metadata st)) new-q-data)
+           (values
+            (format nil "~%* ~a ~d~%~a" 
+                    (getf props :title)
+                    number
+                    body-text)
+            st)))))))
 
+#|
 (defun rename-tags (markup)
   (if (consp markup)
       (let* ((tag (car markup))
@@ -83,6 +103,7 @@
                (cons tag-name (mapcar #'rename-tags rest)))
               (t (cons tag (mapcar #'rename-tags rest)))))
       markup))
+|#
 
 (defun compile-node (node state)
   (cond
