@@ -17,7 +17,7 @@
    :metadata (make-hash-table :test #'equal)
    :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
            doc q s p ul ol li wa tc gvn hdn a cb sols sol)
-   :env (list :level 0  :ol-p nil :i-num 0)))
+   :env (list :level -1  :ol-p nil :i-num 0)))
 
 (defun register-tag (table name fn)
   (setf (gethash name table) fn))
@@ -39,13 +39,13 @@
 (defun register-core-tags (table)
 
   (register-tag table 'doc-tag
-                (deftag doc-tag (args state)
+                (deftag doc-tag (args state) 
                   (destructuring-bind (props &rest body) args
-                    (multiple-value-bind (body-text st)
-                        (compile-nodes body state)
-                      (let* ((title (getf props :title ))
-                             (folder (check-folder-name (getf props :folder))))
-                        (setf (gethash "folder" (compiler-state-metadata st)) folder)
+                    (let* ((title (getf props :title ))
+                           (folder (check-folder-name (getf props :folder))))
+                      (setf (gethash "folder" (compiler-state-metadata state)) folder)
+                      (multiple-value-bind (body-text st)
+                          (compile-nodes body state)                                                     
                         (values
                          (format nil "#+TITLE: ~a~%#+OPTIONS: toc:nil num:nil date:nil author:nil~%~a"
                                  title
@@ -57,7 +57,23 @@
                   (destructuring-bind (&rest body) args
                     (multiple-value-bind (body-text st)
                         (compile-nodes body state)
-                      (values (format nil "~a~%" body-text) st)))))
+                      (values (format nil "~%~a" body-text) st)))))
+
+  (register-tag table 'ul-tag
+                (deftag ul-tag (args state) 
+                  (destructuring-bind (&rest body) args
+                    (let* ((ol-flag (getf (compiler-state-env state) :ol-p))
+                           (cur-i-num (getf (compiler-state-env state) :i-num))
+                           (cur-level (getf (compiler-state-env state) :level)))
+                      (incf (getf (compiler-state-env state) :level))
+                      (setf (getf (compiler-state-env state) :i-num) 0)
+                      (setf (getf (compiler-state-env state) :ol-p) nil)
+                      (multiple-value-bind (body-text st)
+                          (compile-nodes body state)
+                        (setf (getf (compiler-state-env state) :i-num) cur-i-num)
+                        (setf (getf (compiler-state-env state) :level) cur-level)
+                        (setf (getf (compiler-state-env state) :ol-p) ol-flag)
+                        (values (format nil "~a" body-text) st))))))
 
   (register-tag table 'ol-tag
                 (deftag ol-tag (args state) 
@@ -66,30 +82,29 @@
                            (cur-i-num (getf (compiler-state-env state) :i-num))
                            (cur-level (getf (compiler-state-env state) :level)))
                       (incf (getf (compiler-state-env state) :level))
-                      (incf (getf (compiler-state-env state) :i-num))
+                      (setf (getf (compiler-state-env state) :i-num) 0)
                       (setf (getf (compiler-state-env state) :ol-p) t)
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
                         (setf (getf (compiler-state-env state) :i-num) cur-i-num)
                         (setf (getf (compiler-state-env state) :level) cur-level)
                         (setf (getf (compiler-state-env state) :ol-p) ol-flag)
-                        (values body-text st))))))
+                        (values (format nil "~a" body-text) st))))))
 
   (register-tag table 'li-tag
                 (deftag li-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((level (getf (compiler-state-env state) :level))
                            (indent (* level 2))
-                           (i-num  (getf (compiler-state-env state) :i-num))
-                           (bullet (or (and :ol-p (format nil "~a. " inum))
-                                       "- ")))
+                           (i-num  (incf (getf (compiler-state-env state) :i-num)))
+                           (o-flag (getf (compiler-state-env state) :ol-p))
+                           (bullet (or (and  o-flag (format nil "~a. " i-num)) "- ")))
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
                         (values
-                         (format t "~a~a~a" (make-string indent :initial-element #\ ) bullet body-text)
+                         (format nil "~%~a~a~a" (make-string indent :initial-element #\ ) bullet body-text)
                          st))))))
   
-
   (register-tag table 's-tag
                 (deftag s-tag (args state)
                   (destructuring-bind (props &rest body) args
@@ -103,63 +118,92 @@
                                  title
                                  body-text)
                          st))))))
-
   
   (register-tag table 'q-tag
                 (deftag q-tag (args state)
                   (destructuring-bind (props &rest body) args
-                    (multiple-value-bind (body-text st)
-                        (compile-nodes body state)
-                      (let* ((number (getf props :number))
+                    (let* ((number (getf props :number))
                              (forbidden (getf props :forbidden))
                              (penalty (getf props :penalty))
                              (q-label (format nil "q~a" number))
-                             (q-labels-list (gethash "questions" (compiler-state-metadata st)))
-                             (q-data (gethash q-label (compiler-state-metadata st)))
+                             (q-labels-list (gethash "questions" (compiler-state-metadata state)))
+                             (q-data (gethash q-label (compiler-state-metadata state)))
                              (q-new (cons q-label q-labels-list))
                              (new-q-data (when (and penalty forbidden)
                                            (push (list "forbidden-symbols"
                                                        :penalty penalty
                                                        :symbols forbidden)
                                                  q-data))))
-                        (setf (gethash "questions" (compiler-state-metadata st)) q-new
-                              (gethash q-label (compiler-state-metadata st)) new-q-data)
+                      (setf (gethash "questions" (compiler-state-metadata state)) q-new
+                            (gethash q-label (compiler-state-metadata state)) new-q-data)
+                      (multiple-value-bind (body-text st)
+                          (compile-nodes body state) 
                         (values
                          (format nil "~%* ~a ~d~%~a" 
                                  (getf props :title)
                                  number
                                  body-text)
                          st))))))
-
-
+  
+  (register-tag table 'cb-tag
+                (deftag cb-tag (args state)
+                  (destructuring-bind (props &rest body) args
+                    (multiple-value-bind (body-text st)
+                        (compile-nodes body state)
+                      (values
+                       (format nil "~%#+BEGIN_SRC ~a~%~a~%#+END_SRC~%" 
+                               (getf props :language) 
+                               body-text)
+                       st)))))
+  
   (register-tag table 'wa-tag
                 (deftag wa-tag (args state)
                   (destructuring-bind (&rest body) args
-                    (let* ((q-labels-list-symb (gethash "questions" (compiler-state-metadata state)))
+                    (let* ((metadata (compiler-state-metadata state))
+                           (q-labels-list-symb (gethash "questions" metadata))
                            (q-label-symb (first q-labels-list-symb))
-                           (q-data-symb (gethash q-label-symb (compiler-state-metadata state)))
-                           (folder-name (gethash "folder" (compiler-state-metadata state))))
+                           (folder-name (gethash "folder" metadata))
+                           (str1 (format nil "You are required to write the solutions for the parts of this question in the lisp program file *~a~a.lisp* ."
+                                         folder-name
+                                         q-label-symb))
+                           (str2 (format nil "(cg:chk-my-solution \"~a~a.lisp\")"
+                                         folder-name
+                                         q-label-symb)))
                       (multiple-value-bind (body-text st)
-                          (compile-nodes
+                          (compile-node
                            `(s-tag (:level 2 :title "WHAT YOU ARE ASKED")
                                    (p-tag "*NOTE*:")
                                    (ul-tag
-                                    (li-tag (format nil "You are required to write the solutions for the parts of this question in the lisp program file *~a~a.lisp* ."
-                                                    ,folder
-                                                    ,q-label-symb))
+                                    (li-tag ,str1)
                                     (li-tag "You may create helper functions in your program file. ")
                                     (li-tag "To ensure your solution is in the correct folder and passes the test cases shown in the examples below,  type the following expression on the REPL:"
                                             (p-tag (cb-tag (:language "lisp")
-                                                           (format nil "(cg:chk-my-solution \"~a~a.lisp\")"
-                                                                   ,folder-name
-                                                                   ,q-label-symb)))))
+                                                           ,str2))))
                                    ,@body)
                            state) 
                         (setf (gethash q-label-symb (compiler-state-metadata st))
-                              (cons (list "whats-asked" body) q-data-symb))
+                              (cons (list "whats-asked" body-text)
+                                    (gethash q-label-symb (compiler-state-metadata st))))
                         (values
                          (format nil "~a" body-text)
-                         st)))))))
+                         st))))))
+
+  (register-tag table 'tc-tag
+                (deftag tc-tag (args state)
+                  (destructuring-bind (props &rest body) args
+                    (let* ((metadata (compiler-state-metadata state))
+                           (latest-q (first (gethash "questions" metadata)))
+                           (q-data (gethash latest-q metadata))
+                           (fname (getf props :function))
+                           (fnames-data (gethash "fnames" metadata)))
+                      (setf (gethash latest-q metadata)
+                            (cons (list "asked-functions" (list fname))
+                                  q-data))
+                      (unless (member fname fnames-data)
+                        (setf (gethash "fnames" metadata) (cons fname fnames-data)))
+                      (multiple-value-bind (body-text st)
+                          (compile-nodes body state)
+                        (values (format nil "~%~a" body-text) st)))))))
 
 #|
 (defun rename-tags (markup)             ; ;
@@ -194,6 +238,7 @@ markup))                                ; ;
   (let ((text "")
         (st state))
     (dolist (n nodes)
+      
       (multiple-value-bind (ot new-st) (compile-node n st)
         (setf text (concatenate 'string text ot)
               st new-st)))
@@ -206,5 +251,15 @@ markup))                                ; ;
         (compile-node dsl-form state)
       (values
        text
-       (compiler-state-metadata final-state)))))
+       final-state)
+      (maphash (lambda (k v)
+                 (format t "~%Key: ~s Value: ~a" k v))
+               (compiler-state-metadata final-state)))
+    ))
 
+
+(let ((form '(doc-tag (:title "Test" :folder "~/")
+              (q-tag (:title "Question" :number 1)
+               (wa-tag "Test"
+                (tc-tag (:function fact)))))))
+  (format t "~a" (compile-document form)))
