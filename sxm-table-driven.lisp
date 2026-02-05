@@ -11,13 +11,13 @@
     (register-core-tags table)
     table))
 
-(defun make-initial-state ()
+(defun make-initial-state (include-hidden)
   (make-compiler-state
    :tag-compilers (make-tag-table)
    :metadata (make-hash-table :test #'equal)
    :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
            doc q s p ul ol li wa tc gvn hdn a cb sols sol)
-   :env (list :level -1  :ol-p nil :i-num 0)))
+   :env (list :level -1  :ol-p nil :i-num 0 :in-hdn-p nil :include-hidden include-hidden)))
 
 (defun register-tag (table name fn)
   (setf (gethash name table) fn))
@@ -35,6 +35,22 @@
     (if (char= (aref p (1- (length p))) #\/)
         p
         (concatenate 'string p "/"))))
+
+(defun gen-tc-code (q-label fname body)
+  (let ((suite-name (intern (format nil "TEST-~:@(~a~)" q-label)))
+        (fname-symb (if (stringp fname)
+                        (intern (format nil "~:@(~A~)" fname))
+                        fname))
+        (test-name (intern (format nil "TEST-~:@(~A~)" fname))))
+    `((declaim (notinline ,fname))
+      (deftest ,test-name ()
+        (check
+          ,@(mapcar (lambda (a)
+                      (list 'equalp (second a) (third a)))
+                    body)))
+      (defun ,suite-name ()
+        (,test-name)
+        (fmakunbound (quote ,fname-symb))))))
 
 (defun register-core-tags (table)
 
@@ -123,17 +139,17 @@
                 (deftag q-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (let* ((number (getf props :number))
-                             (forbidden (getf props :forbidden))
-                             (penalty (getf props :penalty))
-                             (q-label (format nil "q~a" number))
-                             (q-labels-list (gethash "questions" (compiler-state-metadata state)))
-                             (q-data (gethash q-label (compiler-state-metadata state)))
-                             (q-new (cons q-label q-labels-list))
-                             (new-q-data (when (and penalty forbidden)
-                                           (push (list "forbidden-symbols"
-                                                       :penalty penalty
-                                                       :symbols forbidden)
-                                                 q-data))))
+                           (forbidden (getf props :forbidden))
+                           (penalty (getf props :penalty))
+                           (q-label (format nil "q~a" number))
+                           (q-labels-list (gethash "questions" (compiler-state-metadata state)))
+                           (q-data (gethash q-label (compiler-state-metadata state)))
+                           (q-new (cons q-label q-labels-list))
+                           (new-q-data (when (and penalty forbidden)
+                                         (push (list "forbidden-symbols"
+                                                     :penalty penalty
+                                                     :symbols forbidden)
+                                               q-data))))
                       (setf (gethash "questions" (compiler-state-metadata state)) q-new
                             (gethash q-label (compiler-state-metadata state)) new-q-data)
                       (multiple-value-bind (body-text st)
@@ -203,22 +219,67 @@
                         (setf (gethash "fnames" metadata) (cons fname fnames-data)))
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
-                        (values (format nil "~%~a" body-text) st)))))))
+                        (values (format nil "~%~a" body-text) st))))))
+
+  (register-tag table 'gvn-tag
+                (deftag gvn-tag (args state)
+                  (destructuring-bind (&rest body) args
+                    (let* ((metadata (compiler-state-metadata state))
+                           (q-label (first (gethash "questions" metadata)))
+                           (latest-q-data (gethash q-label metadata))
+                           (fun-name (first (second (assoc "asked-functions" latest-q-data :test #'string=))))
+                           (tc-code (gen-tc-code q-label fun-name body))
+                           (gvn-data (append (list "given") tc-code)))
+                      (setf (gethash q-label metadata)
+                            (cons gvn-data latest-q-data))
+                      (multiple-value-bind (body-text st)
+                          (compile-nodes body state)
+                        (values
+                         (format nil "#+BEGIN_SRC lisp~%~a~%#+END_SRC"
+                                 body-text)
+                         st))))))
+  
+  (register-tag table 'hdn-tag
+                (deftag hdn-tag (args state)
+                  (destructuring-bind (&rest body) args
+                    (setf (getf (compiler-state-env state) :in-hdn-p) t)
+                    (when (getf (compiler-state-env state) :include-hidden)
+                      (let* ((metadata (compiler-state-metadata state))
+                             (q-label (first (gethash "questions" metadata)))
+                             (latest-q-data (gethash q-label metadata))
+                             (fun-name (first (second (assoc "asked-functions" latest-q-data :test #'string=))))
+                             (tc-code (gen-tc-code q-label fun-name body))
+                             (hdn-data (append (list "hidden") tc-code)))
+                        (setf (gethash q-label metadata)
+                              (cons hdn-data latest-q-data))))
+                    (setf (getf (compiler-state-env state) :in-hdn-p) nil)
+                    (values "" state))))
+  
+  (register-tag table 'a-tag
+                (deftag a-tag (args state)
+                  (destructuring-bind (call expected) args
+                    (values
+                     (if (getf (compiler-state-env state) :in-hdn-p)
+                         ""
+                         (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%" 
+                                 call expected))
+                     state)))))
+
 
 #|
-(defun rename-tags (markup)             ; ;
-(if (consp markup)                      ; ;
-(let* ((tag (car markup))               ; ;
-(rest (cdr markup))                     ; ;
-(tag-name (intern (format nil "~A-TAG" (symbol-name tag))))) ; ;
-(cond ((and (member tag *sxm*)          ; ;
-(or (eq 'a-tag tag-name)                ; ;
-(eq 'sol-tag tag-name)))                ; ;
-(cons tag-name rest))                   ; ;
-((member tag *sxm*)                     ; ;
-(cons tag-name (mapcar #'rename-tags rest))) ; ;
-(t (cons tag (mapcar #'rename-tags rest))))) ; ;
-markup))                                ; ;
+(defun rename-tags (markup)             ; ; ; ; ;
+(if (consp markup)                      ; ; ; ; ;
+(let* ((tag (car markup))               ; ; ; ; ;
+(rest (cdr markup))                     ; ; ; ; ;
+(tag-name (intern (format nil "~A-TAG" (symbol-name tag))))) ; ; ; ; ;
+(cond ((and (member tag *sxm*)          ; ; ; ; ;
+(or (eq 'a-tag tag-name)                ; ; ; ; ;
+(eq 'sol-tag tag-name)))                ; ; ; ; ;
+(cons tag-name rest))                   ; ; ; ; ;
+((member tag *sxm*)                     ; ; ; ; ;
+(cons tag-name (mapcar #'rename-tags rest))) ; ; ; ; ;
+(t (cons tag (mapcar #'rename-tags rest))))) ; ; ; ; ;
+markup))                                ; ; ; ; ;
 |#
 
 (defun compile-node (node state)
@@ -238,15 +299,14 @@ markup))                                ; ;
   (let ((text "")
         (st state))
     (dolist (n nodes)
-      
       (multiple-value-bind (ot new-st) (compile-node n st)
         (setf text (concatenate 'string text ot)
               st new-st)))
     (values text st)))
 
 
-(defun compile-document (dsl-form)
-  (let ((state (make-initial-state)))
+(defun compile-document (dsl-form include-hidden)
+  (let ((state (make-initial-state include-hidden)))
     (multiple-value-bind (text final-state)
         (compile-node dsl-form state)
       (values
@@ -261,5 +321,12 @@ markup))                                ; ;
 (let ((form '(doc-tag (:title "Test" :folder "~/")
               (q-tag (:title "Question" :number 1)
                (wa-tag "Test"
-                (tc-tag (:function fact)))))))
-  (format t "~a" (compile-document form)))
+                (tc-tag (:function fact)
+                 (gvn-tag
+                  (a-tag (fact 1) 1)
+                  (a-tag (fact 2) 2))
+                 (hdn-tag
+                  (a-tag (fact 3) 6)
+                  (a-tag (fact 0) 1))))))))
+  
+  (format t "~a" (compile-document form t)))
