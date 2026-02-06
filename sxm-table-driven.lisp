@@ -372,13 +372,17 @@
                              (directory-namestring from)
                              *parent-folder*
                              (pathname-name (file-namestring from))))))
-    (multiple-value-bind (orgmode-text metadata)
+    (multiple-value-bind (orgmode-text state)
         (compile-sxm-form sxm-form include-hidden)
       (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
         (format out "~a" orgmode-text))
       (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
       (with-open-file (out exam-data :direction :output :if-exists :supersede)
-        (format out "~s" metadata))
+        (format out "~s" (let (data)
+                           (maphash (lambda (k v)
+                                      (push (list k v) data))
+                                    (compiler-state-metadata state))
+                           data)))
       (format t "~%Generated assessment testing code at: ~a~%Done." exam-data))))
 
 
