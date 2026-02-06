@@ -278,21 +278,24 @@
                     (values ""  state)))))
 
 
-#|
-(defun rename-tags (markup)             ; ; ; ; ;
-(if (consp markup)                      ; ; ; ; ;
-(let* ((tag (car markup))               ; ; ; ; ;
-(rest (cdr markup))                     ; ; ; ; ;
-(tag-name (intern (format nil "~A-TAG" (symbol-name tag))))) ; ; ; ; ;
-(cond ((and (member tag *sxm*)          ; ; ; ; ;
-(or (eq 'a-tag tag-name)                ; ; ; ; ;
-(eq 'sol-tag tag-name)))                ; ; ; ; ;
-(cons tag-name rest))                   ; ; ; ; ;
-((member tag *sxm*)                     ; ; ; ; ;
-(cons tag-name (mapcar #'rename-tags rest))) ; ; ; ; ;
-(t (cons tag (mapcar #'rename-tags rest))))) ; ; ; ; ;
-markup))                                ; ; ; ; ;
-|#
+
+(defun rename-tags (markup state)             
+  (if (consp markup)                    
+      (let* ((tag (car markup))         
+             (rest (cdr markup))        
+             (tag-name (intern (format nil "~A-TAG" (symbol-name tag))))) 
+        (cond ((and (member tag (compiler-state-tags state))          
+                    (or (eq 'a-tag tag-name)         
+                        (eq 'sol-tag tag-name)))     
+               (cons tag-name rest))                 
+              ((member tag (compiler-state-tags state))                    
+               (cons tag-name (mapcar (lambda (node)
+                                        (rename-tags node state))
+                                      rest)))
+              (t (cons tag (mapcar (lambda (node)
+                                        (rename-tags node state))
+                                      rest)))))
+      markup))                               
 
 (defun compile-node (node state)
   (cond
@@ -318,9 +321,10 @@ markup))                                ; ; ; ; ;
 
 
 (defun compile-document (dsl-form include-hidden)
-  (let ((state (make-initial-state include-hidden)))
+  (let* ((state (make-initial-state include-hidden))
+         (new-dsl-form (rename-tags dsl-form state)))
     (multiple-value-bind (text final-state)
-        (compile-node dsl-form state)
+        (compile-node new-dsl-form state)
       (values
        text
        final-state)
