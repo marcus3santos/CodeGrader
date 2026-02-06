@@ -263,7 +263,19 @@
                          ""
                          (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%" 
                                  call expected))
-                     state)))))
+                     state))))
+  
+  (register-tag table 'sols-tag
+                (deftag sols-tag (args state)
+                  (destructuring-bind (&rest body) args
+                    (when (getf  (compiler-state-env state) :include-hidden)
+                      (let* ((metadata (compiler-state-metadata state))
+                             (q-label (first (gethash "questions" metadata)))
+                             (latest-q-data (gethash q-label metadata))
+                             (rmv-sols-q-data (remove "solutions" latest-q-data :key #'first :test #'string=))
+                             (sols-data `("solutions" ,@body)))
+                        (setf (gethash q-label metadata) (cons sols-data rmv-sols-q-data))))
+                    (values ""  state)))))
 
 
 #|
@@ -313,9 +325,8 @@ markup))                                ; ; ; ; ;
        text
        final-state)
       (maphash (lambda (k v)
-                 (format t "~%Key: ~s Value: ~a" k v))
-               (compiler-state-metadata final-state)))
-    ))
+                 (format t "~%Key: ~s Value: ~s" k v))
+               (compiler-state-metadata final-state)))))
 
 
 (let ((form '(doc-tag (:title "Test" :folder "~/")
@@ -327,6 +338,31 @@ markup))                                ; ; ; ; ;
                   (a-tag (fact 2) 2))
                  (hdn-tag
                   (a-tag (fact 3) 6)
-                  (a-tag (fact 0) 1))))))))
+                  (a-tag (fact 0) 1))))
+               (sols-tag
+                (sol
+                 (defun fact (x)
+                   (if (< x 1) 1
+                       (* x (fact (- x 1)))))
+                 (defun fact (x)
+                   (if (< x 2) 1
+                       (* x (fact (- x 1))))))))
+              (q-tag (:title "Question" :number 2)
+               (wa-tag "Test"
+                (tc-tag (:function fact*)
+                 (gvn-tag
+                  (a-tag (fact* 1) 1)
+                  (a-tag (fact* 2) 2))
+                 (hdn-tag
+                  (a-tag (fact* 3) 6)
+                  (a-tag (fact* 0) 1))))
+               (sols-tag
+                (sol
+                 (defun fact* (x)
+                   (if (< x 1) 1
+                       (* x (fact* (- x 1)))))
+                 (defun fact* (x)
+                   (if (< x 2) 1
+                       (* x (fact* (- x 1)))))))))))
   
-  (format t "~a" (compile-document form t)))
+  (format t "~s" (compile-document form t)))
