@@ -1,8 +1,12 @@
+(defparameter *parent-folder* "Gen-files/")
+
+
 (defstruct compiler-state
-  tag-compilers     ;; hash-table
-  metadata          ;; hash-table
-  tags              ;; The list of tags
-  env               ;; environment 
+  tag-compilers   ;; hash-table
+  metadata        ;; hash-table
+  tags            ;; The list of tags
+  tags-with-props ;; Tags that have a property list
+  env             ;; environment 
   )
 
 
@@ -17,6 +21,7 @@
    :metadata (make-hash-table :test #'equal)
    :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
            doc q s p ul ol li wa tc gvn hdn a cb sols sol)
+   :tags-with-props '(:doc doc :q q :s s :tc tc :cb cb)
    :env (list :level -1  :ol-p nil :i-num 0 :in-hdn-p nil :include-hidden include-hidden)))
 
 (defun register-tag (table name fn)
@@ -53,7 +58,8 @@
         (fmakunbound (quote ,fname-symb))))))
 
 (defun register-core-tags (table)
-
+  "Registers the functions created by the deftag macro in the hash table
+   using as the tags as key"
   (register-tag table 'doc-tag
                 (deftag doc-tag (args state) 
                   (destructuring-bind (props &rest body) args
@@ -300,7 +306,13 @@
         (cond ((and (member tag (compiler-state-tags state))          
                     (or (eq 'a-tag tag-name)         
                         (eq 'sol-tag tag-name)))     
-               (cons tag-name rest))                 
+               (cons tag-name rest))
+              ((and (member tag (compiler-state-tags state))
+                    (member tag (compiler-state-tags-with-props state)))
+               (cons tag-name (append (list (first rest))
+                                      (mapcar (lambda (node)
+                                                (rename-tags node state))
+                                              (cdr rest)))))
               ((member tag (compiler-state-tags state))                    
                (cons tag-name (mapcar (lambda (node)
                                         (rename-tags node state))
@@ -315,13 +327,13 @@
     ((stringp node) (values node state))
     ((symbolp node) (values (symbol-name node) state))
     ((consp node)
-     (let* ((tag (car node))
-            (args (cdr node))
+     (let* ((tag (first node))
+            (args (rest node))
             (fn (gethash tag (compiler-state-tag-compilers state))))
        (unless fn
-         (error "Unknown DSL tag: ~a" tag))
+         (error "Unknown SXM tag: ~a" tag))
        (funcall fn args state)))
-    (t (error "Invalid DSL form: ~a" node))))
+    (t (error "Invalid SXM form: ~a" node))))
 
 (defun compile-nodes (nodes state)
   (let ((text "")
@@ -333,94 +345,40 @@
     (values text st)))
 
 
-(defun compile-document (dsl-form include-hidden)
+(defun compile-sxm-form (sxm-form include-hidden)
   (let* ((state (make-initial-state include-hidden))
-         (new-dsl-form (rename-tags dsl-form state)))
+         (new-sxm-form (rename-tags sxm-form state)))
     (multiple-value-bind (text final-state)
-        (compile-node new-dsl-form state)
-      (values
-       text
-       final-state)
-      (maphash (lambda (k v)
-                 (format t "~%Key: ~s Value: ~s" k v))
-               (compiler-state-metadata final-state)))))
+        (compile-node new-sxm-form state)
+      (values text final-state))))
+
+(defun gen-exam-files (from &key include-hidden)
+  "Generates the orgmode and data files from the .sxm file 
+   containing the assessment's description. 
+   If :INCLUDE-HIDDEN is T then the hidden test cases and question solutions
+   will be added to the data file."
+  (let* ((fn-ext (pathname-type from))
+         (sxm-form (if (and fn-ext (string= fn-ext "sxm"))
+                               (with-open-file (in from)
+                                 (read in))
+                               (error "File name does not have the extension '.sxm': ~a" from)))
+         (orgmode-version (ensure-directories-exist
+                           (format nil "~a~a~a.org"
+                                   (directory-namestring from)
+                                   *parent-folder*
+                                   (pathname-name (file-namestring from)))))
+         (exam-data (ensure-directories-exist
+                     (format nil "~a~a~a.data"
+                             (directory-namestring from)
+                             *parent-folder*
+                             (pathname-name (file-namestring from))))))
+    (multiple-value-bind (orgmode-text metadata)
+        (compile-sxm-form sxm-form include-hidden)
+      (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
+        (format out "~a" orgmode-text))
+      (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
+      (with-open-file (out exam-data :direction :output :if-exists :supersede)
+        (format out "~s" metadata))
+      (format t "~%Generated assessment testing code at: ~a~%Done." exam-data))))
 
 
-(let ((form '(doc (:title "Test" :folder "~/")
-              (q (:title "Question" :number 1)
-               (wa "Test"
-                (tc (:function fact)
-                 (gvn
-                  (a (fact 1) 1)
-                  (a (fact 2) 2))
-                 (hdn
-                  (a (fact 3) 6)
-                  (a (fact 0) 1))))
-               (sols
-                (sol
-                 (defun fact (x)
-                   (if (< x 1) 1
-                       (* x (fact (- x 1))))))
-                (sol
-                 (defun fact (x)
-                   (if (< x 2) 1
-                       (* x (fact (- x 1))))))))
-              (q (:title "Question" :number 2)
-               (wa "Test"
-                (tc (:function fact*)
-                 (gvn
-                  (a (fact* 1) 1)
-                  (a (fact* 2) 2))
-                 (hdn
-                  (a (fact* 3) 6)
-                  (a (fact* 0) 1))))
-               (sols
-                (sol
-                 (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
-                   (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
-                 (DEFUN LIST-OF-ARRAYS (L1 L2) (MAPCAR #'CREATE-SUM-ARRAY-HELPER L1 L2)))
-                (sol
-                 (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
-                   (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
-                 (DEFUN LIST-OF-ARRAYS (A B &OPTIONAL RES)
-                   (IF (NULL A)
-                       (REVERSE RES)
-          (LIST-OF-ARRAYS (CDR A) (CDR B)
-           (CONS (CREATE-SUM-ARRAY-HELPER (CAR A) (CAR B)) RES)))))
-   (sol
-    (DEFUN LIST-OF-ARRAYS (LST1 LST2)
-      (LABELS ((CREATE-ARRAY-SUM (A B)
-                 (LET ((ARRAY (MAKE-ARRAY 3)))
-                   (SETF (AREF ARRAY 0) A)
-                   (SETF (AREF ARRAY 1) B)
-                   (SETF (AREF ARRAY 2) (+ A B))
-                   ARRAY)))
-        (LET ((RESULT NIL))
-          (IF (AND (NULL LST1) (NULL LST2))
-              NIL
-              (DOTIMES (I (LENGTH LST1) (REVERSE RESULT))
-                (PUSH (CREATE-ARRAY-SUM (NTH I LST1) (NTH I LST2))
-                      RESULT)))))))
-   (sol
-    (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
-      (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
-    (DEFUN LIST-OF-ARRAYS (L1 L2)
-      (LOOP FOR X IN L1
-            FOR Y IN L2
-            COLLECT (CREATE-SUM-ARRAY-HELPER X Y))))
-   (sol
-    (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
-      (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
-    (DEFUN LIST-OF-ARRAYS (L1 L2)
-      (IF (NULL L1)
-          NIL
-          (CONS (CREATE-SUM-ARRAY-HELPER (CAR L1) (CAR L2))
-                (LIST-OF-ARRAYS (CDR L1) (CDR L2))))))
-   (sol
-    (DEFUN LIST-OF-ARRAYS (L1 L2)
-      (LABELS ((CREATE-SUM-ARRAY-HELPER (A B)
-                 (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B)))))
-        (MAPCAR #'CREATE-SUM-ARRAY-HELPER L1 L2)))))
-               ))))
-  
-  (format t "~s" (compile-document form t)))
