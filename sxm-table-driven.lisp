@@ -264,16 +264,29 @@
                          (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%" 
                                  call expected))
                      state))))
-  
+
   (register-tag table 'sols-tag
                 (deftag sols-tag (args state)
                   (destructuring-bind (&rest body) args
                     (when (getf  (compiler-state-env state) :include-hidden)
                       (let* ((metadata (compiler-state-metadata state))
                              (q-label (first (gethash "questions" metadata)))
+                             (latest-q-data (gethash q-label metadata)))
+                        (setf (gethash q-label metadata) (cons (list "solutions") latest-q-data))))
+                    (multiple-value-bind (body-text st)
+                        (compile-nodes body state)
+                      (values body-text st)))))
+  
+  (register-tag table 'sol-tag
+                (deftag sol-tag (args state)
+                  (destructuring-bind (&rest body) args
+                    (when (getf  (compiler-state-env state) :include-hidden)
+                      (let* ((metadata (compiler-state-metadata state))
+                             (q-label (first (gethash "questions" metadata)))
                              (latest-q-data (gethash q-label metadata))
+                             (sols (rest (assoc "solutions" latest-q-data :test #'string=)))
                              (rmv-sols-q-data (remove "solutions" latest-q-data :key #'first :test #'string=))
-                             (sols-data `("solutions" ,@body)))
+                             (sols-data `("solutions" ,@(append sols (list `(sol ,@body))))))
                         (setf (gethash q-label metadata) (cons sols-data rmv-sols-q-data))))
                     (values ""  state)))))
 
@@ -333,40 +346,81 @@
                (compiler-state-metadata final-state)))))
 
 
-(let ((form '(doc-tag (:title "Test" :folder "~/")
-              (q-tag (:title "Question" :number 1)
-               (wa-tag "Test"
-                (tc-tag (:function fact)
-                 (gvn-tag
-                  (a-tag (fact 1) 1)
-                  (a-tag (fact 2) 2))
-                 (hdn-tag
-                  (a-tag (fact 3) 6)
-                  (a-tag (fact 0) 1))))
-               (sols-tag
+(let ((form '(doc (:title "Test" :folder "~/")
+              (q (:title "Question" :number 1)
+               (wa "Test"
+                (tc (:function fact)
+                 (gvn
+                  (a (fact 1) 1)
+                  (a (fact 2) 2))
+                 (hdn
+                  (a (fact 3) 6)
+                  (a (fact 0) 1))))
+               (sols
                 (sol
                  (defun fact (x)
                    (if (< x 1) 1
-                       (* x (fact (- x 1)))))
+                       (* x (fact (- x 1))))))
+                (sol
                  (defun fact (x)
                    (if (< x 2) 1
                        (* x (fact (- x 1))))))))
-              (q-tag (:title "Question" :number 2)
-               (wa-tag "Test"
-                (tc-tag (:function fact*)
-                 (gvn-tag
-                  (a-tag (fact* 1) 1)
-                  (a-tag (fact* 2) 2))
-                 (hdn-tag
-                  (a-tag (fact* 3) 6)
-                  (a-tag (fact* 0) 1))))
-               (sols-tag
+              (q (:title "Question" :number 2)
+               (wa "Test"
+                (tc (:function fact*)
+                 (gvn
+                  (a (fact* 1) 1)
+                  (a (fact* 2) 2))
+                 (hdn
+                  (a (fact* 3) 6)
+                  (a (fact* 0) 1))))
+               (sols
                 (sol
-                 (defun fact* (x)
-                   (if (< x 1) 1
-                       (* x (fact* (- x 1)))))
-                 (defun fact* (x)
-                   (if (< x 2) 1
-                       (* x (fact* (- x 1)))))))))))
+                 (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
+                   (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
+                 (DEFUN LIST-OF-ARRAYS (L1 L2) (MAPCAR #'CREATE-SUM-ARRAY-HELPER L1 L2)))
+                (sol
+                 (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
+                   (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
+                 (DEFUN LIST-OF-ARRAYS (A B &OPTIONAL RES)
+                   (IF (NULL A)
+                       (REVERSE RES)
+          (LIST-OF-ARRAYS (CDR A) (CDR B)
+           (CONS (CREATE-SUM-ARRAY-HELPER (CAR A) (CAR B)) RES)))))
+   (sol
+    (DEFUN LIST-OF-ARRAYS (LST1 LST2)
+      (LABELS ((CREATE-ARRAY-SUM (A B)
+                 (LET ((ARRAY (MAKE-ARRAY 3)))
+                   (SETF (AREF ARRAY 0) A)
+                   (SETF (AREF ARRAY 1) B)
+                   (SETF (AREF ARRAY 2) (+ A B))
+                   ARRAY)))
+        (LET ((RESULT NIL))
+          (IF (AND (NULL LST1) (NULL LST2))
+              NIL
+              (DOTIMES (I (LENGTH LST1) (REVERSE RESULT))
+                (PUSH (CREATE-ARRAY-SUM (NTH I LST1) (NTH I LST2))
+                      RESULT)))))))
+   (sol
+    (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
+      (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
+    (DEFUN LIST-OF-ARRAYS (L1 L2)
+      (LOOP FOR X IN L1
+            FOR Y IN L2
+            COLLECT (CREATE-SUM-ARRAY-HELPER X Y))))
+   (sol
+    (DEFUN CREATE-SUM-ARRAY-HELPER (A B)
+      (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B))))
+    (DEFUN LIST-OF-ARRAYS (L1 L2)
+      (IF (NULL L1)
+          NIL
+          (CONS (CREATE-SUM-ARRAY-HELPER (CAR L1) (CAR L2))
+                (LIST-OF-ARRAYS (CDR L1) (CDR L2))))))
+   (sol
+    (DEFUN LIST-OF-ARRAYS (L1 L2)
+      (LABELS ((CREATE-SUM-ARRAY-HELPER (A B)
+                 (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B)))))
+        (MAPCAR #'CREATE-SUM-ARRAY-HELPER L1 L2)))))
+               ))))
   
   (format t "~s" (compile-document form t)))
