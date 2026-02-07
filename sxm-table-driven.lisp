@@ -241,7 +241,7 @@
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
                         (values
-                         (format nil "#+BEGIN_SRC lisp~%~a~%#+END_SRC"
+                         (format nil "#+BEGIN_SRC lisp~&~a#+END_SRC"
                                  body-text)
                          st))))))
   
@@ -267,7 +267,7 @@
                     (values
                      (if (getf (compiler-state-env state) :in-hdn-p)
                          ""
-                         (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%" 
+                         (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%~%" 
                                  call expected))
                      state))))
 
@@ -352,37 +352,55 @@
         (compile-node new-sxm-form state)
       (values text final-state))))
 
+(defun org-to-html (input-file)
+  "Converts an org-mode file to HTML using Emacs in batch mode."
+  (let ((command (format nil "emacs --batch --visit=~A --funcall org-html-export-to-html --kill" 
+                         (namestring (truename input-file)))))
+    (uiop:run-program command :output t)))
+
+(defun org-to-pdf (input-file)
+  "Converts an org-mode file to PDF using Emacs and LaTeX."
+  (let ((command (format nil "emacs --batch --visit=~A --funcall org-latex-export-to-pdf --kill" 
+                         (namestring (truename input-file)))))
+    (handler-case
+        (uiop:run-program command :output t)
+      (error (c)
+        (format t "Error during PDF conversion: ~A~%" c)))))
+
+
 (defun gen-exam-files (from &key include-hidden)
-  "Generates the orgmode and data files from the .sxm file 
+  "Generates the orgmode, html, pdf,  and metadata files from the .sxm file 
    containing the assessment's description. 
    If :INCLUDE-HIDDEN is T then the hidden test cases and question solutions
    will be added to the data file."
   (let* ((fn-ext (pathname-type from))
          (sxm-form (if (and fn-ext (string= fn-ext "sxm"))
-                               (with-open-file (in from)
-                                 (read in))
-                               (error "File name does not have the extension '.sxm': ~a" from)))
-         (orgmode-version (ensure-directories-exist
-                           (format nil "~a~a~a.org"
-                                   (directory-namestring from)
-                                   *parent-folder*
-                                   (pathname-name (file-namestring from)))))
-         (exam-data (ensure-directories-exist
-                     (format nil "~a~a~a.data"
-                             (directory-namestring from)
-                             *parent-folder*
-                             (pathname-name (file-namestring from))))))
+                       (with-open-file (in from)
+                         (read in))
+                       (error "File name does not have the extension '.sxm': ~a" from)))
+         (filename-root (format nil "~a~a~a"
+                                (directory-namestring from)
+                                *parent-folder*
+                                (pathname-name (file-namestring from))))
+         (orgmode-file (ensure-directories-exist (format nil "~a.org" filename-root)))
+         (exam-data-file (ensure-directories-exist (format nil "~a.data" filename-root)))
+         (html-file (format nil "~a.html" filename-root))
+         (pdf-file (format nil "~a.pdf" filename-root)))
     (multiple-value-bind (orgmode-text state)
         (compile-sxm-form sxm-form include-hidden)
-      (with-open-file (out orgmode-version :direction :output :if-exists :supersede)
+      (with-open-file (out orgmode-file :direction :output :if-exists :supersede)
         (format out "~a" orgmode-text))
-      (format t "~%Generated assessment orgmode description file at: ~a" orgmode-version)
-      (with-open-file (out exam-data :direction :output :if-exists :supersede)
+      (format t "~&Assessment Org-mode file generated at: ~a" orgmode-file)
+      (org-to-html orgmode-file)
+      (format t "~&Assessment html file created at: ~a" html-file)
+      (org-to-pdf orgmode-file)
+      (format t "~&Assessment pdf file created at: ~a" pdf-file)
+      (with-open-file (out exam-data-file :direction :output :if-exists :supersede)
         (format out "~s" (let (data)
                            (maphash (lambda (k v)
                                       (push (list k v) data))
                                     (compiler-state-metadata state))
                            data)))
-      (format t "~%Generated assessment testing code at: ~a~%Done." exam-data))))
+      (format t "~&Assessment metadata file created at: ~a~%" exam-data-file))))
 
 
