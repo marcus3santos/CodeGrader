@@ -39,63 +39,109 @@ better automation and tooling.
 
 ** SXM Structure Overview
 
+SXM grammar:
 #+begin_example
-(doc ;; The assessment description
+<sxm-expression> ::= <doc-tag>
+
+<doc-tag>        ::= "(" ":doc" <doc-props> <node-list> ")"
+<doc-props>      ::= "(" ":title" <string> ":folder" <string> ")"
+
+<node-list>      ::= <node> | <node> <node-list>
+<node>           ::= <string> 
+                   | <p-tag> | <ul-tag> | <ol-tag> | <li-tag> 
+                   | <s-tag> | <q-tag>  | <cb-tag> | <wa-tag> 
+                   | <tc-tag> | <gvn-tag> | <hdn-tag> | <a-tag> 
+                   | <sols-tag> | <sol-tag>
+
+<p-tag>          ::= "(" ":p" <node-list> ")"
+<ul-tag>         ::= "(" ":ul" <node-list> ")"
+<ol-tag>         ::= "(" ":ol" <node-list> ")"
+<li-tag>         ::= "(" ":li" <node-list> ")"
+
+<s-tag>          ::= "(" ":s" <s-props> <node-list> ")"
+<s-props>        ::= "(" [ ":level" <integer> ] [ ":title" <string> ] ")"
+
+<q-tag>          ::= "(" ":q" <q-props> <node-list> ")"
+<q-props>        ::= "(" ":title" <string> ":number" <integer> 
+                         [ ":forbidden" <list> ":penalty" <number> ] ")"
+
+<cb-tag>         ::= "(" ":cb" <cb-props> <node-list> ")"
+<cb-props>       ::= "(" ":language" <string> ")"
+
+<wa-tag>         ::= "(" ":wa" <node-list> ")"
+<tc-tag>         ::= "(" ":tc" <tc-props> <node-list> ")"
+<tc-props>       ::= "(" ":function" <symbol> ")"
+
+<gvn-tag>        ::= "(" ":gvn" <node-list> ")"
+<hdn-tag>        ::= "(" ":hdn" <node-list> ")"
+<sols-tag>       ::= "(" ":sols" <node-list> ")"
+<sol-tag>        ::= "(" ":sol" <lisp-code-list> ")"
+
+<a-tag>          ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
+
+<string>         ::= "\"" <characters> "\""
+<symbol>         ::= <alphanumeric-sequence>
+<integer>        ::= <digit> | <digit> <integer>
+<lisp-expression>::= <any-valid-common-lisp-form>
+#+end_example
+
+Example:
+#+begin_example
+(:doc ;; The assessment description
   (:title "Common Lisp Practicum Test"
    :folder "~/pt") ;; Where students are required to store their solutions
-  (q ;; a question description; transated as a level 1 section "*" in orgmode
+  (:q ;; a question description; transated as a level 1 section "*" in orgmode
     (:title "Question"
      :number 1 
      :penalty 80 ;;  the deduction in the student's score if they use a forbidden function
      :forbidden (count member)) ;; the list of forbidden functions
-    (p "This question contains two parts.") ;; a paragraph.
-    (wa  ;; What students are asked; must appear within a question expression
-      (p "Part 1:")
-      (p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
-        (tc (:function count-occurrences)
-         (gvn ;; Given test cases           
-          (a ;; an assertion specifying a function call and its expected result
+    (:p "This question contains two parts.") ;; a paragraph.
+    (:wa  ;; What students are asked; must appear within a question expression
+      (:p "Part 1:")
+      (:p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
+        (:tc (:function count-occurrences)
+         (:gvn ;; Given test cases           
+          (:a ;; an assertion specifying a function call and its expected result
             (count-occurrences 3 '(1 2 3 3 3 4)) 3)
-          (a (count-occurrences 'a '(a b a c a)) 3)
-          (a (count-occurrences 5 '(1 2 3 4)) 0))
-         (hdn ;; Hidden test cases used for grading a student's solution
-          (a (count-occurrences 1 '(1 1 1 1 1)) 5)
-          (a (count-occurrences 0 '(1 2 3 4)) 0)
-          (a (count-occurrences 'z '(a b c z z)) 2)))
-        (sols
-          (sol
+          (:a (count-occurrences 'a '(a b a c a)) 3)
+          (:a (count-occurrences 5 '(1 2 3 4)) 0))
+         (:hdn ;; Hidden test cases used for grading a student's solution
+          (:a (count-occurrences 1 '(1 1 1 1 1)) 5)
+          (:a (count-occurrences 0 '(1 2 3 4)) 0)
+          (:a (count-occurrences 'z '(a b c z z)) 2)))
+        (:sols
+          (:sol
             (defun count-occurrences (a b &optional (acc 0))
               (cond ((null b) acc)
                     ((= a (car b)) (count-occurrences a (cdr b) (1+ acc)))
                     (t (count-occurrences a (cdr b) acc)))))
-          (sol
+          (:sol
             (defun count-occurrences (a b)
               (cond ((null b) 0)
                     ((= a (first b)) (1+ (count-occurrences a (rest b))))
                     (t (count-occurrences a (rest b)))))))
-      (p "Part 2:")
-      (p "...")
+      (:p "Part 2:")
+      (:p "...")
         ;; Additional example/test blocks can go here
        ))
-  (q ;; other question...))
+  (:q ;; other question...))
 #+end_example
 
 ** Explanation of Fields
 
 - =:title= — Assessment title.
 - =:folder= — Directory path where students are required to save their solutions.
-- =q= — A section describing an individual exercise or problem.
+- =:q= — A section describing an individual exercise or problem.
   - =:title= — The question title, e.g.  `"Question"` or `"Exercise"`.
   - =:number= — Integer identifier for the question.
   - =:penalty= — (Optional) Penalty percentage for using forbidden functions.
   - =:forbidden= — (Optional) List of forbidden functions in Lisp syntax.
-  - =p= — a paragraph of text.
-  - =wa= — A section describing what the student is being asked. It can contain:
-    - =(p ...)= - paragraphs
-    - =(tc ...)= - test cases
-    - =(gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
-    - =(hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
-    - =(sols ...)= - Node containing the question solution(s). 
+- =:wa= — A section describing what the student is being asked. It can contain:
+- =(:p ...)= - paragraphs
+- =(:tc ...)= - test cases
+- =(:gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
+- =(:hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
+- =(:sols (:sol ... ...) (:sol ... ...)= - Node containing the question solution(s). The :sol node contains the forms of a solution. 
 
 * Generating the Assessment Support Files
 

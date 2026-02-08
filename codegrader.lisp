@@ -1,4 +1,3 @@
-
 (in-package #:codegrader)
 
 
@@ -113,7 +112,7 @@ Please check your logic and consider adding a termination condition.")
         (format out "~%Your Solution:~%~A~%~%Your Solution normalized and macroexpanded:~%~a~%~%End of Your Solution for ~a" (read-from-string std-sol)  (normalize (first (third solution-similarity))) (string-upcase q) )
         (format out "~%---------------------------------------------------------------------------"))
      (when question-text
-        (format out "~%Question Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
+        (format out "~%Question Description:~%~sEnd of ~a description." question-text (string-upcase q)))
       (format out "~%---------------------------------------------------------------------------")
       (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
         (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
