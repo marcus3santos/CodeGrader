@@ -43,41 +43,41 @@ SXM grammar:
 #+begin_example
 <sxm-expression> ::= <doc-tag>
 
-<doc-tag>        ::= "(" ":doc" <doc-props> <node-list> ")"
+<doc-node>        ::= "(" ":doc" <doc-props> <node-list> ")"
 <doc-props>      ::= "(" ":title" <string> ":folder" <string> ")"
 
 <node-list>      ::= <node> | <node> <node-list>
 <node>           ::= <string> 
-                   | <p-tag> | <ul-tag> | <ol-tag> | <li-tag> 
-                   | <s-tag> | <q-tag>  | <cb-tag> | <wa-tag> 
-                   | <tc-tag> | <gvn-tag> | <hdn-tag> | <a-tag> 
-                   | <sols-tag> | <sol-tag>
+                   | <p-node> | <ul-node> | <ol-node> | <li-node> 
+                   | <s-node> | <q-node>  | <cb-node> | <wa-node> 
+                   | <tc-node> | <gvn-node> | <hdn-node> | <a-node> 
+                   | <sols-node> | <sol-node>
 
-<p-tag>          ::= "(" ":p" <node-list> ")"
-<ul-tag>         ::= "(" ":ul" <node-list> ")"
-<ol-tag>         ::= "(" ":ol" <node-list> ")"
-<li-tag>         ::= "(" ":li" <node-list> ")"
+<p-node>          ::= "(" ":p" <node-list> ")"
+<ul-node>         ::= "(" ":ul" <node-list> ")"
+<ol-node>         ::= "(" ":ol" <node-list> ")"
+<li-node>         ::= "(" ":li" <node-list> ")"
 
-<s-tag>          ::= "(" ":s" <s-props> <node-list> ")"
+<s-node>          ::= "(" ":s" <s-props> <node-list> ")"
 <s-props>        ::= "(" [ ":level" <integer> ] [ ":title" <string> ] ")"
 
-<q-tag>          ::= "(" ":q" <q-props> <node-list> ")"
-<q-props>        ::= "(" ":title" <string> ":number" <integer> 
+<q-node>          ::= "(" ":q" <q-props> <node-list> ")"
+<q-props>        ::= "(" [ ":title" <string> ]
                          [ ":forbidden" <list> ":penalty" <number> ] ")"
 
-<cb-tag>         ::= "(" ":cb" <cb-props> <node-list> ")"
+<cb-node>         ::= "(" ":cb" <cb-props> <node-list> ")"
 <cb-props>       ::= "(" ":language" <string> ")"
 
-<wa-tag>         ::= "(" ":wa" <node-list> ")"
-<tc-tag>         ::= "(" ":tc" <tc-props> <node-list> ")"
+<wa-node>         ::= "(" ":wa" <node-list> ")"
+<tc-node>         ::= "(" ":tc" <tc-props> <node-list> ")"
 <tc-props>       ::= "(" ":function" <symbol> ")"
 
-<gvn-tag>        ::= "(" ":gvn" <node-list> ")"
-<hdn-tag>        ::= "(" ":hdn" <node-list> ")"
-<sols-tag>       ::= "(" ":sols" <node-list> ")"
-<sol-tag>        ::= "(" ":sol" <lisp-code-list> ")"
+<gvn-node>        ::= "(" ":gvn" <node-list> ")"
+<hdn-node>        ::= "(" ":hdn" <node-list> ")"
+<sols-node>       ::= "(" ":sols" <node-list> ")"
+<sol-node>        ::= "(" ":sol" <lisp-code-list> ")"
 
-<a-tag>          ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
+<a-node>          ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
 
 <string>         ::= "\"" <characters> "\""
 <symbol>         ::= <alphanumeric-sequence>
@@ -91,13 +91,10 @@ Example:
   (:title "Common Lisp Practicum Test"
    :folder "~/pt") ;; Where students are required to store their solutions
   (:q ;; a question description; transated as a level 1 section "*" in orgmode
-    (:title "Question"
-     :number 1 
-     :penalty 80 ;;  the deduction in the student's score if they use a forbidden function
+    (:penalty 80 ;;  the deduction in the student's score if they use a forbidden function
      :forbidden (count member)) ;; the list of forbidden functions
     (:p "This question contains two parts.") ;; a paragraph.
-    (:wa  ;; What students are asked; must appear within a question expression
-      (:p "Part 1:")
+    (:wa  ;; What students are asked; must appear within a :q expression
       (:p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
         (:tc (:function count-occurrences)
          (:gvn ;; Given test cases           
@@ -119,12 +116,8 @@ Example:
             (defun count-occurrences (a b)
               (cond ((null b) 0)
                     ((= a (first b)) (1+ (count-occurrences a (rest b))))
-                    (t (count-occurrences a (rest b)))))))
-      (:p "Part 2:")
-      (:p "...")
-        ;; Additional example/test blocks can go here
-       ))
-  (:q ;; other question...))
+                    (t (count-occurrences a (rest b)))))))))
+  (:q ;; another question...))
 #+end_example
 
 ** Explanation of Fields
@@ -132,8 +125,7 @@ Example:
 - =:title= — Assessment title.
 - =:folder= — Directory path where students are required to save their solutions.
 - =:q= — A section describing an individual exercise or problem.
-  - =:title= — The question title, e.g.  `"Question"` or `"Exercise"`.
-  - =:number= — Integer identifier for the question.
+  - =:title= — The question title. The default title is `"Question".
   - =:penalty= — (Optional) Penalty percentage for using forbidden functions.
   - =:forbidden= — (Optional) List of forbidden functions in Lisp syntax.
 - =:wa= — A section describing what the student is being asked. It can contain:

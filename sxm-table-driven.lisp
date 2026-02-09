@@ -22,7 +22,7 @@
    :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
            doc q s p ul ol li wa tc gvn hdn a cb sols sol)
    :tags-with-props '(:doc doc :q q :s s :tc tc :cb cb)
-   :env (list :level -1  :ol-p nil :i-num 0 :in-hdn-p nil :include-hidden include-hidden)))
+   :env (list :q-num 0 :level -1  :ol-p nil :i-num 0 :in-hdn-p nil :include-hidden include-hidden)))
 
 (defun register-tag (table name fn)
   (setf (gethash name table) fn))
@@ -144,7 +144,7 @@
   (register-tag table 'q-tag
                 (deftag q-tag (args state)
                   (destructuring-bind (props &rest body) args
-                    (let* ((number (getf props :number))
+                    (let* ((number (incf (getf (compiler-state-env state) :q-num)))
                            (forbidden (getf props :forbidden))
                            (penalty (getf props :penalty))
                            (q-label (format nil "q~a" number))
@@ -162,7 +162,7 @@
                           (compile-nodes body state) 
                         (values
                          (format nil "~%* ~a ~d~%~a" 
-                                 (getf props :title)
+                                 (getf props :title "Question")
                                  number
                                  body-text)
                          st))))))
