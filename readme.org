@@ -41,48 +41,64 @@ better automation and tooling.
 
 SXM grammar:
 #+begin_example
-<sxm-expression> ::= <doc-tag>
+<sxm-expression>   ::= <doc-node>
 
-<doc-node>        ::= "(" ":doc" <doc-props> <node-list> ")"
-<doc-props>      ::= "(" ":title" <string> ":folder" <string> ")"
+<doc-node>         ::= "(" ":doc" <doc-props> <doc-content-list> ")"
+<doc-props>        ::= "(" ":title" <string> ":folder" <string> ")"
 
-<node-list>      ::= <node> | <node> <node-list>
-<node>           ::= <string> 
-                   | <p-node> | <ul-node> | <ol-node> | <li-node> 
-                   | <s-node> | <q-node>  | <cb-node> | <wa-node> 
-                   | <tc-node> | <gvn-node> | <hdn-node> | <a-node> 
-                   | <sols-node> | <sol-node>
+<doc-content-list> ::= <standard-node> | <standard-node> <doc-content-list>
 
-<p-node>          ::= "(" ":p" <node-list> ")"
-<ul-node>         ::= "(" ":ul" <node-list> ")"
-<ol-node>         ::= "(" ":ol" <node-list> ")"
-<li-node>         ::= "(" ":li" <node-list> ")"
+<standard-node>    ::= <string> 
+                     | <p-node> | <ul-node> | <ol-node> | <li-node> 
+                     | <s-node> | <cb-node> | <wa-node> | <q-node>
 
-<s-node>          ::= "(" ":s" <s-props> <node-list> ")"
-<s-props>        ::= "(" [ ":level" <integer> ] [ ":title" <string> ] ")"
+<q-node>           ::= "(" ":q" <q-props> <q-content-list> ")"
+<q-props>          ::= "(" [ ":title" <string> ] 
+                           [ ":forbidden" <list> ":penalty" <number> ] ")"
 
-<q-node>          ::= "(" ":q" <q-props> <node-list> ")"
-<q-props>        ::= "(" [ ":title" <string> ]
-                         [ ":forbidden" <list> ":penalty" <number> ] ")"
+<q-content-list>   ::= <q-element> | <q-element> <q-content-list>
+<q-element>        ::= <string> | <p-node> | <ul-node> | <ol-node> 
+                     | <li-node> | <s-node> | <cb-node> | <wa-node>
+                     | <tc-node> | <sols-node>
 
-<cb-node>         ::= "(" ":cb" <cb-props> <node-list> ")"
-<cb-props>       ::= "(" ":language" <string> ")"
+<tc-node>          ::= "(" ":tc" <tc-props> <tc-content-list> ")"
+<tc-props>         ::= "(" ":function" <symbol> ")"
 
-<wa-node>         ::= "(" ":wa" <node-list> ")"
-<tc-node>         ::= "(" ":tc" <tc-props> <node-list> ")"
-<tc-props>       ::= "(" ":function" <symbol> ")"
+<tc-content-list>  ::= <tc-element> | <tc-element> <tc-content-list>
+<tc-element>       ::= <string> | <p-node> | <cb-node> | <gvn-node> | <hdn-node>
 
-<gvn-node>        ::= "(" ":gvn" <node-list> ")"
-<hdn-node>        ::= "(" ":hdn" <node-list> ")"
-<sols-node>       ::= "(" ":sols" <node-list> ")"
-<sol-node>        ::= "(" ":sol" <lisp-code-list> ")"
+<gvn-node>         ::= "(" ":gvn" <data-content-list> ")"
+<hdn-node>         ::= "(" ":hdn" <data-content-list> ")"
 
-<a-node>          ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
+<data-content-list> ::= <data-element> | <data-element> <data-content-list>
+<data-element>      ::= <string> | <p-node> | <a-node>
 
-<string>         ::= "\"" <characters> "\""
-<symbol>         ::= <alphanumeric-sequence>
-<integer>        ::= <digit> | <digit> <integer>
-<lisp-expression>::= <any-valid-common-lisp-form>
+<a-node>            ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
+
+<sols-node>        ::= "(" ":sols" <sols-list> ")"
+<sols-list>        ::= <sol-node> | <sol-node> <sols-list>
+<sol-node>         ::= "(" ":sol" <lisp-program> ")"
+
+<p-node>           ::= "(" ":p" <general-list> ")"
+<ul-node>          ::= "(" ":ul" <general-list> ")"
+<ol-node>          ::= "(" ":ol" <general-list> ")"
+<li-node>          ::= "(" ":li" <general-list> ")"
+<s-node>           ::= "(" ":s" <s-props> <general-list> ")"
+<wa-node>          ::= "(" ":wa" <general-list> ")"
+<cb-node>          ::= "(" ":cb" <cb-props> <general-list> ")"
+
+<general-list>     ::= <standard-node> | <standard-node> <general-list>
+
+<s-props>          ::= "(" [ ":level" <integer> ] [ ":title" <string> ] ")"
+<cb-props>         ::= "(" ":language" <string> ")"
+
+<string>           ::= "\"" <characters> "\""
+<symbol>           ::= <alphanumeric-sequence>
+<integer>          ::= <digit> | <digit> <integer>
+<number>           ::= <integer> | <integer> "." <integer>
+<list>             ::= "(" <element-list> ")"
+<lisp-expression>  ::= <any-valid-common-lisp-form>
+<lisp-program>     ::= <any-valid-common-lisp-code>
 #+end_example
 
 Example:
@@ -95,28 +111,28 @@ Example:
      :forbidden (count member)) ;; the list of forbidden functions
     (:p "This question contains two parts.") ;; a paragraph.
     (:wa  ;; What students are asked; must appear within a :q expression
-      (:p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")
-        (:tc (:function count-occurrences)
-         (:gvn ;; Given test cases           
-          (:a ;; an assertion specifying a function call and its expected result
-            (count-occurrences 3 '(1 2 3 3 3 4)) 3)
-          (:a (count-occurrences 'a '(a b a c a)) 3)
-          (:a (count-occurrences 5 '(1 2 3 4)) 0))
-         (:hdn ;; Hidden test cases used for grading a student's solution
-          (:a (count-occurrences 1 '(1 1 1 1 1)) 5)
-          (:a (count-occurrences 0 '(1 2 3 4)) 0)
-          (:a (count-occurrences 'z '(a b c z z)) 2)))
-        (:sols
-          (:sol
-            (defun count-occurrences (a b &optional (acc 0))
-              (cond ((null b) acc)
-                    ((= a (car b)) (count-occurrences a (cdr b) (1+ acc)))
-                    (t (count-occurrences a (cdr b) acc)))))
-          (:sol
-            (defun count-occurrences (a b)
-              (cond ((null b) 0)
-                    ((= a (first b)) (1+ (count-occurrences a (rest b))))
-                    (t (count-occurrences a (rest b)))))))))
+      (:p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")))
+    (:tc (:function count-occurrences)
+      (:gvn ;; Given test cases           
+        (:a ;; an assertion specifying a function call and its expected result
+          (count-occurrences 3 '(1 2 3 3 3 4)) 3)
+        (:a (count-occurrences 'a '(a b a c a)) 3)
+        (:a (count-occurrences 5 '(1 2 3 4)) 0))
+      (:hdn ;; Hidden test cases used for grading a student's solution
+        (:a (count-occurrences 1 '(1 1 1 1 1)) 5)
+        (:a (count-occurrences 0 '(1 2 3 4)) 0)
+        (:a (count-occurrences 'z '(a b c z z)) 2)))
+      (:sols
+        (:sol
+          (defun count-occurrences (a b &optional (acc 0))
+            (cond ((null b) acc)
+                  ((= a (car b)) (count-occurrences a (cdr b) (1+ acc)))
+                  (t (count-occurrences a (cdr b) acc)))))
+        (:sol
+          (defun count-occurrences (a b)
+            (cond ((null b) 0)
+                  ((= a (first b)) (1+ (count-occurrences a (rest b))))
+                  (t (count-occurrences a (rest b)))))))  
   (:q ;; another question...))
 #+end_example
 

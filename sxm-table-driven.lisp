@@ -182,8 +182,7 @@
                 (deftag wa-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((metadata (compiler-state-metadata state))
-                           (q-labels-list-symb (gethash "questions" metadata))
-                           (q-label-symb (first q-labels-list-symb))
+                           (q-label-symb (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                            (folder-name (gethash "folder" metadata))
                            (str1 (format nil "You are required to write the solutions for the parts of this question in the lisp program file *~a~a.lisp* ."
                                          folder-name
@@ -214,7 +213,7 @@
                 (deftag tc-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (let* ((metadata (compiler-state-metadata state))
-                           (latest-q (first (gethash "questions" metadata)))
+                           (latest-q (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                            (q-data (gethash latest-q metadata))
                            (fname (getf props :function))
                            (fnames-data (gethash "fnames" metadata)))
@@ -231,7 +230,7 @@
                 (deftag gvn-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((metadata (compiler-state-metadata state))
-                           (q-label (first (gethash "questions" metadata)))
+                           (q-label (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                            (latest-q-data (gethash q-label metadata))
                            (fun-name (first (second (assoc "asked-functions" latest-q-data :test #'string=))))
                            (tc-code (gen-tc-code q-label fun-name body))
@@ -251,7 +250,7 @@
                     (setf (getf (compiler-state-env state) :in-hdn-p) t)
                     (when (getf (compiler-state-env state) :include-hidden)
                       (let* ((metadata (compiler-state-metadata state))
-                             (q-label (first (gethash "questions" metadata)))
+                             (q-label (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                              (latest-q-data (gethash q-label metadata))
                              (fun-name (first (second (assoc "asked-functions" latest-q-data :test #'string=))))
                              (tc-code (gen-tc-code q-label fun-name body))
@@ -276,7 +275,7 @@
                   (destructuring-bind (&rest body) args
                     (when (getf  (compiler-state-env state) :include-hidden)
                       (let* ((metadata (compiler-state-metadata state))
-                             (q-label (first (gethash "questions" metadata)))
+                             (q-label (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                              (latest-q-data (gethash q-label metadata)))
                         (setf (gethash q-label metadata) (cons (list "solutions") latest-q-data))))
                     (multiple-value-bind (body-text st)
@@ -288,7 +287,7 @@
                   (destructuring-bind (&rest body) args
                     (when (getf  (compiler-state-env state) :include-hidden)
                       (let* ((metadata (compiler-state-metadata state))
-                             (q-label (first (gethash "questions" metadata)))
+                             (q-label (format nil "q~a" (getf (compiler-state-env state) :q-num)))
                              (latest-q-data (gethash q-label metadata))
                              (sols (rest (assoc "solutions" latest-q-data :test #'string=)))
                              (rmv-sols-q-data (remove "solutions" latest-q-data :key #'first :test #'string=))
