@@ -239,10 +239,7 @@
                             (cons gvn-data latest-q-data))
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
-                        (values
-                         (format nil "#+BEGIN_SRC lisp~&~a#+END_SRC"
-                                 body-text)
-                         st))))))
+                        (values (format nil "~s" body-text) st))))))
   
   (register-tag table 'hdn-tag
                 (deftag hdn-tag (args state)
@@ -266,7 +263,7 @@
                     (values
                      (if (getf (compiler-state-env state) :in-hdn-p)
                          ""
-                         (format nil "- The expression below~%~%    ~s~%~%  should evaluate to~%~%    ~s~%~%" 
+                         (format nil "~%#+BEGIN_SRC lisp~%The expression below~%~%  ~s~%~%should evaluate to~%~%  ~s~%#+END_SRC~%" 
                                  call expected))
                      state))))
 
@@ -294,8 +291,6 @@
                              (sols-data `("solutions" ,@(append sols (list `(sol ,@body))))))
                         (setf (gethash q-label metadata) (cons sols-data rmv-sols-q-data))))
                     (values ""  state)))))
-
-
 
 (defun rename-tags (markup state)             
   (if (consp markup)                    
@@ -406,3 +401,12 @@
       (format t "~&Assessment metadata file created at: ~a~%" exam-data-file))))
 
 
+(let ((form '(:doc (:title "A doc" :folder "~/")
+              (:q ()
+               (:tc (:function fact)
+                (:gvn
+                 (:p "A simple call")
+                 (:a (fact 0) 0)
+                 (:p "Another example:")
+                 (:a (fact 1) 1)))))))
+  (format t "~s" (compile-sxm-form form t)))
