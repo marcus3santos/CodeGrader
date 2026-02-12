@@ -55,12 +55,12 @@ SXM grammar:
 <ol-node>           ::= (:ol <node>*)
 <li-node>           ::= (:li <node>*)
 <wa-node>           ::= (:wa <node>*)
-<s-node>            ::= (:s (:level <integer>? :title <string>?) <node>*)
+<s-node>            ::= (:s ([:level <integer>] [:title <string>]) <node>*)
 <cb-node>           ::= (:cb (:language <string>) <node>*)
 
 ;; --- Question & Metadata Nodes ---
 <q-node>            ::= (:q <q-props> <q-element>*)
-<q-props>           ::= (:title <string>? [:forbidden <list> :penalty <number>]?)
+<q-props>           ::= ([:title <string>] [:forbidden <list> :penalty <number>])
 <q-element>         ::= <node> | <tc-node> | <sols-node>
 
 <tc-node>           ::= (:tc (:function <symbol>) <tc-element>*)
