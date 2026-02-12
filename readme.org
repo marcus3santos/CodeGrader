@@ -41,64 +41,48 @@ better automation and tooling.
 
 SXM grammar:
 #+begin_example
-<sxm-expression>   ::= <doc-node>
+;; --- Top Level Structure ---
+<sxm-expression>    ::= <doc-node>
+<doc-node>          ::= (:doc (:title <string> :folder <string>) <node>*)
 
-<doc-node>         ::= "(" ":doc" <doc-props> <doc-content-list> ")"
-<doc-props>        ::= "(" ":title" <string> ":folder" <string> ")"
+;; --- Shared Node Definition ---
+<node>              ::= <string> | <p-node> | <ul-node> | <ol-node> | <li-node> | 
+                        <s-node> | <cb-node> | <wa-node> | <q-node>
 
-<doc-content-list> ::= <standard-node> | <standard-node> <doc-content-list>
+;; --- Standard Content Nodes ---
+<p-node>            ::= (:p <node>*)
+<ul-node>           ::= (:ul <node>*)
+<ol-node>           ::= (:ol <node>*)
+<li-node>           ::= (:li <node>*)
+<wa-node>           ::= (:wa <node>*)
+<s-node>            ::= (:s (:level <integer>? :title <string>?) <node>*)
+<cb-node>           ::= (:cb (:language <string>) <node>*)
 
-<standard-node>    ::= <string> 
-                     | <p-node> | <ul-node> | <ol-node> | <li-node> 
-                     | <s-node> | <cb-node> | <wa-node> | <q-node>
+;; --- Question & Metadata Nodes ---
+<q-node>            ::= (:q <q-props> <q-element>*)
+<q-props>           ::= (:title <string>? [:forbidden <list> :penalty <number>]?)
+<q-element>         ::= <node> | <tc-node> | <sols-node>
 
-<q-node>           ::= "(" ":q" <q-props> <q-content-list> ")"
-<q-props>          ::= "(" [ ":title" <string> ] 
-                           [ ":forbidden" <list> ":penalty" <number> ] ")"
+<tc-node>           ::= (:tc (:function <symbol>) <tc-element>*)
+<tc-element>        ::= <string> | <p-node> | <cb-node> | <gvn-node> | <hdn-node>
 
-<q-content-list>   ::= <q-element> | <q-element> <q-content-list>
-<q-element>        ::= <string> | <p-node> | <ul-node> | <ol-node> 
-                     | <li-node> | <s-node> | <cb-node> | <wa-node>
-                     | <tc-node> | <sols-node>
-
-<tc-node>          ::= "(" ":tc" <tc-props> <tc-content-list> ")"
-<tc-props>         ::= "(" ":function" <symbol> ")"
-
-<tc-content-list>  ::= <tc-element> | <tc-element> <tc-content-list>
-<tc-element>       ::= <string> | <p-node> | <cb-node> | <gvn-node> | <hdn-node>
-
-<gvn-node>         ::= "(" ":gvn" <data-content-list> ")"
-<hdn-node>         ::= "(" ":hdn" <data-content-list> ")"
-
-<data-content-list> ::= <data-element> | <data-element> <data-content-list>
+<gvn-node>          ::= (:gvn <data-element>*)
+<hdn-node>          ::= (:hdn <data-element>*)
 <data-element>      ::= <string> | <p-node> | <a-node>
+<a-node>            ::= (:a <lisp-form> <lisp-form>)
 
-<a-node>            ::= "(" ":a" <lisp-expression> <lisp-expression> ")"
+;; --- Solutions ---
+<sols-node>         ::= (:sols <sol-node>+)
+<sol-node>          ::= (:sol <lisp-code>)
 
-<sols-node>        ::= "(" ":sols" <sols-list> ")"
-<sols-list>        ::= <sol-node> | <sol-node> <sols-list>
-<sol-node>         ::= "(" ":sol" <lisp-program> ")"
-
-<p-node>           ::= "(" ":p" <general-list> ")"
-<ul-node>          ::= "(" ":ul" <general-list> ")"
-<ol-node>          ::= "(" ":ol" <general-list> ")"
-<li-node>          ::= "(" ":li" <general-list> ")"
-<s-node>           ::= "(" ":s" <s-props> <general-list> ")"
-<wa-node>          ::= "(" ":wa" <general-list> ")"
-<cb-node>          ::= "(" ":cb" <cb-props> <general-list> ")"
-
-<general-list>     ::= <standard-node> | <standard-node> <general-list>
-
-<s-props>          ::= "(" [ ":level" <integer> ] [ ":title" <string> ] ")"
-<cb-props>         ::= "(" ":language" <string> ")"
-
-<string>           ::= "\"" <characters> "\""
-<symbol>           ::= <alphanumeric-sequence>
-<integer>          ::= <digit> | <digit> <integer>
-<number>           ::= <integer> | <integer> "." <integer>
-<list>             ::= "(" <element-list> ")"
-<lisp-expression>  ::= <any-valid-common-lisp-form>
-<lisp-program>     ::= <any-valid-common-lisp-code>
+;; --- Atomic Types ---
+<string>            ::= "characters"
+<symbol>            ::= keyword-or-lisp-symbol
+<integer>           ::= [0-9]+
+<number>            ::= [0-9]+ | [0-9]+.[0-9]+
+<list>              ::= (<atom>*)
+<lisp-form>         ::= any-valid-common-lisp-form
+<lisp-code>         ::= any-valid-common-lisp-program-text
 #+end_example
 
 Example:
