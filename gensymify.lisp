@@ -42,6 +42,8 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
        (walk (f venv fenv)
          (cond
            ((symbolp f) (vlookup f venv))
+           ((and (consp f) (eq 'function (car f)))
+            (list 'function (flookup (cadr f) fenv)))
            ((and (consp f) (eq (car f) 'quote)) f)
 
            ;; LAMBDA
@@ -164,6 +166,13 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
         (walk form venv fenv)
       (error () form))))
 
+(defun function-form-p (form)
+  (and (consp form)                             ; Is it a list?
+       (eq (car form) 'function)                ; Does it start with 'function'?
+       (symbolp (cadr form))                    ; Is the second part a symbol?
+       (null (cddr form))))                     ; Is there nothing else in the list?
+
+
 (defun normalize-gensyms (form)
   "Replace all gensyms with deterministic symbols G1, G2, ...
    and normalize equivalent forms, first <-> car, ..."
@@ -175,7 +184,10 @@ Handles complex lambda lists for DEFUN, LAMBDA, FLET, and LABELS."
                   (or (gethash x table)
                       (setf (gethash x table)
                             (intern (format nil "G~D" (incf counter))))))
-                 ((and (consp x) ; open-branch if a
+                 ((and (consp x) (eq 'function (car x))) ;; Handles #'x, the (function ....) form
+                  (list 'function (norm (second x))))
+
+                 ((and (consp x)        ; open-branch if a
                        (eq 'if (first x))
                        (null (cdddr x)))
                   (list 'when (norm (second x)) (norm (third x))))

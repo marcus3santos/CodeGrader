@@ -129,7 +129,11 @@ Returns T if A is considered less than B."
           (seq-edit-distance (node-children t1)
                              (node-children t2)))))))
 
+
 (defun normalize (f)
+  (sort-form (normalize-gensyms (gensymify f))))
+
+(defun normalize-expand (f)
   (let* ((gensymified (gensymify f))
          (normed-gensyms (normalize-gensyms gensymified))
          (macroexpanded (macroexpand normed-gensyms)))
@@ -137,8 +141,8 @@ Returns T if A is considered less than B."
 
 
 (defun similarity (qs ss)
-  (let* ((nqs (normalize qs))
-         (nss (normalize ss))
+  (let* ((nqs (normalize-expand qs))
+         (nss (normalize-expand ss))
          (distance (tree-edit-distance nqs nss))
         (tree-size (tree-size qs)))
     (if (> distance tree-size)
@@ -254,6 +258,6 @@ Returns T if A is considered less than B."
               (let ((similarity-score (similarity instructor-solution student-sols-with-embedded-helpers)))
                 (when (or (null max-similarity)
                           (> similarity-score (first max-similarity)))
-                  (setf max-similarity (list similarity-score instructor-solution student-sols-with-embedded-helpers)))))
+                  (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sols-with-embedded-helpers))))))
             instructor-sols-with-embedded-helpers)
       max-similarity)))

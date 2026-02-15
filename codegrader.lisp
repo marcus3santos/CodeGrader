@@ -82,10 +82,11 @@ Please check your logic and consider adding a termination condition.")
                                     (let ((qlabel (first x))
                                           (error-message (second (second x))))
                                       (unless (and (stringp error-message) (string= "missing-question-file" error-message))
-                                        (list qlabel)))) (cadr eval))))
+                                        (list qlabel))))
+                                  (reverse (cadr eval)))))
   (format out "- Each question is worth 100 points.~%- Your score in the assessment is the sum of your questions' points divided by the number of questions in the assessment.~%")
   (format out "Your final score in this assessment: ~a (out of 100)~%" (car eval))
-  (dolist (question (cadr eval))
+  (dolist (question (reverse (cadr eval)))
     (let* ((q (car question))
            (qeval (cadr question))
            (mark (first qeval))
@@ -100,7 +101,7 @@ Please check your logic and consider adding a termination condition.")
            (pos (position #\- unit-test-name))
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
-      (format out "~%* QUESTION: ~a~%~%Your score: ~a points (out of 100).~a~%"
+      (format out "~%* QUESTION: ~a~%~%Your score: ~,2F points (out of 100).~a~%"
               (string-upcase q)
               (if (nth 4 solution-similarity) (nth 4 solution-similarity) 0.0)
               (if (nth 3 solution-similarity) (nth 3 solution-similarity) ""))
@@ -109,7 +110,7 @@ Please check your logic and consider adding a termination condition.")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
-        (format out "~%Your Solution:~%~A~%~%Your Solution normalized and macroexpanded:~%~a~%~%End of Your Solution for ~a" (read-from-string std-sol)  (normalize (first (third solution-similarity))) (string-upcase q) )
+        (format out "~%Your Solution:~%~s~%~%Your Solution, normalized for comparison with the instructor's solutions:~%~s~%~%End of Your Solution for ~a" (read-from-string std-sol)   (first (third solution-similarity)) (string-upcase q) )
         (format out "~%---------------------------------------------------------------------------"))
      (when question-text
         (format out "~%Question Description:~%~sEnd of ~a description." question-text (string-upcase q)))
@@ -157,7 +158,7 @@ Please check your logic and consider adding a termination condition.")
            (pos (position #\- unit-test-name))
            (func-name (if pos (subseq unit-test-name (1+ pos))
                           unit-test-name)))
-      (format out "~%* QUESTION: ~a~%Your score: ~a points (out of 100).~%" (string-upcase q) mark)
+      (format out "~%* QUESTION: ~a~%Your score: ~,2F points (out of 100).~%" (string-upcase q) mark)
       (when question-text
         (format out "Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
       (format out "~%---------------------------------------------------------------------------")
@@ -166,7 +167,7 @@ Please check your logic and consider adding a termination condition.")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
-        (format out "~%Your Solution:~%~A~%~%End of Your Solution for ~a." std-sol (string-upcase q))
+        (format out "~%Your Solution:~%~s~%~%End of Your Solution for ~a." std-sol (string-upcase q))
         (format out "~%---------------------------------------------------------------------------"))
      
       (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
@@ -195,11 +196,13 @@ Please check your logic and consider adding a termination condition.")
     (with-open-file (out folder :direction :output :if-exists :supersede)
       (generate-messages out eval))))
 
+#|
 (defun generate-d2l-feedback (key eval feedback-folder)
   (let* ((fname (concatenate 'string (subseq key 0 (1- (length key))) ".txt"))
 	 (folder (ensure-directories-exist (concatenate 'string  (namestring feedback-folder) fname))))
     (with-open-file (out folder :direction :output :if-exists :supersede)
       (generate-messages out eval))))
+|#
 
 (defun get-std-id (csv)
   (subseq csv 1 (position #\, csv)))
@@ -507,7 +510,7 @@ Please check your logic and consider adding a termination condition.")
                                 (format nil "~a/" folder-raw))))
          (assessment-data (with-open-file (in assessment-data-file :direction :input)
                             (read in)))
-         (assessment-questions (second (assoc "questions" assessment-data :test #'string=))))
+         (assessment-questions  (second (assoc "questions" assessment-data :test #'string=))))
     (create-temp-solution-files folder assessment-questions assessment-data)
     (mapcar (lambda (q g h)
               (format t "~a's test cases results:~%~TGiven:~%~T~T~a~%~THidden:~%~T~T~a~%" q g h))
@@ -626,7 +629,7 @@ Global Constants Used:
       (cond 
         ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
         ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS (* MAX-STYLE-BONUS STYLE-SIMILARITY)), where:~%- Your solution CORRECTNESS: ~a~%- The MAX-STYLE-BONUS: ~a~%- Your solution's STYLE-SIMILARITY: ~a, which is greater or equal than the minimum ~a~%- Your style bonus marks: (* ~a ~a)~%Note: Your STYLE-SIMILARITY was ~a. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS (* MAX-STYLE-BONUS STYLE-SIMILARITY)), where:~%- Your solution CORRECTNESS: ~,2F~%- The MAX-STYLE-BONUS: ~a~%- Your solution's STYLE-SIMILARITY: ~a, which is greater or equal than the minimum ~a~%- Your style bonus marks: (* ~a ~a)~%Note: Your STYLE-SIMILARITY was ~a. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
                                               correctness
                                               +style-bonus-mark+
                                               rounded-similarity
@@ -641,7 +644,7 @@ Global Constants Used:
         ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
         ;; We return 100 directly to ensure they aren't dragged down by style.
         ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS 0.0), where:~%- Your solution CORRECTNESS: ~a~%Note: Your solution’s code style similarity, ~a, is below the required minimum, ~a, to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS 0.0), where:~%- Your solution CORRECTNESS: ~,2F~%Note: Your solution’s code style similarity, ~a, is below the required minimum, ~a, to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
                                               correctness
                                               rounded-similarity
                                               +similarity-threshold+
@@ -651,10 +654,10 @@ Global Constants Used:
 
         ;; Case 3: All other cases (Standard weighted average)
         (t
-         (let* ((base-msg " Calculation, in Lisp notation: (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~a~%- CORRECTNESS-WEIGHT for this assessment: ~a~%- The STYLE-WEIGHT for this assessment: ~a~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
-                (suffix (if (zerop rounded-similarity)
+         (let* ((base-msg " Calculation, in Lisp notation: (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~,2F~%- CORRECTNESS-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to solution correctness. ~%- The STYLE-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to proper programming style.~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
+                (suffix (if nil ;;(zerop rounded-similarity)
                             "reflects the maximum style similarity found between your solution and the solutions recorded for this question. Since there was zero similarity, no instructor solution will shown in this feedback report."
-                            "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution:~%~{~s~%~}"))
+                            "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"))
                 (full-msg (concatenate 'string base-msg suffix))
                 ;; Gather shared arguments
                 (args (list correctness
@@ -664,7 +667,7 @@ Global Constants Used:
            ;; Apply the format function
            (nconc similarity-data
                   (list (apply #'format nil full-msg 
-                               (if (zerop rounded-similarity) 
+                               (if nil ;;(zerop rounded-similarity) 
                                    args
                                    (append args (list (second similarity-data)))))
                         base-score))) 
@@ -675,20 +678,17 @@ Global Constants Used:
   (let* ((std-sub-folder (concatenate 'string (car (last (pathname-directory (second (assoc "folder" assessment-data :test #'string=))))) "/"))
          (student-files (directory (concatenate 'string (namestring  folder) std-sub-folder "*.*")))
          (solutions-evaluations (grade-solutions student-files assessment-questions assessment-data))
-         (seval (progn
-                  (list
-                   (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
-                                            (if (or (and (stringp (second (second e)))
-                                                         (string= (second (second e)) "No RT-error"))
-                                                    (and (listp (second (second e)))
-                                                         (string= (first (second (second e))) "used forbidden symbol")))                                       
-                                                (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
-                                                0.0))
-                                          solutions-evaluations))
-                      (length assessment-questions))
-                   ;;(/ (reduce #'+ solutions-evaluations :key #'caadr) (length assessment-questions))
-
-                   solutions-evaluations)))
+         (seval (list
+                 (/ (reduce #'+ (mapcar (lambda (e) ; averaged weighed score
+                                          (if (or (and (stringp (second (second e)))
+                                                       (string= (second (second e)) "No RT-error"))
+                                                  (and (listp (second (second e)))
+                                                       (string= (first (second (second e))) "used forbidden symbol")))                                       
+                                              (final-mark (first (second e)) (first (nth 6 (second e))) (nth 6 (second e)))
+                                              0.0))
+                                        solutions-evaluations))
+                    (length assessment-questions))
+                 solutions-evaluations))
          (item (make-submission :std-id (first std)
                                 :std-fname (second std)
                                 :std-lname (third std)
