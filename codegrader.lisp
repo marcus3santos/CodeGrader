@@ -629,7 +629,7 @@ Global Constants Used:
       (cond 
         ;; Case 1: Perfect correctness and style >= 0.5 (up to +style-bonus-mark+ Bonus)
         ((and (= correctness 100) (>= rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS (* MAX-STYLE-BONUS STYLE-SIMILARITY)), where:~%- Your solution CORRECTNESS: ~,2F~%- The MAX-STYLE-BONUS: ~a~%- Your solution's STYLE-SIMILARITY: ~a, which is greater or equal than the minimum ~a~%- Your style bonus marks: (* ~a ~a)~%Note: Your STYLE-SIMILARITY was ~a. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation:~%   (+ CORRECTNESS (* MAX-STYLE-BONUS STYLE-SIMILARITY)), where:~%- Your solution CORRECTNESS: ~,2F~%- The MAX-STYLE-BONUS: ~a~%- Your solution's STYLE-SIMILARITY: ~a, which is greater or equal than the minimum ~a~%- Your style bonus marks: (* ~a ~a)~%Note: Your STYLE-SIMILARITY was ~a. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
                                               correctness
                                               +style-bonus-mark+
                                               rounded-similarity
@@ -644,7 +644,7 @@ Global Constants Used:
         ;; Case 2: Perfect correctness but style <= 0.5 (No penalty)
         ;; We return 100 directly to ensure they aren't dragged down by style.
         ((and (= correctness 100) (<  rounded-similarity +similarity-threshold+))
-         (nconc similarity-data (list (format nil " Calculation, in Lisp notation: (+ CORRECTNESS 0.0), where:~%- Your solution CORRECTNESS: ~,2F~%Note: Your solution’s code style similarity, ~a, is below the required minimum, ~a, to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
+         (nconc similarity-data (list (format nil " Calculation, in Lisp notation:~%   (+ CORRECTNESS 0.0), where:~%- Your solution CORRECTNESS: ~,2F~%Note: Your solution’s code style similarity, ~a, is below the required minimum, ~a, to qualify for bonus marks. This factor [0 to 1] reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"
                                               correctness
                                               rounded-similarity
                                               +similarity-threshold+
@@ -654,7 +654,7 @@ Global Constants Used:
 
         ;; Case 3: All other cases (Standard weighted average)
         (t
-         (let* ((base-msg " Calculation, in Lisp notation: (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~,2F~%- CORRECTNESS-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to solution correctness. ~%- The STYLE-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to proper programming style.~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
+         (let* ((base-msg " Calculation, in Lisp notation:~%   (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~,2F~%- CORRECTNESS-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to solution correctness. ~%- The STYLE-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to proper programming style.~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
                 (suffix (if nil ;;(zerop rounded-similarity)
                             "reflects the maximum style similarity found between your solution and the solutions recorded for this question. Since there was zero similarity, no instructor solution will shown in this feedback report."
                             "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"))
