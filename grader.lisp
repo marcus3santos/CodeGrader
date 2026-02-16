@@ -323,13 +323,13 @@ the mark is calculated as the # of passes divided by the total # of cases.
            forbid-symb
            similarity)
       (unless *load-error*
-        
         (let* ((student-solution  (with-open-file (stream student-prog-file :direction :input) 
                                     (loop for form = (read stream nil nil)  
                                           while form
                                           collect form)))
                (raw-correctness-score (calc-mark *results* ws)))
-          (setf similarity (comp-similarity asked-functions student-solution question-solutions))
+          (when question-solutions
+            (setf similarity (comp-similarity asked-functions student-solution question-solutions)))
           (setf forbid-symb (some #'identity
                                   (mapcar #'(lambda (x)
                                               (let ((asked-function (intern (symbol-name x))))
@@ -362,8 +362,9 @@ the mark is calculated as the # of passes divided by the total # of cases.
        (change-results-readable *results*)
        (format nil "~s" (uiop:read-file-string student-prog-file))
        whats-asked
-       (if similarity similarity
-           "Program caused a compiling error.")))))
+       (if *load-error* 
+           "Program caused a loading error!"
+           similarity)))))
 
 (defun grade-code (student-solution question assessment-data &optional kind ws)
   "Loads the student-solution file, initializes the test-runtime environment, and invokes
@@ -380,7 +381,6 @@ the mark is calculated as the # of passes divided by the total # of cases.
         ((not (equal (pathname-type student-solution) "lisp"))
          (list 0 "not-lisp-file" "Not a lisp file" nil))
         (t (let ((grade (grade-code student-solution question assessmt-data kind)))
-             ;(format t "+++++~%Grade: ~s~%" grade)
              grade) )))
 
 

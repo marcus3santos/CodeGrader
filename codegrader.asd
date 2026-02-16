@@ -7,7 +7,7 @@
   :license  "Specify license here"
   :version "0.2"
   :serial t
-  :depends-on (#:zip :rutils)
+  :depends-on (#:zip :rutils :lisp-critic)
   :components ((:file "package")
                (:file "macros")
                (:file "gensymify")

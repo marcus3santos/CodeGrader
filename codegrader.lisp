@@ -725,6 +725,11 @@ Global Constants Used:
                   (string= user-name home)))
          (probe-file file))))
 
+(defun critique-student-solution (sol)
+  (format t "~%---------------------------------------------------------------------------")
+  (format t "~%Below is your program and, if applicable, suggestions ~%on how to improve your Lisp programming style:~%~%")
+  (lisp-critic:critique-file sol))
+
 (defun chk-my-solution (a#)
   "Checks a student's solution file against examples.
    a#: String identifying the solution file, e.g., '~/lab01/q1.lisp'."
@@ -737,7 +742,8 @@ Global Constants Used:
     (unwind-protect
          (let* ((eval (load-and-evaluate-solution a# question-name assessment-data))
                 (error-type (second eval)))
-           (handle-evaluation-output error-type eval question-name))
+           (handle-evaluation-output error-type eval question-name)
+           (critique-student-solution a#))
       (setf *package* current-pckg)))
   t)
 
