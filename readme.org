@@ -142,18 +142,20 @@ Assuming the SXM description for your assessment is located in the file =~/tmp/a
 #+begin_src lisp
   CL-USER> (in-package :SXM)
   ...
-  SXM> (gen-exam-files "~/tmp/assessment1.sxm" :include-hidden nil)
-  Generated assessment orgmode description file at: ~/tmp/assessment1.org
-  Generated assessment testing code at: ~/tmp/assessment1.data
+  SXM> (gen-exam-files "~/tmp/assessment1.sxm" :include-hidden t)
+  Assessment Org-mode file generated: ~/tmp/assessment1.org
+  Assessment HTML file created: ~/tmp/assessment1.html
+  Assessment PDF ile created: ~/tmp/assessment1.pdf
+  Assessment metadata file created: ~/tmp/assessment1.pdf
   SXM>
 #+end_src
 
 CodeGrader's GEN-EXAM-FILES function generates the following files within the `./Gen-files/` directory:
 
-- An Org mode file (=~/tmp/Gen-files/assessment1.org=) containing the assessment description. This file can be further processed using Emacs to export it to various formats such as HTML or PDF.
+- An Org-mode file (=~/tmp/Gen-files/assessment1.org=) containing the assessment description. 
+- The PDF and HTML files generated from the Org-mode file.
 - A data file (=~/tmp/Gen-files/assessment1.data=) that CodeGrader utilizes for the automated grading of student solutions.
-
-*NOTE*: To include the hidden test cases in the data file, call GEN-EXAM-FILES setting :INCLUDE-HIDDEN to T.
+*NOTE*: To omit the hidden test cases in the data file, call GEN-EXAM-FILES setting :INCLUDE-HIDDEN to NIL.
 
 ** Moving the assessment data file to its appropriate location
 
