@@ -20,16 +20,14 @@ Type the commands below an a linux or Mac terminal:
 
 * The Workflow
 
-The workflow involves the following steps:
-
-1. The instructor writes the assessment in s-expression markup (SXM).
-2. The instructor uses CodeGrader to generate from the SXM file the necessary support
-   files, including the formatted questions translated to orgmode and assessment-specific test
-   cases to be later used by CodeGrader to grade the students' solutions.
-4. Students complete the assessment created by the instructor,
-   providing their solutions to the given programming questions.
-5. The instructor uses CodeGrader to evaluate and grade the students'
-   solutions.
+- *Step 1: Authoring (The Source)* :: 
+  The instructor defines the assessment in *SXM (S-expression Markup)*. This file serves as the "single source of truth," encapsulating student-facing questions and public assertions alongside hidden grading tests and reference solutions.
+- *Step 2: Compilation (The Artifacts)* :: 
+  The instructor invokes the ~GEN-EXAM-FILES~ function to compile the SXM source. This automates the production of the assessment package: student-ready documents in *Org-mode, HTML, and PDF*, and a *.data* file containing the metadata and logic required for the autograding engine.
+- *Step 3: Practicum (Exam in Progress)* :: 
+  Students complete the programming practicum using the generated *PDF* as their primary guide. To verify their implementations, students utilize the ~CHK-MY-SOLUTION~ function, which provides immediate feedback by running their code against the public test cases.
+- *Step 4: Evaluation (Final Grading)* :: 
+  Once the exam concludes and solutions are collected on the host computer, the instructor uses CodeGrader to batch-process the submissions. The system evaluates each solution against the hidden assertions stored in the *.data* file to generate objective final grades.
 The next sections explain each of these workflow steps.
 
 * Writing a Lisp Programming Assessment Using SXM
