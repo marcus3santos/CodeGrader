@@ -20,24 +20,27 @@ Type the commands below an a linux or Mac terminal:
 
 * The Workflow
 
-- *Step 1: Authoring (The Source)* :: 
+- *Step 1: Authoring (The Source)*: 
   The instructor defines the assessment in *SXM (S-expression Markup)*. This file serves as the "single source of truth," encapsulating student-facing questions and public assertions alongside hidden grading tests and reference solutions.
-- *Step 2: Compilation (The Artifacts)* :: 
+- *Step 2: Compilation (The Artifacts)*: 
   The instructor invokes the ~GEN-EXAM-FILES~ function to compile the SXM source. This automates the production of the assessment package: student-ready documents in *Org-mode, HTML, and PDF*, and a *.data* file containing the metadata and logic required for the autograding engine.
-- *Step 3: Practicum (Exam in Progress)* :: 
+- *Step 3: Practicum (Exam in Progress)*: 
   Students complete the programming practicum using the generated *PDF* as their primary guide. To verify their implementations, students utilize the ~CHK-MY-SOLUTION~ function, which provides immediate feedback by running their code against the public test cases.
-- *Step 4: Evaluation (Final Grading)* :: 
-  Once the exam concludes and solutions are collected on the host computer, the instructor uses CodeGrader to batch-process the submissions. The system evaluates each solution against the hidden assertions stored in the *.data* file to generate objective final grades.
+- *Step 4: Evaluation (Automated Assessment)*: 
+  Once the exam concludes and solutions are collected, the instructor uses CodeGrader to batch-process submissions. The system calculates scores based on two primary metrics:
+  1. *Functional Correctness*: Performance against hidden test cases.
+  2. *Programming Style*: The structural similarity between the student's implementation and the reference solutions defined in the *.data* file.
+
 The next sections explain each of these workflow steps.
 
-* Writing a Lisp Programming Assessment Using SXM
+* Phase 1: Authoring Assessments in SXM
 
-Instructors write their Lisp assessments in SXM. This structured format simplifies parsing and enables
-better automation and tooling.
+Instructors author their programming exams using *SXM (S-expression Markup)*. This structured format leverages Lisp's native syntax to simplify parsing while enabling sophisticated automation and pedagogical tooling.
 
-** SXM Structure Overview
+** SXM Grammar Overview
 
-SXM grammar:
+The following EBNF grammar defines the structure of an SXM document:
+
 #+begin_example
 ;; --- Top Level Structure ---
 <sxm-expression>    ::= <doc-node>
@@ -72,96 +75,79 @@ SXM grammar:
 ;; --- Solutions ---
 <sols-node>         ::= (:sols <sol-node>+)
 <sol-node>          ::= (:sol <lisp-code>)
-
-;; --- Atomic Types ---
-<string>            ::= "characters"
-<symbol>            ::= keyword-or-lisp-symbol
-<integer>           ::= [0-9]+
-<number>            ::= [0-9]+ | [0-9]+.[0-9]+
-<list>              ::= (<atom>*)
-<lisp-form>         ::= any-valid-common-lisp-form
-<lisp-code>         ::= any-valid-common-lisp-program-text
 #+end_example
 
-Example:
+** SXM Implementation Example
+
+The following example demonstrates a question that restricts specific functions and provides both public and hidden test cases.
+
 #+begin_example
-(:doc ;; The assessment description
+(:doc 
   (:title "Common Lisp Practicum Test"
-   :folder "~/pt") ;; Where students are required to store their solutions
-  (:q ;; a question description; transated as a level 1 section "*" in orgmode
-    (:penalty 80 ;;  the deduction in the student's score if they use a forbidden function
-     :forbidden (count member)) ;; the list of forbidden functions
-    (:p "This question contains two parts.") ;; a paragraph.
-    (:wa  ;; What students are asked; must appear within a :q expression
-      (:p "Write a function COUNT-OCCURRENCES that takes an element and a list as arguments and returns the number of times the element appears in the list.")))
+   :folder "~/pt") ;; Target directory for student solutions
+  (:q 
+    (:penalty 80     ;; Score deduction for using forbidden symbols
+     :forbidden (count member)) 
+    (:p "This question contains two parts.") 
+    (:wa 
+      (:p "Write a function COUNT-OCCURRENCES that takes an element and a list and returns the frequency of that element."))
     (:tc (:function count-occurrences)
-      (:gvn ;; Given test cases           
-        (:a ;; an assertion specifying a function call and its expected result
-          (count-occurrences 3 '(1 2 3 3 3 4)) 3)
-        (:a (count-occurrences 'a '(a b a c a)) 3)
-        (:a (count-occurrences 5 '(1 2 3 4)) 0))
-      (:hdn ;; Hidden test cases used for grading a student's solution
+      (:gvn ;; Public assertions: visible to students via CHK-MY-SOLUTION
+        (:a (count-occurrences 3 '(1 2 3 3 3 4)) 3)
+        (:a (count-occurrences 'a '(a b a c a)) 3))
+      (:hdn ;; Hidden assertions: used by CodeGrader for final evaluation
         (:a (count-occurrences 1 '(1 1 1 1 1)) 5)
-        (:a (count-occurrences 0 '(1 2 3 4)) 0)
         (:a (count-occurrences 'z '(a b c z z)) 2)))
-      (:sols
-        (:sol
-          (defun count-occurrences (a b &optional (acc 0))
-            (cond ((null b) acc)
-                  ((= a (car b)) (count-occurrences a (cdr b) (1+ acc)))
-                  (t (count-occurrences a (cdr b) acc)))))
-        (:sol
-          (defun count-occurrences (a b)
-            (cond ((null b) 0)
-                  ((= a (first b)) (1+ (count-occurrences a (rest b))))
-                  (t (count-occurrences a (rest b)))))))  
-  (:q ;; another question...))
+    (:sols
+      (:sol
+        (defun count-occurrences (a b &optional (acc 0))
+          (cond ((null b) acc)
+                ((eql a (car b)) (count-occurrences a (cdr b) (1+ acc)))
+                (t (count-occurrences a (cdr b) acc)))))
+      (:sol
+        (defun count-occurrences (a b)
+          (count if (lambda (x) (eql x a)) b)))))
 #+end_example
 
-** Explanation of Fields
+** Key Field Definitions
 
-- =:title= — Assessment title.
-- =:folder= — Directory path where students are required to save their solutions.
-- =:q= — A section describing an individual exercise or problem.
-  - =:title= — The question title. The default title is `"Question".
-  - =:penalty= — (Optional) Penalty percentage for using forbidden functions.
-  - =:forbidden= — (Optional) List of forbidden functions in Lisp syntax.
-- =:wa= — A section describing what the student is being asked. It can contain:
-- =(:p ...)= - paragraphs
-- =(:tc ...)= - test cases
-- =(:gvn ...)=- Node  containing given test assertions; they are translated to code that students can use to test their solutions during the test.
-- =(:hdn ...)= - Node containing hidden test assertions; they are translated to code that CodeGrader will use to test the students' solutions after they complete the test.
-- =(:sols (:sol ... ...) (:sol ... ...)= - Node containing the question solution(s). The :sol node contains the forms of a solution. 
+- =:doc= :: The root node. The =:folder= property specifies where the student must save their work for the autograder to locate it.
+- =:q= :: Defines a question. Transpiles to a level-1 heading (~*~) in Org-mode.
+  - =:penalty= :: Percentage deducted if =:forbidden= symbols are detected in the student's code.
+- =:wa= :: (What is Asked) The problem description and student instructions.
+- =:tc= :: (Test Cases) Container for functional requirements.
+  - =:gvn= :: Publicly accessible test cases.
+  - =:hdn= :: Private test cases used for objective evaluation.
+- =:a= :: (Assertion) A pair representing a ~(function-call expected-result)~.
+- =:sols= :: Contains one or more valid =:sol= (Solution) nodes used for structural similarity grading.
 
-* Generating the Assessment Support Files
+* Phase 2: Generating Assessment Support Files
 
-Assuming the SXM description for your assessment is located in the file =~/tmp/assessment1.sxm=.
+Once the SXM file is finalized, the instructor compiles the assessment artifacts.
 
 #+begin_src lisp
-  CL-USER> (in-package :SXM)
-  ...
   SXM> (gen-exam-files "~/tmp/assessment1.sxm" :include-hidden t)
-  Assessment Org-mode file generated: ~/tmp/assessment1.org
-  Assessment HTML file generated: ~/tmp/assessment1.html
-  Assessment PDF ile generated: ~/tmp/assessment1.pdf
-  Assessment metadata file generated: ~/tmp/assessment1.pdf
-  SXM>
+  ;; Output:
+  ;; Assessment Org-mode file generated: ~/tmp/Gen-files/assessment1.org
+  ;; Assessment HTML file generated:    ~/tmp/Gen-files/assessment1.html
+  ;; Assessment PDF file generated:     ~/tmp/Gen-files/assessment1.pdf
+  ;; Assessment metadata file generated: ~/tmp/Gen-files/assessment1.data
 #+end_src
 
-CodeGrader's GEN-EXAM-FILES function generates the following files within the `./Gen-files/` directory:
+** Generated Artifacts
 
-- An Org-mode file (=~/tmp/Gen-files/assessment1.org=) containing the assessment description. 
-- The PDF and HTML files generated from the Org-mode file.
-- A data file (=~/tmp/Gen-files/assessment1.data=) that CodeGrader utilizes for the automated grading of student solutions.
-*NOTE*: To omit the hidden test cases in the data file, call GEN-EXAM-FILES setting :INCLUDE-HIDDEN to NIL.
+The ~GEN-EXAM-FILES~ function creates a =./Gen-files/= directory containing:
+1. *Assessment Documentation*: Org-mode, PDF, and HTML versions of the exam.
+2. *Grading Metadata*: A =.data= file that stores the assertion, reference solutions, and other relevant data required for automated evaluation.
 
-** Moving the assessment data file to its appropriate location
+*NOTE*: Set ~:include-hidden nil~ if you wish to generate a metadata file that excludes private test cases.
 
-Before the assessment, the instructor must ask IT staff to save the
-assessment data (.data) file in the *~/quicklisp/local-projects/Codegrader/Assessment-data/* directory.
+** Deployment
+
+To enable automated evaluation, the generated =.data= file must be moved to the CodeGrader central repository:
+=~/quicklisp/local-projects/Codegrader/Assessment-data/=
 
 * Student Interaction with the Assessment
-
 
 As it is typically the case, during a programming practicum assessment students are tasked with
 solving programming questions provided in the assessment description. This stage
