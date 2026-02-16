@@ -149,7 +149,7 @@ To enable automated evaluation, the generated =.data= file must be moved to the 
 
 * Phase 3: Student Interaction & The Practicum
 
-During the practicum, students solve the programming problems defined in the assessment. While the **PDF** serves as their primary guide, the students interact with the CodeGrader system through a specialized feedback loop designed to ensure compliance and promote better Lisp programming habits.
+During the practicum, students solve the programming problems defined in the assessment. While the *PDF* serves as their primary guide, the students interact with the CodeGrader system through a specialized feedback loop designed to ensure compliance and promote better Lisp programming habits.
 
 ** Student Requirements
 To succeed in the practicum, students must adhere to two primary constraints:
