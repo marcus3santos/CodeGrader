@@ -147,44 +147,70 @@ The ~GEN-EXAM-FILES~ function creates a =./Gen-files/= directory containing:
 To enable automated evaluation, the generated =.data= file must be moved to the CodeGrader central repository:
 =~/quicklisp/local-projects/Codegrader/Assessment-data/=
 
-* Student Interaction with the Assessment
+* Phase 3: Student Interaction & The Practicum
 
-As it is typically the case, during a programming practicum assessment students are tasked with
-solving programming questions provided in the assessment description. This stage
-involves students working through the programming problems, adhering
-to the specified requirements, and crafting solutions that meet the
-criteria outlined in the assessment.
+During the practicum, students solve the programming problems defined in the assessment. While the **PDF** serves as their primary guide, the students interact with the CodeGrader system through a specialized feedback loop designed to ensure compliance and promote better Lisp programming habits.
 
-The rewritten assessment specifies two key requirements:  
-1. *Allowed Lisp Functions*: Students must avoid using any forbidden
-   functions listed for each question. CodeGrader applies penalties
-   for violations. As seen earlier, the instructor defines this
-   penalties in the assessment description.
-2. *File Location and Naming*: Students must save their program files
-   in the designated folder and with the specified names, as outlined
-   in the header of the assessment. As seen earlier, the instructor
-   also defines the file location in the assessment description.
+** Student Requirements
+To succeed in the practicum, students must adhere to two primary constraints:
+1. *Function Restrictions*: Students must avoid the ~:forbidden~ functions listed for each question. CodeGrader automatically applies the instructor-defined penalties if these symbols are detected in the submission.
+2. *Filesystem Compliance*: Solutions must be saved in the designated folder (e.g., =~/pt1/=) using the exact filenames specified in the assessment header.
 
-To assist students in adhering to these requirements and verifying
-their progress, CodeGrader provides the function =CHK-MY-SOLUTION=. Students can use this function during the assessment to:
-- *Check Compliance*: Ensure their solution file is saved in the
-  correct folder and follows the naming convention specified in the
-  assessment.
-- *Run Example Test Cases*: Execute their solution against the
-  examples included in the assessment description to verify
-  correctness for those specific cases.
+** Real-time Feedback with ~CHK-MY-SOLUTION~
 
-*For example*: Suppose a student wants to verify whether their solution to Question 1 of Practicum Test 1 meets the assessment requirements. Assuming that solutions must be saved in the *~/pt1/* folder, the student can evaluate the following expression in the Lisp REPL to check their work after completing their solution: 
-#+begin_example  
-CL-USER> (CG:CHK-MY-SOLUTION "~/pt1/q1.lisp")  
-#+end_example  
+To assist students, CodeGrader provides the ~CHK-MY-SOLUTION~ function. This is more than a simple tester; it is a "live" assistant that helps students address issues before the final evaluation.
 
-This function will:  
-1. Validate that the solution is stored in the correct folder with the required name.  
-2. Execute the example test cases for *Question 1* and provide feedback on whether the solution passes these tests.  
+*** What ~CHK-MY-SOLUTION~ Does:
+1. *Path Validation*: Verifies that the file is in the correct directory with the correct name.
+2. *Functional Testing*: Executes the solution against the *given* (~:gvn~) test cases.
+3. *Style Coaching*: Analyzes the student's code for structural "smells" or poor naming conventions and provides immediate suggestions for improvement.
 
-By using =CHK-MY-SOLUTION=, students can identify and address
-potential issues early, ensuring their submissions align with the assessment's specifications.
+*** Example Session
+
+If a student is working on Question 1, they can evaluate the following in their REPL:
+
+#+begin_src lisp
+CL-USER> (cg:chk-my-solution "~/pt1/q1.lisp")
+#+end_src
+
+The output provides a comprehensive report, as shown below:
+
+#+begin_example
+[Lisp generated load messages]
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Note: In the messages above, Warning messages starting with
+    'WARNING: redefining TEST-RUNTIME::....'
+do not affect the results of your test cases.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Test Cases Results:
+When testing your solution for q1, the results obtained were the following:
+- Passed: (LIST-OF-ARRAYS NIL NIL) returned NIL
+- Passed: (LIST-OF-ARRAYS '(1 4 2) '(0 5 1)) returned (#(1 0 1) #(4 5 9) #(2 1 3))
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Idiomatic Style & Feedback:
+Below is your program and, if applicable, suggestions 
+on how to improve your Lisp programming style:
+
+**********************************************************************
+
+(DEFUN LIST-OF-ARRAYS (L1 L2)
+  (LABELS ((CREATE-SUM-ARRAY-HELPER (A B)
+             (MAKE-ARRAY 3 :INITIAL-CONTENTS (LIST A B (+ A B)))))
+    (MAPCAR #'CREATE-SUM-ARRAY-HELPER L1 L2)))
+----------------------------------------------------------------------
+Helper is not helpful name. A function name should primarily describe
+what is returned, and maybe with what input.
+----------------------------------------------------------------------
+#+end_example
+
+
+
+** Benefits of the Feedback Loop
+- *Early Correction*: Students catch path or naming errors immediately rather than at the end of the exam.
+- *Iterative Improvement*: By viewing the "Style Suggestions," students can refactor their code to achieve a higher "programming style" score during the final evaluation.
+- *Confidence*: The functional results provide certainty that the core logic meets the public requirements.
 
 * Grading students' solutions
 
