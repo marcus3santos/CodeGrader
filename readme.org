@@ -144,9 +144,9 @@ Assuming the SXM description for your assessment is located in the file =~/tmp/a
   ...
   SXM> (gen-exam-files "~/tmp/assessment1.sxm" :include-hidden t)
   Assessment Org-mode file generated: ~/tmp/assessment1.org
-  Assessment HTML file created: ~/tmp/assessment1.html
-  Assessment PDF ile created: ~/tmp/assessment1.pdf
-  Assessment metadata file created: ~/tmp/assessment1.pdf
+  Assessment HTML file generated: ~/tmp/assessment1.html
+  Assessment PDF ile generated: ~/tmp/assessment1.pdf
+  Assessment metadata file generated: ~/tmp/assessment1.pdf
   SXM>
 #+end_src
 
