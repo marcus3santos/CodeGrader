@@ -33,6 +33,7 @@
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
 
+(defparameter *separators* 75)
 
 ;; List of assessments and labs
 
@@ -111,13 +112,13 @@ Please check your logic and consider adding a termination condition.")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
         (format out "~%Your Solution:~%~s~%~%Your Solution, normalized for comparison with the instructor's solutions:~%~s~%~%End of Your Solution for ~a" (read-from-string std-sol)   (first (third solution-similarity)) (string-upcase q) )
-        (format out "~%---------------------------------------------------------------------------"))
+        (format out "~%~V@{~A~:*~}" *separators* "+"))
      (when question-text
         (format out "~%Question Description:~%~sEnd of ~a description." question-text (string-upcase q)))
-      (format out "~%---------------------------------------------------------------------------")
+      (format out "~%~V@{~A~:*~}" *separators* "+")
       (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
         (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
-        (format out "~%---------------------------------------------------------------------------")
+        (format out "~%~V@{~A~:*~}" *separators* "+")
         (setf *load-error-message* nil))
       
       (cond ((or (equalp error-type "load-error")
@@ -132,7 +133,7 @@ Please check your logic and consider adding a termination condition.")
              ))
       (when messages
         (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}End of Unit Tests for ~a." func-name messages (string-upcase q)))
-      (format out "~%---------------------------------------------------------------------------")))
+      (format out "~%~V@{~A~:*~}" *separators* "+")))
   (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
 
 (defun generate-messages-old (out eval)
@@ -161,18 +162,18 @@ Please check your logic and consider adding a termination condition.")
       (format out "~%* QUESTION: ~a~%Your score: ~,2F points (out of 100).~%" (string-upcase q) mark)
       (when question-text
         (format out "Description:~%~{~a~%~}End of ~a description." question-text (string-upcase q)))
-      (format out "~%---------------------------------------------------------------------------")
+      (format out "~%~V@{~A~:*~}" *separators* "+")
       (unless (or (equalp error-type "load-error")
                   (equalp error-type "missing-question-file")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
         (format out "~%Your Solution:~%~s~%~%End of Your Solution for ~a." std-sol (string-upcase q))
-        (format out "~%---------------------------------------------------------------------------"))
+        (format out "~%~V@{~A~:*~}" *separators* "+"))
      
       (when descr ;(and  *load-error-message* (not (string= *load-error-message* "")))
         (format out "~%Compile time messages:~%~T~a~%End of compile time messages for ~a." descr (string-upcase q))
-        (format out "~%---------------------------------------------------------------------------")
+        (format t "~%~V@{~A~:*~}" *separators* "+")
         (setf *load-error-message* nil))
       
       (cond ((or (equalp error-type "load-error")
@@ -187,7 +188,7 @@ Please check your logic and consider adding a termination condition.")
              ))
       (when messages
         (format out "~%Unit Test Results - function ~a:~%~{- ~a~%~}End of Unit Tests for ~a." func-name messages (string-upcase q)))
-      (format out "~%---------------------------------------------------------------------------")))
+      (format out "~%~V@{~A~:*~}" *separators* "+")))
   (format out "~%--END OF EVALUATION FEEDBACK--~%~%"))
 
 (defun generate-feedback (key eval feedback-folder)
@@ -414,7 +415,9 @@ Please check your logic and consider adding a termination condition.")
              (testcase-code (cdr (assoc test-cases-kind question-data :test #'string=))))
         (if testcase-code
             (load-test-cases testcase-code)
-            (error "Missing hidden test cases for question ~a. ~%Ensure you have generated the assessment data file by setting the :hidden key to T, as follows: ~%(GEN-EXAM-FILES <sxm file> :INCLUDE-HIDDEN T)" question))))
+            (progn
+              (setf *package* current)
+              (error "Missing hidden test cases for question ~a. ~%Ensure you have generated the assessment data file by setting the :hidden key to T, as follows: ~%(GEN-EXAM-FILES <sxm file> :INCLUDE-HIDDEN T)" question)))))
     (setf *package* current)))
 
 
@@ -709,7 +712,7 @@ Global Constants Used:
   (when exam-grades-export-file (format broadcast-stream "Done.~%"))
   (sb-ext:delete-directory (namestring subs-folder) :recursive t)
   (format broadcast-stream "Exam grading complete!~%" )
-  (format *standard-output* "You may now upload to D2L the following grade files stored in your ~a folder :~%" results-folder)
+  (format *standard-output* "You may now upload to D2L the following grade files stored in your folder: ~a~%" results-folder)
   (when exam-grades-export-file
     (format *standard-output* "- grade.csv : contains the test marks~%"))
   (format *standard-output* "- student-feedback/ : contains the feedback txt files for each student.")
@@ -726,8 +729,8 @@ Global Constants Used:
          (probe-file file))))
 
 (defun critique-student-solution (sol)
-  (format t "~%---------------------------------------------------------------------------")
-  (format t "~%Below is your program and, if applicable, suggestions ~%on how to improve your Lisp programming style:~%~%")
+  (format t "~%~V@{~A~:*~}" *separators* "+")
+  (format t "~%Idiomatic Style & Feedback:~%Below is your program and, if applicable, suggestions ~%on how to improve your Lisp programming style:~%~%")
   (lisp-critic:critique-file sol))
 
 (defun chk-my-solution (a#)
@@ -775,15 +778,15 @@ Global Constants Used:
          (format t "~%~a" *load-error-message*))
         (t
          (when (and  *load-error-message* (not (string= *load-error-message* "")))
-           (format t "~%---------------------------------------------------------------------------")
+           (format t "~%~V@{~A~:*~}" *separators* "+")
            (format t "~%Compile time messages:~%~a" *load-error-message*))
-         (format t "---------------------------------------------------------------------------")
-         (format t "~%Note: Warning messages starting with~%    'WARNING: redefining TEST-RUNTIME::....'~%do not affect the results of your test cases.")
-         (format t "~%---------------------------------------------------------------------------")
+         (format t "~%~V@{~A~:*~}" *separators* "+")
+         (format t "~%Note: In the messages above, Warning messages starting with~%    'WARNING: redefining TEST-RUNTIME::....'~%do not affect the results of your test cases.")
+         (format t "~%~V@{~A~:*~}" *separators* "+")
          (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
            (format t "~%!!! FORBIDDEN FUNCTION DETECTED!!!~%~%Forbidden function ~A detected in the call graph of ~A.~%" (second (cadr error-type)) (first (cadr error-type)))
            (format t "~%Penalty applied: -~a% for this question.~%" (caddr error-type)))
-         (format t "~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))
+         (format t "~%Test Cases Results:~%When testing your solution for ~A, the results obtained were the following:~%~{- ~a~%~}" question-name (mapcar #'gen-message (nth 3 eval))))))
 
 ;;
 

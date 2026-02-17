@@ -1,3 +1,5 @@
+(in-package :sxm-compiler)
+
 (defparameter *parent-folder* "Gen-files/")
 
 
@@ -19,9 +21,8 @@
   (make-compiler-state
    :tag-compilers (make-tag-table)
    :metadata (make-hash-table :test #'equal)
-   :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol
-           doc q s p ul ol li wa tc gvn hdn a cb sols sol)
-   :tags-with-props '(:doc doc :q q :s s :tc tc :cb cb)
+   :tags '(:doc :q :s :p :ul :ol :li :wa :tc :gvn :hdn :a :cb :sols :sol)
+   :tags-with-props '(:doc :q :s :tc :cb)
    :env (list :q-num 0 :level -1  :ol-p nil :i-num 0 :in-hdn-p nil :include-hidden include-hidden)))
 
 (defun register-tag (table name fn)
@@ -60,7 +61,7 @@
 (defun register-core-tags (table)
   "Registers the functions created by the deftag macro in the hash table
    using as the tags as key"
-  (register-tag table 'doc-tag
+  (register-tag table :doc-tag
                 (deftag doc-tag (args state) 
                   (destructuring-bind (props &rest body) args
                     (let* ((title (getf props :title ))
@@ -74,14 +75,14 @@
                                  body-text)
                          st))))))
   
-  (register-tag table 'p-tag
+  (register-tag table :p-tag
                 (deftag p-tag (args state)
                   (destructuring-bind (&rest body) args
                     (multiple-value-bind (body-text st)
                         (compile-nodes body state)
                       (values (format nil "~%~a" body-text) st)))))
 
-  (register-tag table 'ul-tag
+  (register-tag table :ul-tag
                 (deftag ul-tag (args state) 
                   (destructuring-bind (&rest body) args
                     (let* ((ol-flag (getf (compiler-state-env state) :ol-p))
@@ -97,7 +98,7 @@
                         (setf (getf (compiler-state-env state) :ol-p) ol-flag)
                         (values (format nil "~a" body-text) st))))))
 
-  (register-tag table 'ol-tag
+  (register-tag table :ol-tag
                 (deftag ol-tag (args state) 
                   (destructuring-bind (&rest body) args
                     (let* ((ol-flag (getf (compiler-state-env state) :ol-p))
@@ -113,7 +114,7 @@
                         (setf (getf (compiler-state-env state) :ol-p) ol-flag)
                         (values (format nil "~a" body-text) st))))))
 
-  (register-tag table 'li-tag
+  (register-tag table :li-tag
                 (deftag li-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((level (getf (compiler-state-env state) :level))
@@ -127,7 +128,7 @@
                          (format nil "~%~a~a~a" (make-string indent :initial-element #\ ) bullet body-text)
                          st))))))
   
-  (register-tag table 's-tag
+  (register-tag table :s-tag
                 (deftag s-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (multiple-value-bind (body-text st)
@@ -141,7 +142,7 @@
                                  body-text)
                          st))))))
   
-  (register-tag table 'q-tag
+  (register-tag table :q-tag
                 (deftag q-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (let* ((number (incf (getf (compiler-state-env state) :q-num)))
@@ -167,7 +168,7 @@
                                  body-text)
                          st))))))
   
-  (register-tag table 'cb-tag
+  (register-tag table :cb-tag
                 (deftag cb-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (multiple-value-bind (body-text st)
@@ -178,7 +179,7 @@
                                body-text)
                        st)))))
   
-  (register-tag table 'wa-tag
+  (register-tag table :wa-tag
                 (deftag wa-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((metadata (compiler-state-metadata state))
@@ -192,13 +193,13 @@
                                          q-label-symb)))
                       (multiple-value-bind (body-text st)
                           (compile-node
-                           `(s-tag (:level 2 :title "WHAT YOU ARE ASKED")
-                                   (p-tag "*NOTE*:")
-                                   (ul-tag
-                                    (li-tag ,str1)
-                                    (li-tag "You may create helper functions in your program file. ")
-                                    (li-tag "To ensure your solution is in the correct folder and passes the test cases shown in the examples below,  type the following expression on the REPL:"
-                                            (p-tag (cb-tag (:language "lisp")
+                           `(:s-tag (:level 2 :title "WHAT YOU ARE ASKED")
+                                   (:p-tag "*NOTE*:")
+                                   (:ul-tag
+                                    (:li-tag ,str1)
+                                    (:li-tag "You may create helper functions in your program file. ")
+                                    (:li-tag "To ensure your solution is in the correct folder and passes the test cases shown in the examples below,  type the following expression on the REPL:"
+                                            (:p-tag (:cb-tag (:language "lisp")
                                                            ,str2))))
                                    ,@body)
                            state) 
@@ -209,7 +210,7 @@
                          (format nil "~a" body-text)
                          st))))))
 
-  (register-tag table 'tc-tag
+  (register-tag table :tc-tag
                 (deftag tc-tag (args state)
                   (destructuring-bind (props &rest body) args
                     (let* ((metadata (compiler-state-metadata state))
@@ -226,7 +227,7 @@
                           (compile-nodes body state)
                         (values (format nil "~%~a" body-text) st))))))
 
-  (register-tag table 'gvn-tag
+  (register-tag table :gvn-tag
                 (deftag gvn-tag (args state)
                   (destructuring-bind (&rest body) args
                     (let* ((metadata (compiler-state-metadata state))
@@ -241,7 +242,7 @@
                           (compile-nodes body state)
                         (values (format nil "~s" body-text) st))))))
   
-  (register-tag table 'hdn-tag
+  (register-tag table :hdn-tag
                 (deftag hdn-tag (args state)
                   (destructuring-bind (&rest body) args
                     (setf (getf (compiler-state-env state) :in-hdn-p) t)
@@ -257,7 +258,7 @@
                     (setf (getf (compiler-state-env state) :in-hdn-p) nil)
                     (values "" state))))
   
-  (register-tag table 'a-tag
+  (register-tag table :a-tag
                 (deftag a-tag (args state)
                   (destructuring-bind (call expected) args
                     (values
@@ -267,7 +268,7 @@
                                  call expected))
                      state))))
 
-  (register-tag table 'sols-tag
+  (register-tag table :sols-tag
                 (deftag sols-tag (args state)
                   (destructuring-bind (&rest body) args
                     (when (getf  (compiler-state-env state) :include-hidden)
@@ -279,7 +280,7 @@
                         (compile-nodes body state)
                       (values body-text st)))))
   
-  (register-tag table 'sol-tag
+  (register-tag table :sol-tag
                 (deftag sol-tag (args state)
                   (destructuring-bind (&rest body) args
                     (when (getf  (compiler-state-env state) :include-hidden)
@@ -294,19 +295,19 @@
 
 (defun rename-tags (markup state)             
   (if (consp markup)                    
-      (let* ((tag (car markup))         
+      (let* ((tag (intern (symbol-name (car markup)) :keyword))         
              (rest (cdr markup))        
-             (tag-name (intern (format nil "~A-TAG" (symbol-name tag))))) 
+             (tag-name (intern (format nil "~A-TAG" tag) :keyword)))
         (cond ((and (member tag (compiler-state-tags state))          
-                    (or (eq 'a-tag tag-name)         
-                        (eq 'sol-tag tag-name)))     
-               (cons tag-name rest))
+                    (or (eq :A-TAG tag-name)         
+                        (eq :SOL-TAG tag-name)))     
+               (cons  tag-name rest))
               ((and (member tag (compiler-state-tags state))
                     (member tag (compiler-state-tags-with-props state)))
                (cons tag-name (append (list (first rest))
-                                      (mapcar (lambda (node)
-                                                (rename-tags node state))
-                                              (cdr rest)))))
+                                         (mapcar (lambda (node)
+                                                   (rename-tags node state))
+                                                 (cdr rest)))))
               ((member tag (compiler-state-tags state))                    
                (cons tag-name (mapcar (lambda (node)
                                         (rename-tags node state))
@@ -400,13 +401,3 @@
                            data)))
       (format t "~&Assessment metadata file created at: ~a~%" exam-data-file))))
 
-
-(let ((form '(:doc (:title "A doc" :folder "~/")
-              (:q ()
-               (:tc (:function fact)
-                (:gvn
-                 (:p "A simple call")
-                 (:a (fact 0) 0)
-                 (:p "Another example:")
-                 (:a (fact 1) 1)))))))
-  (format t "~s" (compile-sxm-form form t)))

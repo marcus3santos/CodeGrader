@@ -75,20 +75,27 @@
   (:export :evaluate-solution)
   (:export :grade-code))
 
-(defpackage :sexprmark-to-org
+(defpackage :utils
+  (:use :cl)
+  (:export :subst-package-symbols :keyword-symbol-p
+           :normalize-whitespace :remove-substrings
+           :str->list))
+
+(defpackage :sxm-compiler
   (:nicknames :sxm)
   (:use :cl)
-  (:export :str->list :normalize-whitespace :remove-substrings
-           :subst-package-symbols :keyword-symbol-p))
+  (:export :gen-exam-files))
 
 (defpackage #:codegrader
   (:documentation "Manages the grading of all assignment submissions")
-  (:use cl :grader :test-runtime :sexprmark-to-org :similarity-scorer)
-  (:export :grade-it :grade-exam  :chk-given-and-hidden-cases :chk-my-solution :my-feedback-file))
+  (:use cl :grader :test-runtime :similarity-scorer :utils)
+  (:export :grade-it :grade-exam  :chk-given-and-hidden-cases
+   :chk-my-solution :my-feedback-file))
 
 (defpackage #:cg
   (:documentation "CL-USER + Codegrader utilities")
-  (:use :common-lisp :cl-user :codegrader :grader :sexprmark-to-org)
-  (:export :start :quit :eval-solutions :grade-it  :grade-exam :chk-given-and-hidden-cases :evaluate-solution :chk-my-solution
-           :gen-exam-files :my-feedback-file))
+  (:use :common-lisp :cl-user :codegrader :grader :sxm-compiler)
+  (:export :start :quit :eval-solutions :grade-it
+           :grade-exam :chk-given-and-hidden-cases :evaluate-solution
+           :chk-my-solution :gen-exam-files :my-feedback-file))
 

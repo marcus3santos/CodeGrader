@@ -13,5 +13,6 @@
                (:file "gensymify")
                (:file "similarity-scorer")
                (:file "grader")
-               (:file "sexprmarkup")
+               (:file "sxm-table-driven")
+               (:file "utilities")
                (:file "codegrader")))

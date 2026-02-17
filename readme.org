@@ -125,7 +125,7 @@ The following example demonstrates a question that restricts specific functions 
 Once the SXM file is finalized, the instructor compiles the assessment artifacts.
 
 #+begin_src lisp
-  SXM> (gen-exam-files "~/tmp/assessment1.sxm" :include-hidden t)
+  CL-USER> (cg:gen-exam-files "~/tmp/assessment1.sxm" :include-hidden t)
   ;; Output:
   ;; Assessment Org-mode file generated: ~/tmp/Gen-files/assessment1.org
   ;; Assessment HTML file generated:    ~/tmp/Gen-files/assessment1.html
