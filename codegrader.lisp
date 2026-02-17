@@ -33,7 +33,7 @@
 ;; assessment functions are stored.
 ;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
 
-(defparameter *separators* 75)
+(defparameter *separators* 70)
 
 ;; List of assessments and labs
 
@@ -86,7 +86,7 @@ Please check your logic and consider adding a termination condition.")
                                         (list qlabel))))
                                   (reverse (cadr eval)))))
   (format out "- Each question is worth 100 points.~%- Your score in the assessment is the sum of your questions' points divided by the number of questions in the assessment.~%")
-  (format out "Your final score in this assessment: ~a (out of 100)~%" (car eval))
+  (format out "~%Your final score in this assessment: ~a (out of 100)~%" (car eval))
   (dolist (question (reverse (cadr eval)))
     (let* ((q (car question))
            (qeval (cadr question))
@@ -658,8 +658,8 @@ Global Constants Used:
         ;; Case 3: All other cases (Standard weighted average)
         (t
          (let* ((base-msg " Calculation, in Lisp notation:~%   (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~,2F~%- CORRECTNESS-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to solution correctness. ~%- The STYLE-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to proper programming style.~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
-                (suffix (if nil ;;(zerop rounded-similarity)
-                            "reflects the maximum style similarity found between your solution and the solutions recorded for this question. Since there was zero similarity, no instructor solution will shown in this feedback report."
+                (suffix (if (zerop rounded-similarity)
+                            "reflects the maximum style similarity found between your solution and the solutions recorded for this question. ~%~%I noticed your solution followed quite a different logic than the instructor solutions. Here is the instructor’s version, normalized for easier comparison, that seems closer to yours:~%~{~s~%~}"
                             "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"))
                 (full-msg (concatenate 'string base-msg suffix))
                 ;; Gather shared arguments
@@ -669,10 +669,14 @@ Global Constants Used:
                             rounded-similarity)))
            ;; Apply the format function
            (nconc similarity-data
-                  (list (apply #'format nil full-msg 
+                  (list (apply #'format nil full-msg
+                               (append args (list (second similarity-data)))
+                               #|
                                (if nil ;;(zerop rounded-similarity) 
                                    args
-                                   (append args (list (second similarity-data)))))
+                                   (append args (list (second similarity-data))))
+                               |#
+                               )
                         base-score))) 
          base-score)))))
 
@@ -743,6 +747,7 @@ Global Constants Used:
          (question-name (pathname-name a#))
          (current-pckg *package*))
     (unwind-protect
+          (format t "~V@{~A~:*~}~%Lisp generated load/compile messages:" *separators* "+")         
          (let* ((eval (load-and-evaluate-solution a# question-name assessment-data))
                 (error-type (second eval)))
            (handle-evaluation-output error-type eval question-name)
@@ -780,8 +785,7 @@ Global Constants Used:
          (when (and  *load-error-message* (not (string= *load-error-message* "")))
            (format t "~%~V@{~A~:*~}" *separators* "+")
            (format t "~%Compile time messages:~%~a" *load-error-message*))
-         (format t "~%~V@{~A~:*~}" *separators* "+")
-         (format t "~%Note: In the messages above, Warning messages starting with~%    'WARNING: redefining TEST-RUNTIME::....'~%do not affect the results of your test cases.")
+         (format t "~%Note: In the messages above, Warning messages starting with~%    'WARNING: redefining TEST-RUNTIME::....'~%do not affect the results of your test cases.~%")
          (format t "~%~V@{~A~:*~}" *separators* "+")
          (when (and (listp error-type) (string= (car error-type) "used forbidden symbol"))
            (format t "~%!!! FORBIDDEN FUNCTION DETECTED!!!~%~%Forbidden function ~A detected in the call graph of ~A.~%" (second (cadr error-type)) (first (cadr error-type)))
