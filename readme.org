@@ -111,15 +111,14 @@ The following example demonstrates a question that restricts specific functions 
 
 ** Key Field Definitions
 
-- =:doc= :: The root node. The =:folder= property specifies where the student must save their work for the autograder to locate it.
-- =:q= :: Defines a question. Transpiles to a level-1 heading (~*~) in Org-mode.
-  - =:penalty= :: Percentage deducted if =:forbidden= symbols are detected in the student's code.
-- =:wa= :: (What is Asked) The problem description and student instructions.
-- =:tc= :: (Test Cases) Container for functional requirements.
-  - =:gvn= :: Publicly accessible test cases.
-  - =:hdn= :: Private test cases used for objective evaluation.
-- =:a= :: (Assertion) A pair representing a ~(function-call expected-result)~.
-- =:sols= :: Contains one or more valid =:sol= (Solution) nodes used for structural similarity grading.
+- =:doc= : The root node. The =:folder= property specifies where the student must save their work for the autograder to locate it.
+- =:q= : Defines a question. Transpiles to a level-1 heading (~*~) in Org-mode. =:penalty= is the percentage deducted if =:forbidden= symbols are detected in the student's code.
+- =:wa= : (What is Asked) The problem description and student instructions.
+- =:tc= : (Test Cases) Container for functional requirements.
+  - =:gvn= : Publicly accessible test cases.
+  - =:hdn= : Private test cases used for objective evaluation.
+- =:a= : (Assertion) A pair representing a ~(function-call expected-result)~.
+- =:sols= ::Contains one or more valid =:sol= (Solution) nodes used for structural similarity grading.
 
 * Phase 2: Generating Assessment Support Files
 
