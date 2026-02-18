@@ -139,16 +139,59 @@ Returns T if A is considered less than B."
          (macroexpanded (macroexpand normed-gensyms)))
     (sort-form macroexpanded)))
 
+#|
+(defun similarity (qs ss &optional (lambda 0.1))
+  (let* ((nqs (normalize-expand qs))
+         (nss (normalize-expand ss))
+         (distance (tree-edit-distance nqs nss))
+         (size (tree-size nqs))
+         ;; We set lambda so that a distance equal to the 
+         ;; tree-size results in a ~36% score (e^-1).
+         (dynamic-lambda (/ 1.0 size)))
+    ;; Formula: e^(-lambda * distance)
+    (exp (* (- dynamic-lambda) distance))))
+
+(defun similarity (qs ss) 
+  (let* ((nqs (normalize-expand qs)) 
+         (nss (normalize-expand ss)) 
+         (distance (tree-edit-distance nqs nss)) 
+         ;; Measure both trees to find the maximum possible "cost"
+         (size-qs (tree-size nqs))
+         (size-ss (tree-size nss))
+         (max-size (max size-qs size-ss)))
+    (if (zerop max-size)
+        1.0 ;; Two empty forms are 100% similar
+        (max 0.0 (- 1 (/ (float distance) max-size))))))
+
+
+(defun similarity (qs ss) 
+  (let* ((nqs (normalize-expand qs)) 
+         (nss (normalize-expand ss)) 
+         (distance (tree-edit-distance nqs nss)) 
+         ;; Measure both trees to find the maximum possible "cost"
+         (size-qs (tree-size nqs))
+         (size-ss (tree-size nss))
+         (avg-size (/ (+ size-qs size-ss) 2.0)))
+    (if (zerop avg-size)
+        1.0 ;; Two empty forms are 100% similar
+        (max 0.0 (- 1 (/ distance avg-size))))))
+|#
 
 (defun similarity (qs ss)
   (let* ((nqs (normalize-expand qs))
          (nss (normalize-expand ss))
          (distance (tree-edit-distance nqs nss))
-        (tree-size (tree-size qs)))
-    (if (> distance tree-size)
-        0
-        (- 1 (float (/ distance tree-size))))))
-
+         (size-q (tree-size nqs))
+         (size-s (tree-size nss))
+         (total-complexity (+ size-q size-s)))
+    (cond 
+      ;; Case 1: Both are empty (Perfect match of nothing)
+      ((zerop total-complexity) 1.0)
+      
+      ;; Case 2: Student submitted NIL but Instructor has code
+      ;; or vice versa. This will naturally result in a 0 or near-0.
+      (t (let ((score (- 1.0 (/ (* 2.0 distance) total-complexity))))
+           (max 0.0 (float score)))))))
 
 (defun get-call-graph (target-func program)
   "Returns a list of functions called by target-func within the given program."
@@ -187,6 +230,17 @@ Returns T if A is considered less than B."
       (build-graph target-func)
       graph)))
 
+(defun closest-solution (std-sol prof-sols)
+  (let ((dist most-positive-fixnum)
+        res)
+    (mapc (lambda (s)
+            (let ((temp (tree-edit-distance (normalize-expand std-sol)
+                                            (normalize-expand s))))
+              (when (< temp dist)
+                (setf dist temp)
+                (setf res (normalize s)))))
+          prof-sols)
+    res))
 
 (defun score-similarity (target-func raw-student-solution instructor-solutions)
   "Return the similarity score (0 to 1.0) between the definition for function
@@ -260,4 +314,8 @@ Returns T if A is considered less than B."
                           (> similarity-score (first max-similarity)))
                   (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sols-with-embedded-helpers))))))
             instructor-sols-with-embedded-helpers)
-      max-similarity)))
+      (if (zerop (first max-similarity))
+          (list (first max-similarity)
+                (closest-solution student-sols-with-embedded-helpers instructor-sols-with-embedded-helpers)
+                (normalize student-sols-with-embedded-helpers))
+          max-similarity))))
