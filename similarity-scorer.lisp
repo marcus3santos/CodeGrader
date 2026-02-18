@@ -230,7 +230,7 @@ Returns T if A is considered less than B."
       (build-graph target-func)
       graph)))
 
-(defun closest-solution (std-sol prof-sols)
+(defun closest-solution-to-the-profs-solution (std-sol prof-sols)
   (let ((dist most-positive-fixnum)
         res)
     (mapc (lambda (s)
@@ -246,11 +246,7 @@ Returns T if A is considered less than B."
   "Return the similarity score (0 to 1.0) between the definition for function
    TARGET-FUNC present in the STUDENT-SOLUTION list and the one found in the 
    INSTRUCTOR-SOLUTIONS list. The latter is in the form 
-   (doc (defun ...) ...) 
-
-   Currently, a solution to a question consists of a single defun, with no
-   helpers. This applies to the instructor's versions of the solution
-   and to the student's solution"
+   (doc (defun ...) ...)"
   (labels ((filter-atoms (program)
              (cond ((null program) program)
                    ((atom (car program)) (filter-atoms (cdr program)))
@@ -293,7 +289,7 @@ Returns T if A is considered less than B."
            (student-solution-cg (get-call-graph target-func student-solution))
            (student-used-functions-and-globals
              (get-relevant-code student-solution student-solution-cg))
-           (student-sols-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
+           (student-sol-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
            (instructor-solutions-for-target-func
              (loop for s in instructor-solutions
                    for data = (rest s)
@@ -309,13 +305,13 @@ Returns T if A is considered less than B."
                      instructor-solutions-used-functions-and-globals))
            (max-similarity))
       (mapc (lambda (instructor-solution)
-              (let ((similarity-score (similarity instructor-solution student-sols-with-embedded-helpers)))
+              (let ((similarity-score (similarity instructor-solution student-sol-with-embedded-helpers)))
                 (when (or (null max-similarity)
                           (> similarity-score (first max-similarity)))
-                  (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sols-with-embedded-helpers))))))
+                  (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sol-with-embedded-helpers))))))
             instructor-sols-with-embedded-helpers)
       (if (zerop (first max-similarity))
           (list (first max-similarity)
-                (closest-solution student-sols-with-embedded-helpers instructor-sols-with-embedded-helpers)
-                (normalize student-sols-with-embedded-helpers))
+                (closest-solution student-sol-with-embedded-helpers instructor-sols-with-embedded-helpers)
+                (third max-similarity))
           max-similarity))))

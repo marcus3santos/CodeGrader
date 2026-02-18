@@ -111,7 +111,7 @@ Please check your logic and consider adding a termination condition.")
                   (equalp error-type "no-submitted-file")
 		  (equalp error-type "not-lisp-file")
 		  (equal error-type "late-submission"))
-        (format out "~%Your Solution:~%~s~%~%Your Solution, normalized for comparison with the instructor's solutions:~%~s~%~%End of Your Solution for ~a" (read-from-string std-sol)   (first (third solution-similarity)) (string-upcase q) )
+        (format out "Your normalized solution - includes only relevant functions:~%~s~%~%Your  original solution:~%~s~%End of Your Solution for ~a"   (first (third solution-similarity)) (read-from-string std-sol) (string-upcase q) )
         (format out "~%~V@{~A~:*~}" *separators* "+"))
      (when question-text
         (format out "~%Question Description:~%~sEnd of ~a description." question-text (string-upcase q)))
@@ -659,7 +659,7 @@ Global Constants Used:
         (t
          (let* ((base-msg " Calculation, in Lisp notation:~%   (MAX CORRECTNESS (+ (* CORRECTNESS CORRECTNESS-WEIGHT) (* STYLE-SIMILARITY STYLE-WEIGHT))), where:~%- Your solution CORRECTNESS: ~,2F~%- CORRECTNESS-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to solution correctness. ~%- The STYLE-WEIGHT for this assessment: ~a. This factor [0 to 1] reflects the weight your instructor assigned to proper programming style.~%- Your STYLE-SIMILARITY was ~a. This factor [0 to 1] ")
                 (suffix (if (zerop rounded-similarity)
-                            "reflects the maximum style similarity found between your solution and the solutions recorded for this question. ~%~%I noticed your solution followed quite a different logic than the instructor solutions. Here is the instructor’s version, normalized for easier comparison, that seems closer to yours:~%~{~s~%~}"
+                            "reflects the maximum style similarity found between your solution and the solutions recorded for this question. ~%~%Note: Your logic varies significantly from the instructor's solution. Below is a normalized version of the reference code to help you compare the two structures side-by-side:~%~{~s~%~}"
                             "reflects the maximum style similarity found between your solution and one of the recorded instructor solutions. ~%~%The Instructor's selected solution, normalized for comparison with your solution:~%~{~s~%~}"))
                 (full-msg (concatenate 'string base-msg suffix))
                 ;; Gather shared arguments
