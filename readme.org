@@ -148,7 +148,7 @@ To enable automated evaluation, the generated =.data= file must be moved to the 
 
 * Phase 3: Student Interaction & The Practicum
 
-During the practicum, students solve the programming problems defined in the assessment. While the *PDF* serves as their primary guide, the students interact with the CodeGrader system through a specialized feedback loop designed to ensure compliance and promote better Lisp programming habits.
+During the practicum, students solve the programming problems defined in the assessment. While the *PDF* serves as their primary guide, the students interact with the CodeGrader system in the Lisp REPL through a specialized function called ~CHK-MY-SOLUTION~ designed to ensure compliance and promote better Lisp programming habits.
 
 ** Student Requirements
 To succeed in the practicum, students must adhere to two primary constraints:
@@ -157,12 +157,12 @@ To succeed in the practicum, students must adhere to two primary constraints:
 
 ** Real-time Feedback with ~CHK-MY-SOLUTION~
 
-To assist students, CodeGrader provides the ~CHK-MY-SOLUTION~ function. This is more than a simple tester; it is a "live" assistant that helps students address issues before the final evaluation.
+The ~CHK-MY-SOLUTION~ functio is more than a simple tester; it is a "live" assistant that helps students address issues before the final evaluation.
 
 *** What ~CHK-MY-SOLUTION~ Does:
 1. *Path Validation*: Verifies that the file is in the correct directory with the correct name.
 2. *Functional Testing*: Executes the solution against the *given* (~:gvn~) test cases.
-3. *Style Coaching*: Analyzes the student's code for structural "smells" or poor naming conventions and provides immediate suggestions for improvement.
+3. *Style Coaching (via lisp-critic)*: Runs the student’s source code through the lisp-critic library to identify non-idiomatic patterns or "code smells." It translates these automated critiques into immediate feedback, suggesting more "Lisp-y" ways to structure their logic.
 
 *** Example Session
 
