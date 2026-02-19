@@ -118,7 +118,7 @@ The following example demonstrates a question that restricts specific functions 
   - =:gvn= : Publicly accessible test cases.
   - =:hdn= : Private test cases used for objective evaluation.
 - =:a= : (Assertion) A pair representing a ~(function-call expected-result)~.
-- =:sols= ::Contains one or more valid =:sol= (Solution) nodes used for structural similarity grading.
+- =:sols= : Contains one or more valid =:sol= (Solution) nodes used for structural similarity grading.
 
 * Phase 2: Generating Assessment Support Files
 
