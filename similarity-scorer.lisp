@@ -178,20 +178,40 @@ Returns T if A is considered less than B."
 |#
 
 (defun similarity (qs ss)
+  "Calculates a similarity score between 0.0 and 1.0 for two Lisp forms.
+   
+   This function uses a normalized Tree Edit Distance approach based on the 
+   Sørensen-Dice coefficient. It is specifically designed to be more lenient 
+   than a simple linear ratio of distance to instructor-tree-size.
+
+   ALGORITHM:
+   1. Normalizes and expands both forms (qs = instructor, ss = student).
+   2. Calculates the tree edit distance (D).
+   3. Computes the total complexity as the sum of the sizes of both trees (S1 + S2).
+   4. Applies the formula: 1.0 - (2 * D / (S1 + S2)).
+   5. Clips the result at 0.0 to prevent negative scores.
+
+   LENIENCY LOGIC:
+   Unlike (1 - D/S1), which hits zero as soon as the distance equals the 
+   instructor's code size, this version allows for 'structural drift.' 
+   A student can write significantly more code (increasing S2) without 
+   bottoming out the score, provided the distance doesn't grow faster 
+   than the total complexity.
+
+   EDGE CASES:
+   - If both forms are empty, returns 1.0.
+   - If one form is empty (e.g., NIL) and the other is a substantial 
+     function, the score will approach 0.0.
+   - Returns a FLOAT for precision."
   (let* ((nqs (normalize-expand qs))
          (nss (normalize-expand ss))
          (distance (tree-edit-distance nqs nss))
-         (size-q (tree-size nqs))
-         (size-s (tree-size nss))
-         (total-complexity (+ size-q size-s)))
+         (s1 (tree-size nqs))
+         (s2 (tree-size nss))
+         (total (+ s1 s2)))
     (cond 
-      ;; Case 1: Both are empty (Perfect match of nothing)
-      ((zerop total-complexity) 1.0)
-      
-      ;; Case 2: Student submitted NIL but Instructor has code
-      ;; or vice versa. This will naturally result in a 0 or near-0.
-      (t (let ((score (- 1.0 (/ (* 2.0 distance) total-complexity))))
-           (max 0.0 (float score)))))))
+      ((zerop total) 1.0)
+      (t (max 0.0 (float (- 1 (/ (* 2.0 distance) total))))))))
 
 (defun get-call-graph (target-func program)
   "Returns a list of functions called by target-func within the given program."
