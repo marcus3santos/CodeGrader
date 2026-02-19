@@ -734,7 +734,7 @@ Global Constants Used:
 
 (defun critique-student-solution (sol)
   (format t "~%~V@{~A~:*~}" *separators* "+")
-  (format t "~%Idiomatic Style & Feedback:~%Below is your program and, if applicable, suggestions ~%on how to improve your Lisp programming style:~%~%")
+  (format t "~%Idiomatic Style & Feedback:~%While your code may be functional, the suggestions below help ~%you write more "Lisp-y" solutions:~%~%")
   (lisp-critic:critique-file sol))
 
 (defun chk-my-solution (a#)
