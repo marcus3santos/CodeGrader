@@ -250,6 +250,52 @@ Returns T if A is considered less than B."
       (build-graph target-func)
       graph)))
 
+(defun get-relevant-code (program call-graph)
+  (let ((form-map (make-hash-table :test 'eq))
+        (filtered-program
+          (remove-if-not (lambda (f)
+                           (and (consp f)
+                                (member (car f) '(let let* defun defconstant defparameter defvar))))
+                    program)))
+    ;; Index the program once: O(N)
+    (dolist (form filtered-program)
+      (setf (gethash (second form) form-map) form))
+    
+    (append
+     ;; Filter constants: O(N)
+     (remove-if-not (lambda (f)
+                      (and (consp f)
+                           (member (car f) '(defconstant defparameter defvar))))
+                    filtered-program)
+     ;; Map call-graph nodes to forms: O(M)
+     (loop for (node-name has-target) in call-graph
+           when (and has-target (gethash node-name form-map))
+             collect (gethash node-name form-map)))))
+
+(defun embed-helpers (main-func-name program)
+  (let* ((globals (loop for form in program
+                        when (and  (consp form) (member (car form) '(defconstant defvar 'defparameter)))
+                          collect form))
+         (helpers (loop for form in program
+                        when (and (consp form)
+                                  (eq (first form) 'defun)
+                                  (not (eq (second form) main-func-name)))
+                          collect form))
+         (main-def (first (member main-func-name program :key #'second)))
+         (main-lamblist (third main-def))
+         (main-bdy (cdddr main-def)))
+    (if (and main-def helpers)
+        (append  globals
+                 (list`(defun ,main-func-name ,main-lamblist
+                         (labels ,(mapcar #'rest helpers)
+                           ,@main-bdy))))
+        program)))
+
+(defun filter-atoms (program)
+  (cond ((null program) program)
+        ((atom (car program)) (filter-atoms (cdr program)))
+        (t (cons (car program) (filter-atoms (cdr program))))))
+
 (defun closest-solution-to-the-profs-solution (std-sol prof-sols)
   (let ((dist most-positive-fixnum)
         res)
@@ -267,71 +313,33 @@ Returns T if A is considered less than B."
    TARGET-FUNC present in the STUDENT-SOLUTION list and the one found in the 
    INSTRUCTOR-SOLUTIONS list. The latter is in the form 
    (doc (defun ...) ...)"
-  (labels ((filter-atoms (program)
-             (cond ((null program) program)
-                   ((atom (car program)) (filter-atoms (cdr program)))
-                   (t (cons (car program) (filter-atoms (cdr program))))))
-           (get-relevant-code (program call-graph)
-             (let ((form-map (make-hash-table :test 'eq)))
-               ;; Index the program once: O(N)
-               (dolist (form program)
-                 (setf (gethash (second form) form-map) form))
-
-               (append
-                ;; Filter constants: O(N)
-                (remove-if-not (lambda (f)
-                                 (and (consp f)
-                                      (member (car f) '(defconstant defparameter defvar))))
-                               program)
-                ;; Map call-graph nodes to forms: O(M)
-                (loop for (node-name has-target) in call-graph
-                      when (and has-target (gethash node-name form-map))
-                        collect (gethash node-name form-map)))))
-           (embed-helpers (main-func-name program)
-             (let* ((globals (loop for form in program
-                                   when (and  (consp form) (member (car form) '(defconstant defvar 'defparameter)))
-                                     collect form))
-                    (helpers (loop for form in program
-                                   when (and (consp form)
-                                             (eq (first form) 'defun)
-                                             (not (eq (second form) main-func-name)))
-                                     collect form))
-                    (main-def (first (member main-func-name program :key #'second)))
-                    (main-lamblist (third main-def))
-                    (main-bdy (cdddr main-def)))
-               (if (and main-def helpers)
-                   (append  globals
-                            (list`(defun ,main-func-name ,main-lamblist
-                                    (labels ,(mapcar #'rest helpers)
-                                      ,@main-bdy))))
-                   program))))
-    (let* ((student-solution (filter-atoms raw-student-solution))
-           (student-solution-cg (get-call-graph target-func student-solution))
-           (student-used-functions-and-globals
-             (get-relevant-code student-solution student-solution-cg))
-           (student-sol-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
-           (instructor-solutions-for-target-func
-             (loop for s in instructor-solutions
-                   for data = (rest s)
-                   when (second (assoc target-func (get-call-graph target-func data)))
-                     collect data))
-           (instructor-solutions-used-functions-and-globals
-             (mapcar (lambda (instructor-solution)
-                       (get-relevant-code instructor-solution (get-call-graph target-func instructor-solution)))
-                     instructor-solutions-for-target-func))
-           (instructor-sols-with-embedded-helpers
-             (mapcar (lambda (sol)
-                       (embed-helpers target-func sol))
-                     instructor-solutions-used-functions-and-globals))
-           (max-similarity))
-      (mapc (lambda (instructor-solution)
-              (let ((similarity-score (similarity instructor-solution student-sol-with-embedded-helpers)))
-                (when (or (null max-similarity)
-                          (> similarity-score (first max-similarity)))
-                  (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sol-with-embedded-helpers))))))
-            instructor-sols-with-embedded-helpers)
-      (if (zerop (first max-similarity))
-          (list (first max-similarity)
-                (closest-solution student-sol-with-embedded-helpers instructor-sols-with-embedded-helpers)
-                (third max-similarity))
-          max-similarity))))
+  (let* ((student-solution (filter-atoms raw-student-solution))
+         (student-solution-cg (get-call-graph target-func student-solution))
+         (student-used-functions-and-globals
+           (get-relevant-code student-solution student-solution-cg))
+         (student-sol-with-embedded-helpers (embed-helpers target-func student-used-functions-and-globals))
+         (instructor-solutions-for-target-func
+           (loop for s in instructor-solutions
+                 for data = (rest s)
+                 when (second (assoc target-func (get-call-graph target-func data)))
+                   collect data))
+         (instructor-solutions-used-functions-and-globals
+           (mapcar (lambda (instructor-solution)
+                     (get-relevant-code instructor-solution (get-call-graph target-func instructor-solution)))
+                   instructor-solutions-for-target-func))
+         (instructor-sols-with-embedded-helpers
+           (mapcar (lambda (sol)
+                     (embed-helpers target-func sol))
+                   instructor-solutions-used-functions-and-globals))
+         (max-similarity))
+    (mapc (lambda (instructor-solution)
+            (let ((similarity-score (similarity instructor-solution student-sol-with-embedded-helpers)))
+              (when (or (null max-similarity)
+                        (> similarity-score (first max-similarity)))
+                (setf max-similarity (list similarity-score (normalize instructor-solution) (normalize student-sol-with-embedded-helpers))))))
+          instructor-sols-with-embedded-helpers)
+    (if (zerop (first max-similarity))
+        (list (first max-similarity)
+              (closest-solution-to-the-profs-solution student-sol-with-embedded-helpers instructor-sols-with-embedded-helpers)
+              (third max-similarity))
+        max-similarity)))
