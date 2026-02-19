@@ -189,9 +189,8 @@ When testing your solution for q1, the results obtained were the following:
 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Idiomatic Style & Feedback:
-Below is your program and, if applicable, suggestions 
-on how to improve your Lisp programming style:
-
+While your code may be functional, the suggestions below help you
+write more "Lisp-y" solutions.
 **********************************************************************
 
 (DEFUN LIST-OF-ARRAYS (L1 L2)
