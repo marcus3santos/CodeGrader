@@ -1,5 +1,6 @@
 (in-package #:codegrader)
 
+;; The student submission object
 
 (defstruct submission
   std-id
@@ -11,9 +12,7 @@
   evaluation          ; percentage marks per question and explanations
   total-marks) ; total marks, i.e., (sum correctness marks per question)/(Number of questions)
 
-;; Folder in student's home directory storing their solutions
-
-;; (defparameter *std-sub-folder* "pt/")
+;; Folder where assessment metadata files should be store
 
 (defparameter *assessment-data-folder* "~/quicklisp/local-projects/CodeGrader/Assessment-data/")
 
@@ -29,9 +28,7 @@
 
 (defconstant +style-weight+ 0.3)
 
-;; Root folder where the examples' test case files  and the names of the
-;; assessment functions are stored.
-;; The actual files should be inside the PT1/ or PT2/ folder, as appropriate
+;; The number of +s output to stdio when printing a feedback message
 
 (defparameter *separators* 70)
 
