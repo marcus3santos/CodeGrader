@@ -240,7 +240,7 @@
                             (cons gvn-data latest-q-data))
                       (multiple-value-bind (body-text st)
                           (compile-nodes body state)
-                        (values (format nil "~s" body-text) st))))))
+                        (values (format nil "~a" body-text) st))))))
   
   (register-tag table :hdn-tag
                 (deftag hdn-tag (args state)
